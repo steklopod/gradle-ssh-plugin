@@ -24,13 +24,12 @@ gradlePlugin {
 }
 
 pluginBundle {
-    website = "https://github.com/steklopod/gradle-ssh-plugin.git"
-    vcsUrl = "https://github.com/steklopod/gradle-docker-plugin"
+    website = "https://github.com/steklopod/gradle-ssh-plugin"
+    vcsUrl = "https://github.com/steklopod/gradle-ssh-plugin.git"
 
     (plugins) {
         "sshPlugin" {
-            displayName = "\uD83D\uDEE1️ FTP deploy ssh-plugin gradle tasks\n" +
-                    "Tasks: publishBack, publishFront, publish, ssh.\n"
+            displayName = "\uD83D\uDEE1️ SSH plugin for FTP deployment"
             tags = listOf("ssh", "kotlin", "deploy", "sftp", "ftp", "\uD83E\uDD1F\uD83C\uDFFB")
             version = pluginsVersion
         }
