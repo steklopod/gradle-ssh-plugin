@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     `kotlin-dsl`
     id("com.gradle.plugin-publish") version "0.10.1"
+    id ("org.sonarqube") version "2.8"
 }
 
 val pluginsVersion = "0.1.4"
@@ -48,5 +49,10 @@ tasks {
     withType<KotlinCompile> { kotlinOptions { jvmTarget = "11" } }
 }
 
+sonarqube {
+    properties {
+        property ("sonar.projectKey", "steklopod_gradle-ssh-plugin")
+    }
+}
 defaultTasks("tasks", "publishPlugins")
 
