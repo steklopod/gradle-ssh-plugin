@@ -8,34 +8,22 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=security_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 
-🛡️ Gradle `ssh` plugin for root multi-project
+🛡️ Gradle `ssh` plugin for easy & quick deploy
 
-> Default `backend`'s **jar** distribution path: `${project.rootDir}/backend/build/libs/*.jar`
-
-### Easy to use
-```kotlin
-        // run command
-        ssh {
-            host = "online.colaba"; user = "user"
-            
-            directory = "frontend"
-        }
-        // copy directory
-        ssh {
-            host = "online.colaba"; user = "user"
-
-            run = "echo \$PWD"
-        }
-```
-
-
-### Quick start (`1 step only`)
-In your `build.gradle.kts` file:
+#### Quick start
+1. In your `build.gradle.kts` file:
 ```kotlin
 plugins {
      id("online.colaba.ssh") version "0.1.4"
 }
+
+ssh {
+    host = "online.colaba"; user = "user"   
+    directory = "distribution"
+    run = "ls -a"
+}
 ```
+> you must to have `id_rsa` private key (on your local machine: `{userHomePath}/.ssh/id_rsa`) to use this plugin.
 
 ### Execute by FTP 🎯
 ```shell script
@@ -53,20 +41,21 @@ gradle ssh
 * `publishBack` - copy backend's distribution `*.jar`-file
 
 
-### Customization
+### Custom task
 
-1. Create custom task in 
+1. Register new task in `build.gradle.kts`
 ```kotlin
         register("customSshTask", Ssh::class) {
             host = "online.colaba"
             user = "user"
+            run = "cd ${project.name} && echo \$PWD"
+
             gradle = true
             frontend = true
             backend = true
             static = true
             docker = true
             nginx = true
-            run = "cd ${project.name} && echo \$PWD"
         }
 ```
 2. Call this task
