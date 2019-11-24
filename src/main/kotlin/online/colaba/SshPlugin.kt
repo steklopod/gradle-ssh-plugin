@@ -39,6 +39,7 @@ class SshPlugin : Plugin<Project> {
             register("publishDocker", Ssh::class) { docker = true }
             register("publishStatic", Ssh::class) { static = true }
             register("publishBack", Ssh::class) { backend = true }
+            register("publishNginx", Ssh::class) { nginx = true }
         }
     }
 }

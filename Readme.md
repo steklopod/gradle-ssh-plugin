@@ -12,9 +12,10 @@
 
 #### Quick start
 1. In your `build.gradle.kts` file:
+
 ```kotlin
 plugins {
-     id("online.colaba.ssh") version "0.1.4"
+     id("online.colaba.ssh") version "0.1.7"
 }
 
 ssh {
@@ -34,12 +35,13 @@ gradle ssh
 
 > Name of service for all tasks equals to ${project.name} 
 
-* `ssh` - send by ftp
+* `ssh` , `publish` - send by ftp, execute remote commands
 * `publishGradle` - copy gradle's files
 * `publishDocker` - copy docker's files
 * `publishStatic` - copy static folder
+* `publishFront` - copy frontend folder
+* `publishNginx` - copy nginx folder
 * `publishBack` - copy backend's distribution `*.jar`-file
-
 
 ### Custom task
 
@@ -48,30 +50,26 @@ gradle ssh
         register("customSshTask", Ssh::class) {
             host = "online.colaba"
             user = "user"
-            run = "cd ${project.name} && echo \$PWD"
-
             gradle = true
             frontend = true
             backend = true
             static = true
             docker = true
             nginx = true
+            run = "cd ${project.name} && echo \$PWD"
         }
 ```
 2. Call this task
 ```shell script
 gradle customSshTask
 ```
+___
+##### Preconfigured profiles
 
+By default you have preconfigured profiles: 
+* in `ssh` task - all disabled (true)
+* in `publish` task - all enabled (false)
 
-> By default you have preconfigured profiles: in `ssh` task - all disabled, in `publish` task - all enabled.
-```shell script
- project
-    |-backend/
-      | - build/libs/*.jar
-    |-frontend/
-    |-nginx/
-```
 You can customize this properties:
 ```kotlin
         ssh {
@@ -82,5 +80,12 @@ You can customize this properties:
             directory = "copy_me_to_remote"
         }
 ```
-
+Project's structure
+```shell script
+ project
+    |-backend/
+      | - build/libs/*.jar
+    |-frontend/
+    |-nginx/
+```
 > Default `backend`'s **jar** distribution path: `${project.rootDir}/backend/build/libs/*.jar`
