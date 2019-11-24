@@ -8,7 +8,7 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=security_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 
-🛡️ Gradle `ssh` plugin for easy & quick deploy
+🛡️ [Gradle `ssh` plugin](https://plugins.gradle.org/plugin/online.colaba.ssh) for easy & quick deploy
 
 #### Quick start
 1. In your `build.gradle.kts` file:
