@@ -23,11 +23,9 @@ open class Ssh : Executor() {
         description = "Publish by FTP your distribution with SSH commands"
     }
 
-    //TODO
     @get:Input
     @Optional
     var host: String? = null
-    //TODO
     @get:Input
     @Optional
     var user: String? = null
@@ -81,7 +79,7 @@ open class Ssh : Executor() {
                 run?.let {
                     println("\n\uD83D\uDD11 Executing command on remote server: { $run }")
                     println(
-                            execute("$it")
+                        execute("$it")
                     )
 
                 }
@@ -93,14 +91,18 @@ open class Ssh : Executor() {
         files.iterator().forEach { file -> copy(file); copyBack(file); copyFront(file) }
     }
 
-    //TODO - user, host : check
-    private fun remote() = (server ?: SshServer()).remote(checkKnownHosts)
+    private fun remote() = (server ?: if (host != null) SshServer(hostSsh = host, userSsh = user)
+    else SshServer()).remote(checkKnownHosts)
 
     private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
-    private fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) = session(*remotes, delegateClosureOf(action))
+    private fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) =
+        session(*remotes, delegateClosureOf(action))
+
     private fun SessionHandler.put(from: Any, into: String) = put(hashMapOf("from" to from, "into" to into))
 
-    private fun SessionHandler.isRemoteExists(into: String) = execute("test -d ${project.name}/$into && echo true || echo false").toBoolean()
+    private fun SessionHandler.isRemoteExists(into: String) =
+        execute("test -d ${project.name}/$into && echo true || echo false").toBoolean()
+
     private fun SessionHandler.toRemoteFolder(into: String): String {
         execute("mkdir --parent $into"); return into
     }
@@ -134,7 +136,7 @@ open class Ssh : Executor() {
     }
 
     private fun SessionHandler.copyFolderIfNotRemote(directory: String = "") =
-            if (!isRemoteExists("${project.name}/$directory")) copyFolder(directory) else false
+        if (!isRemoteExists("${project.name}/$directory")) copyFolder(directory) else false
 
     private fun SessionHandler.copyFolder(directory: String = ""): Boolean {
         val toRemote = "${project.name}/$directory"
