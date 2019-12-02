@@ -7,7 +7,7 @@ import java.io.File
 
 
 data class SshServer(
-        val hostSsh: String? = defaultHost, val userSsh: String? = defaultUser, val idRsaPath: String? = id_Rsa()
+        val hostSsh: String = defaultHost, val userSsh: String = defaultUser, val idRsaPath: String? = id_Rsa()
 ) {
     companion object {
         private const val defaultUser = "root"
@@ -28,7 +28,7 @@ data class SshServer(
         }
     }
 
-    fun remote(checkKnownHosts: Boolean): Remote {
+    fun remote(checkKnownHosts: Boolean = false): Remote {
         val config: MutableMap<String, Any> = mutableMapOf("knownHosts" to AllowAnyHosts.instance)
         if (checkKnownHosts) {
             println("* If you don't want to scan [known_hosts] local file - set `checkKnownHosts = false` in gradle's ssh task.")

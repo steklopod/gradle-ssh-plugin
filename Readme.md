@@ -1,4 +1,4 @@
-# SSH plugin for gradle  [![Build Status](https://travis-ci.org/steklopod/gradle-ssh-plugin.svg?branch=master)](https://travis-ci.org/steklopod/gradle-ssh-plugin)
+# Gradle `ssh` plugin  [![Build Status](https://travis-ci.com/steklopod/gradle-ssh-plugin.svg?branch=master)](https://travis-ci.com/steklopod/gradle-ssh-plugin)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=alert_status)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=bugs)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
@@ -8,23 +8,24 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=security_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 
-🛡️ Gradle [`ssh` plugin](https://plugins.gradle.org/plugin/online.colaba.ssh) for easy & quick deploy
+🛡️ Gradle `ssh` plugin for easy & quick deploy
 
 #### Quick start
 1. In your `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-     id("online.colaba.ssh") version "0.2.3"
+     id("online.colaba.ssh") version "0.2.4"
 }
 
+//Copy local project distribution folder into remote ~/{project.name}/ and print:
 ssh {
     host = "online.colaba"; user = "user"   
     directory = "distribution"
     run = "ls -a"
 }
 ```
-> you must to have `id_rsa` private key (on your local machine: `{userHomePath}/.ssh/id_rsa`) to use this plugin.
+> you must to have `id_rsa` private key (on your local machine: `{user.home}/.ssh/id_rsa`) to use this plugin.
 
 ### Execute by FTP 🎯
 ```shell script
@@ -35,15 +36,16 @@ gradle ssh
 
 > Name of service for all tasks equals to ${project.name} 
 
-* `ssh` , `publish` - send by ftp, execute remote commands
-* `publishGradle` - copy gradle's files
+* `ssh`, `publish` - send by ftp, execute remote commands
+* `publishGradle` - copy gradle's needed files
 * `publishDocker` - copy docker's files
 * `publishStatic` - copy static folder
 * `publishFront` - copy frontend folder
 * `publishNginx` - copy nginx folder
 * `publishBack` - copy backend's distribution `*.jar`-file
+* `prune` - remove unused docker data
 
-### Custom task
+#### Custom task
 
 1. Register new task in `build.gradle.kts`
 ```kotlin
@@ -64,7 +66,7 @@ gradle ssh
 gradle customSshTask
 ```
 ___
-##### Preconfigured profiles
+##### Preconfigured tasks
 
 By default you have preconfigured profiles: 
 * in `ssh` task - all disabled (true)

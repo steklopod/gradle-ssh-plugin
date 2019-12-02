@@ -13,7 +13,7 @@ const val npmPrefix = "npm"
 open class Executor : Exec() {
     init {
         group = "execute"
-        description = "Executes a command line process on local PC [linux / windows]"
+        description = "Execute a command line process on local PC [linux/windows]"
     }
 
     @get:Input
@@ -22,14 +22,12 @@ open class Executor : Exec() {
     @TaskAction
     override fun exec() {
         commandLine = windowsPrefix + command.splitBySpace()
+        println("> Executing command: $commandLine\n")
         super.exec()
     }
 
-    fun execute(execCommand: String) { command = execCommand; group = npmPrefix }
     fun npm(npmCommand: String) { command = "$npmPrefix $npmCommand"; group = npmPrefix }
     fun npmRun(npmRunCommand: String) { npm("run $npmRunCommand") }
-
-    fun containers() { command = "$dockerPrefix ps" }
 }
 
 fun Project.registerExecutorTask() = tasks.register<Executor>("execute")
