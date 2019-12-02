@@ -18,7 +18,7 @@ gradlePlugin {
     plugins {
         create(sshPlugin) {
             id = "$group.ssh"; implementationClass = "$group.SshPlugin"
-            description = "Ssh needed tasks for FTP deploy: all you need for easy deployment \uD83D\uDEE1️ "
+            description = "Ssh needed tasks for FTP deploy: all you need for easy deployment"
         }
     }
 
