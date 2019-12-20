@@ -5,7 +5,7 @@ plugins {
 }
 
 
-val pluginsVersion = "0.2.4"
+val pluginsVersion = "1.0.1"
 val sshPlugin = "sshPlugin"
 description = "EASY-DEPLOY gradle needed tasks"
 version = pluginsVersion
@@ -31,7 +31,7 @@ pluginBundle {
     (plugins) {
         sshPlugin {
             displayName = "SSH task for easy deploy"
-            tags = listOf("ssh", "kotlin", "deploy", "sftp", "ftp", "docker", "docker-compose")
+            tags = listOf("ssh", "deploy", "sftp", "ftp", "docker", "docker-compose")
             version = pluginsVersion
         }
     }

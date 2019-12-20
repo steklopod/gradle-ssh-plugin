@@ -21,20 +21,19 @@ class SshPlugin : Plugin<Project> {
             register(publishFront, Ssh::class) { frontend = true }
 
             register("publish", Ssh::class) {
-                gradle = true
                 frontend = true
                 backend = true
-                static = true
                 docker = true
-                nginx = true
+                gradle = false
+                nginx = false
                 run = "cd ${project.name} && echo \$PWD"
-                description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/static/nginx folder)"
+                description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
             }
 
+            register("publishBack", Ssh::class) { backend = true;  description = "Copy backend folder to remote server" }
             register("publishGradle", Ssh::class) { gradle = true; description = "Copy gradle needed files to remote server" }
             register("publishDocker", Ssh::class) { docker = true; description = "Copy docker needed files to remote server" }
-            register("publishStatic", Ssh::class) { static = true; description = "Copy static folder to remote server" }
-            register("publishBack", Ssh::class) { backend = true;  description = "Copy backend folder to remote server" }
+            register("publishNginx", Ssh::class) { nginx = true;  description = "Copy nginx folder to remote server" }
 
             register("prune", Docker::class) { exec = "system prune -fa"; description = "Remove unused docker data" }
             val removeBackAndFront by registering(Docker::class) { dependsOn(":$frontendService:$removeGroup"); finalizedBy(":$backendService:$removeGroup"); description = "Docker remove backend & frontend containers" }

@@ -15,7 +15,7 @@
 
 ```kotlin
 plugins {
-     id("online.colaba.ssh") version "0.2.4"
+     id("online.colaba.ssh") version "1.0.1"
 }
 
 //Copy local project distribution folder into remote ~/{project.name}/ and print:
@@ -37,12 +37,11 @@ gradle ssh
 > Name of service for all tasks equals to ${project.name} 
 
 * `ssh`, `publish` - send by ftp, execute remote commands
+* `publishBack` - copy backend's distribution `*.jar`-file
+* `publishFront` - copy frontend folder
 * `publishGradle` - copy gradle's needed files
 * `publishDocker` - copy docker's files
-* `publishStatic` - copy static folder
-* `publishFront` - copy frontend folder
 * `publishNginx` - copy nginx folder
-* `publishBack` - copy backend's distribution `*.jar`-file
 * `prune` - remove unused docker data
 
 #### Custom task
@@ -55,7 +54,6 @@ gradle ssh
             gradle = true
             frontend = true
             backend = true
-            static = true
             docker = true
             nginx = true
             run = "cd ${project.name} && echo \$PWD"
@@ -68,9 +66,9 @@ gradle customSshTask
 ___
 ##### Preconfigured tasks
 
-By default you have preconfigured profiles: 
-* in `ssh` task - all disabled (true)
-* in `publish` task - all enabled (false)
+By default you have preconfigured profiles tasks: 
+* `ssh` - all disabled  by default (**false**)
+* `publish` - frontend, backend, docker folders will be copied (**true**)
 
 You can customize this properties:
 ```kotlin
@@ -80,13 +78,19 @@ You can customize this properties:
             frontendFolder = "client"
             backendFolder = "server"
             directory = "copy_me_to_remote"
+            nginx = true
+            docker = false
         }
 ```
-Project's structure
+Project's structure example
 ```shell script
  project
     |-backend/
-      | - build/libs/*.jar
+      | - [build/libs]/*.jar
+      | - Dockerfile
+      | - Dockerfile.dev
+      | - docker-compose.yml
+      | - docker-compose.dev.yml
     |-frontend/
     |-nginx/
 ```

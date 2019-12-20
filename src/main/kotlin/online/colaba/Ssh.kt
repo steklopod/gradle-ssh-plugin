@@ -55,8 +55,6 @@ open class Ssh : Executor() {
     @get:Input
     var backend: Boolean = false
     @get:Input
-    var static: Boolean = false
-    @get:Input
     var docker: Boolean = false
     @get:Input
     var gradle: Boolean = false
@@ -67,14 +65,13 @@ open class Ssh : Executor() {
     fun run() {
         Ssh.newService().runSessions {
             session(remote()) {
-                if (frontend) copyFolder(frontendFolder)
-                if (nginx) copyFolder(nginxService)
-                if (backend) copyFolder(SshServer.backendDistFolder)
-                if (static) copyStatic()
+                if (frontend) copyFolderWithOverride(frontendFolder)
+                if (nginx) copyFolderWithOverride(nginxService)
+                if (backend) copyFolderWithOverride(SshServer.backendDistFolder)
                 if (docker) copyFromRootAndEachSubFolder(dockerComposeFile, dockerfile, dockerignoreFile, ".env")
                 if (gradle) copyGradle()
 
-                directory?.let { copyFolder(it) }
+                directory?.let { copyFolderWithOverride(it) }
 
                 run?.let {
                     println("\n\uD83D\uDD11 Executing command on remote server: { $run }")
@@ -101,7 +98,7 @@ open class Ssh : Executor() {
         execute("test -d ${project.name}/$into && echo true || echo false")?.toBoolean() ?: false
 
     private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
-    private fun SessionHandler.remoteRm(vararg folders: String) = folders.iterator().forEach { execute("rm -fr $it") }
+    private fun SessionHandler.remoteRm(vararg folders: String) = folders.iterator().forEach { println(">✂️ Removing remote folder [$it]"); execute("rm -fr $it") }
 
     private fun SessionHandler.copyFromRootAndEachSubFolder(vararg files: String) {
         files.iterator().forEach { file -> copy(file); copyBack(file); copyFront(file) }
@@ -109,11 +106,6 @@ open class Ssh : Executor() {
 
     private fun SessionHandler.copyFront(vararg files: String) = copy(files, frontendFolder)
     private fun SessionHandler.copyBack(vararg files: String) = copy(files, backendFolder)
-    private fun SessionHandler.copyStatic(staticFolder: String = "static"): Boolean {
-        val remoteIsExistInRootOrInBackend =
-            remoteIsExist(staticFolder) || remoteIsExist("$backendFolder/$staticFolder")
-        return !(remoteIsExistInRootOrInBackend) && (copy(staticFolder) || copy(staticFolder, backendFolder))
-    }
 
     private fun SessionHandler.copyGradle() {
         val buildFile = ifNotGroovyThenKotlin("build.gradle")
@@ -125,27 +117,31 @@ open class Ssh : Executor() {
 
         val buildSrc = "buildSrc"
         "$buildSrc/build".removeLocal()
-        copyFolder(buildSrc)
+        copyFolderWithOverride(buildSrc)
     }
 
-    private fun ifNotGroovyThenKotlin(buildFile: String): String = if (File(buildFile).exists()) buildFile else "$buildFile.kts"
+    private fun ifNotGroovyThenKotlin(buildFile: String): String =
+        if (File(buildFile).exists()) buildFile else "$buildFile.kts"
 
     private fun String.removeLocal() {
-        File("${project.rootDir}/$this").apply { if (exists()) deleteRecursively() }
+        File("${project.rootDir}/$this".normalizeForWindows()).apply { if (exists()) deleteRecursively() }
     }
 
     private fun SessionHandler.copyFolderIfNotRemote(directory: String = "") =
-        if (!remoteIsExist("${project.name}/$directory")) copyFolder(directory) else false
+        if (!remoteIsExist("${project.name}/$directory")) copyFolderWithOverride(directory) else false
 
-    private fun SessionHandler.copyFolder(directory: String = ""): Boolean {
+    private fun SessionHandler.copyFolderWithOverride(directory: String = ""): Boolean {
         val toRemote = "${project.name}/$directory"
         val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
         if (!File(fromLocalPath).exists()) return false
         println("\n\uD83D\uDCE6 FOLDER local [$fromLocalPath] \n\t  to remote {$toRemote}\n")
         remoteRm(toRemote)
-        put(File(fromLocalPath), remoteMkDir(File(toRemote).parent))
+        val toRemoteParent = File(toRemote).parent.normalizeForWindows()
+        println("> \uD83D\uDDC3️ Copy [${fromLocalPath.substringAfterLast('/')}] into remote {$toRemoteParent} in progress...")
+        put(File(fromLocalPath), remoteMkDir(toRemoteParent))
         return true
     }
+
 
     private fun SessionHandler.copy(vararg files: String) = copy(files)
     private fun SessionHandler.copy(files: Array<out String> = arrayOf(""), remote: String = ""): Boolean {
@@ -158,7 +154,7 @@ open class Ssh : Executor() {
         val into = "${project.name}/$remote"
         if (from.exists()) {
             put(from, remoteMkDir(into))
-            println("\uD83D\uDDA5️ FILE from local [$from] \n\t to remote {$into}")
+            println("\uD83D\uDDA5️ FILE from local [$from] \n\t to remote {$into} - DONE")
             return true
         } else println("\t☣️ > Skip not found: $from\n")
         return false
