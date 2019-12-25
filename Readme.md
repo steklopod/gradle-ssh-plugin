@@ -124,3 +124,15 @@ Project's structure example
     | - ...
 ```
 > Default `backend`'s **jar** distribution path: `${project.rootDir}/backend/build/libs/*.jar`
+
+___
+
+##### Optional
+
+
+With `ssh` plugin you have additional bonus task for executing a command line process on local PC [linux/windows]:
+```kotlin
+tasks{
+      cmd { command = "echo ${project.name}" }
+}
+```

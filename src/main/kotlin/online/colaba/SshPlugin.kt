@@ -12,8 +12,11 @@ class SshPlugin : Plugin<Project> {
 
         registerSshTask()
         registerDockerComposeTask()
+        registerCmdTask()
 
         ssh {   }
+
+        cmd{ }
 
         tasks {
 

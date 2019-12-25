@@ -25,7 +25,7 @@ open class Cmd : Exec() {
     }
 }
 
-fun Project.registerExecutorTask() = tasks.register<Cmd>("execute")
+fun Project.registerCmdTask() = tasks.register<Cmd>("cmd")
 
-val Project.execute: TaskProvider<Cmd>
-    get() = tasks.named<Cmd>("execute")
+val Project.cmd: TaskProvider<Cmd>
+    get() = tasks.named<Cmd>("cmd")
