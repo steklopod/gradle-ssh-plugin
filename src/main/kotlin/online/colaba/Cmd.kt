@@ -8,7 +8,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 
-open class Executor : Exec() {
+open class Cmd : Exec() {
     init {
         group = "execute"
         description = "Execute a command line process on local PC [linux/windows]"
@@ -25,7 +25,7 @@ open class Executor : Exec() {
     }
 }
 
-fun Project.registerExecutorTask() = tasks.register<Executor>("execute")
+fun Project.registerExecutorTask() = tasks.register<Cmd>("execute")
 
-val Project.execute: TaskProvider<Executor>
-    get() = tasks.named<Executor>("execute")
+val Project.execute: TaskProvider<Cmd>
+    get() = tasks.named<Cmd>("execute")

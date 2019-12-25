@@ -32,7 +32,7 @@ class SshPlugin : Plugin<Project> {
             register("publishDocker", Ssh::class) { docker = true; description = "Copy docker needed files to remote server" }
             register("publishNginx", Ssh::class) { nginx = true;  description = "Copy nginx folder to remote server" }
 
-            register("prune", Executor::class) { command = "$dockerPrefix system prune -fa"; description = "Remove unused docker data"; group = sshGroup }
+            register("prune", Cmd::class) { command = "$dockerPrefix system prune -fa"; description = "Remove unused docker data"; group = sshGroup }
             val removeBackAndFront by registering{ dependsOn(":$frontendService:$removeGroup"); finalizedBy(":$backendService:$removeGroup"); description = "Docker remove backend & frontend containers"; group = sshGroup }
             val removeAll by registering { dependsOn(":$nginxService:$removeGroup"); finalizedBy(removeBackAndFront); description = "Docker remove `nginx`, `backend` & `frontend` containers"; group = sshGroup }
 

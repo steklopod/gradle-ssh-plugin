@@ -8,7 +8,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 
-open class DockerCompose : Executor() {
+open class DockerCompose : Cmd() {
     init {
         group = "$dockerPrefix-${project.name}"
         description = "Docker-compose task"

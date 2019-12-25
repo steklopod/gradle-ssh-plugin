@@ -17,7 +17,7 @@ import java.io.File
 
 const val sshGroup = "ssh"
 
-open class Ssh : Executor() {
+open class Ssh : Cmd() {
     init {
         group = sshGroup
         description = "Publish by FTP your distribution with SSH commands"
