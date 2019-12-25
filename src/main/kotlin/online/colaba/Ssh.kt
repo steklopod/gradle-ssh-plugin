@@ -83,10 +83,8 @@ open class Ssh : Executor() {
         }
     }
 
-    private fun remote() =
-        (server ?: if (host != null) SshServer(hostSsh = host!!, userSsh = user!!) else SshServer()).remote(
-            checkKnownHosts
-        )
+    private fun remote() = (server ?: if (host != null) SshServer(hostSsh = host!!, userSsh = user!!)
+    else SshServer()).remote(checkKnownHosts)
 
     private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
     private fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) =
@@ -98,19 +96,20 @@ open class Ssh : Executor() {
         execute("test -d ${project.name}/$into && echo true || echo false")?.toBoolean() ?: false
 
     private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
-    private fun SessionHandler.remoteRm(vararg folders: String) = folders.iterator().forEach { println(">✂️ Removing remote folder [$it]"); execute("rm -fr $it") }
+    private fun SessionHandler.remoteRm(vararg folders: String) =
+        folders.iterator().forEach { println(">✂️ Removing remote folder [$it]"); execute("rm -fr $it") }
 
-    private fun SessionHandler.copyFromRootAndEachSubFolder(vararg files: String) {
+    private fun SessionHandler.copyFromRootAndEachSubFolder(vararg files: String) =
         files.iterator().forEach { file -> copy(file); copyBack(file); copyFront(file) }
-    }
+
 
     private fun SessionHandler.copyFront(vararg files: String) = copy(files, frontendFolder)
     private fun SessionHandler.copyBack(vararg files: String) = copy(files, backendFolder)
 
     private fun SessionHandler.copyGradle() {
+        copyGradleWrapperIfNotExists()
         val buildFile = ifNotGroovyThenKotlin("build.gradle")
-        copyFolderIfNotRemote("gradle")
-        copy(buildFile, ifNotGroovyThenKotlin("settings.gradle"), "gradlew", "gradlew.bat")
+        copy(buildFile, ifNotGroovyThenKotlin("settings.gradle"))
         copyBack(buildFile)
         copyFront(buildFile)
         execute("chmod +x ${project.name}/gradlew")
@@ -118,6 +117,10 @@ open class Ssh : Executor() {
         val buildSrc = "buildSrc"
         "$buildSrc/build".removeLocal()
         copyFolderWithOverride(buildSrc)
+    }
+
+    private fun SessionHandler.copyGradleWrapperIfNotExists() {
+        if (copyFolderIfNotRemote("gradle")) copy("gradlew", "gradlew.bat")
     }
 
     private fun ifNotGroovyThenKotlin(buildFile: String): String =

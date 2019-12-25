@@ -8,8 +8,6 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 
-const val npmPrefix = "npm"
-
 open class Executor : Exec() {
     init {
         group = "execute"
@@ -25,9 +23,6 @@ open class Executor : Exec() {
         println("> Executing command: $commandLine\n")
         super.exec()
     }
-
-    fun npm(npmCommand: String) { command = "$npmPrefix $npmCommand"; group = npmPrefix }
-    fun npmRun(npmRunCommand: String) { npm("run $npmRunCommand") }
 }
 
 fun Project.registerExecutorTask() = tasks.register<Executor>("execute")

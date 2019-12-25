@@ -7,7 +7,7 @@ import java.io.File
 
 
 data class SshServer(
-        val hostSsh: String = defaultHost, val userSsh: String = defaultUser, val idRsaPath: String? = id_Rsa()
+    val hostSsh: String = defaultHost, val userSsh: String = defaultUser, val idRsaPath: String = idRsaPath()
 ) {
     companion object {
         private const val defaultUser = "root"
@@ -16,7 +16,7 @@ data class SshServer(
         private val defaultRsaPath = "$userHomePath/.ssh/${rsaKeyName}".normalizeForWindows()
         const val backendDistFolder = "$backendService/$buildGroup/libs"
 
-        fun id_Rsa(idRsaPath: String = rsaKeyName): String {
+        fun idRsaPath(idRsaPath: String = rsaKeyName): String {
             val exists = File(idRsaPath).exists()
             val existsDefault = File(defaultRsaPath).exists()
             if (exists) println("> OK : [$rsaKeyName] found in root folder of project")
