@@ -55,6 +55,8 @@ open class Ssh : Cmd() {
     @get:Input
     var backend: Boolean = false
     @get:Input
+    var static: Boolean = false
+    @get:Input
     var docker: Boolean = false
     @get:Input
     var gradle: Boolean = false
@@ -70,6 +72,7 @@ open class Ssh : Cmd() {
                 if (backend) copyFolderWithOverride(SshServer.backendDistFolder)
                 if (docker) copyFromRootAndEachSubFolder(dockerComposeFile, dockerfile, dockerignoreFile, ".env")
                 if (gradle) copyGradle()
+                if (static) copyFolderIfNotRemote(staticDir)
 
                 directory?.let { copyFolderWithOverride(it) }
 

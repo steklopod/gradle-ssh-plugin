@@ -7,6 +7,7 @@ const val backendService = "backend"
 const val nginxService = "nginx"
 
 const val buildGroup = "build"
+const val staticDir = "static"
 
 const val dockerPrefix = "docker"
 const val dockerfile = "Dockerfile"

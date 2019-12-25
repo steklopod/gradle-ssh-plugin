@@ -26,6 +26,7 @@ class SshPlugin : Plugin<Project> {
                 docker = true
                 gradle = true
                 nginx = true
+                static = true
                 run = "cd ${project.name} && echo \$PWD"
                 description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
             }
