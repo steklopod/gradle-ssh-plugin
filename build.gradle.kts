@@ -42,7 +42,7 @@ dependencies { implementation("org.hidetake:groovy-ssh:2.10.1") }
 kotlinDslPluginOptions { experimentalWarning.set(false) }
 
 tasks {
-    wrapper { gradleVersion = "6.0" }
+    wrapper { gradleVersion = "6.1-rc-1" }
     val java = "11"
     compileKotlin { kotlinOptions { jvmTarget = java }; sourceCompatibility = java; targetCompatibility = java }
 }
