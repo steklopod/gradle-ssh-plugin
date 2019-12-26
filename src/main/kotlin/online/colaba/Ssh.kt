@@ -17,6 +17,7 @@ import java.io.File
 
 const val sshGroup = "ssh"
 
+
 open class Ssh : Cmd() {
     init {
         group = sshGroup
@@ -95,27 +96,31 @@ open class Ssh : Cmd() {
 
     private fun SessionHandler.put(from: Any, into: String) = put(hashMapOf("from" to from, "into" to into))
 
-    private fun SessionHandler.remoteIsExist(into: String) =
-        execute("test -d ${project.name}/$into && echo true || echo false")?.toBoolean() ?: false
+    private fun SessionHandler.remoteIsExist(into: String): Boolean {
+        val exists = execute("test -d ${project.name}/$into && echo true || echo false")?.toBoolean() ?: false
+        if (exists) println("\n\uD83D\uDCE6 Directory [$into] is found on remote server. Will not be copied.")
+        else println("\n\uD83D\uDCE6 Directory [$into] is not exist on remote server")
+        return exists
+    }
 
     private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
     private fun SessionHandler.remoteRm(vararg folders: String) =
-        folders.iterator().forEach { println(">✂️ Removing remote folder [$it]"); execute("rm -fr $it") }
+        folders.iterator().forEach { println("> ✂️ Removing remote folder [$it]..."); execute("rm -fr $it") }
 
     private fun SessionHandler.copyFromRootAndEachSubFolder(vararg files: String) =
         files.iterator().forEach { file -> copy(file); copyBack(file); copyFront(file) }
 
 
-    private fun SessionHandler.copyFront(vararg files: String) = copy(files, frontendFolder)
-    private fun SessionHandler.copyBack(vararg files: String) = copy(files, backendFolder)
+    private fun SessionHandler.copyFront(file: String) = copy(file, frontendFolder)
+    private fun SessionHandler.copyBack(file: String) = copy(file, backendFolder)
 
     private fun SessionHandler.copyGradle() {
         copyGradleWrapperIfNotExists()
         val buildFile = ifNotGroovyThenKotlin("build.gradle")
-        copy(buildFile, ifNotGroovyThenKotlin("settings.gradle"))
+        copy(ifNotGroovyThenKotlin("settings.gradle"))
+        copy(buildFile)
         copyBack(buildFile)
         copyFront(buildFile)
-        execute("chmod +x ${project.name}/gradlew")
 
         val buildSrc = "buildSrc"
         "$buildSrc/build".removeLocal()
@@ -123,7 +128,11 @@ open class Ssh : Cmd() {
     }
 
     private fun SessionHandler.copyGradleWrapperIfNotExists() {
-        if (copyFolderIfNotRemote("gradle")) copy("gradlew", "gradlew.bat")
+        if (copyFolderIfNotRemote("gradle")) {
+            copy("gradlew")
+            copy("gradlew.bat")
+            execute("chmod +x ${project.name}/gradlew")
+        }
     }
 
     private fun ifNotGroovyThenKotlin(buildFile: String): String =
@@ -134,7 +143,7 @@ open class Ssh : Cmd() {
     }
 
     private fun SessionHandler.copyFolderIfNotRemote(directory: String = "") =
-        if (!remoteIsExist("${project.name}/$directory")) copyFolderWithOverride(directory) else false
+        if (!remoteIsExist(directory)) copyFolderWithOverride(directory) else false
 
     private fun SessionHandler.copyFolderWithOverride(directory: String = ""): Boolean {
         val toRemote = "${project.name}/$directory"
@@ -148,19 +157,13 @@ open class Ssh : Cmd() {
         return true
     }
 
-
-    private fun SessionHandler.copy(vararg files: String) = copy(files)
-    private fun SessionHandler.copy(files: Array<out String> = arrayOf(""), remote: String = ""): Boolean {
-        var exist = 0; files.iterator().forEach { if (copy(it, remote)) exist++ }; return exist > 0
-    }
-
-    private fun SessionHandler.copy(file: String, remote: String) = copy(File(file), remote)
-    private fun SessionHandler.copy(file: File, remote: String = project.name): Boolean {
+    private fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)
+    private fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
         val into = "${project.name}/$remote"
         if (from.exists()) {
             put(from, remoteMkDir(into))
-            println("\uD83D\uDDA5️ FILE from local [$from] \n\t to remote {$into} - DONE")
+            println("\uD83D\uDDA5️ FILE from local [$from] \n\t to remote {$into}")
             return true
         } else println("\t☣️ > Skip not found: $from\n")
         return false
