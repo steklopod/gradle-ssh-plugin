@@ -152,7 +152,7 @@ open class Ssh : Cmd() {
         println("\n\uD83D\uDCE6 FOLDER local [$fromLocalPath] \n\t  to remote {$toRemote}\n")
         remoteRm(toRemote)
         val toRemoteParent = File(toRemote).parent.normalizeForWindows()
-        println("> \uD83D\uDDC3️ Copy [${fromLocalPath.substringAfterLast('/')}] into remote {$toRemoteParent} in progress...")
+        println("> \uD83D\uDDC3️ Copy [${fromLocalPath.substringAfterLast('/')}] into remote {$toRemoteParent} in progress...\n")
         put(File(fromLocalPath), remoteMkDir(toRemoteParent))
         return true
     }
