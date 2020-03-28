@@ -6,27 +6,29 @@ import org.gradle.kotlin.dsl.*
 
 
 class SshPlugin : Plugin<Project> {
-
     override fun apply(project: Project): Unit = project.run {
         description = "SSH needed deploy-tasks"
 
         registerSshTask()
-        registerDockerComposeTask()
         registerCmdTask()
+        registerDockerComposeTask()
 
         ssh {   }
 
-        cmd{ }
+        cmd {   }
 
         tasks {
-
             register("publish", Ssh::class) {
                 frontend = true
-                backend = true
                 docker = true
                 gradle = true
                 nginx = true
                 static = true
+                postgres = true
+
+                cloud = true
+                backend = false
+
                 run = "cd ${project.name} && echo \$PWD"
                 description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
             }

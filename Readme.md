@@ -13,11 +13,12 @@
 
 ```kotlin
 plugins {
-     id("online.colaba.ssh") version "1.1.0"
+     id("online.colaba.ssh") version "1.1.1"
 }
 
 ssh {
-    host = "hostexample.com"; user = "user"   
+    host = "hostexample.com"
+    user = "user"
     directory = "distribution"
     run = "ls -a"
 }

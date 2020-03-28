@@ -27,6 +27,7 @@ open class Ssh : Cmd() {
     @get:Input
     @Optional
     var host: String? = null
+
     @get:Input
     @Optional
     var user: String? = null
@@ -37,6 +38,7 @@ open class Ssh : Cmd() {
 
     @get:Input
     var frontendFolder: String = frontendService
+
     @get:Input
     var backendFolder: String = backendService
 
@@ -53,14 +55,25 @@ open class Ssh : Cmd() {
 
     @get:Input
     var frontend: Boolean = false
+
+    @get:Input
+    var postgres: Boolean = false
+
     @get:Input
     var backend: Boolean = false
+
+    @get:Input
+    var cloud: Boolean = true
+
     @get:Input
     var static: Boolean = false
+
     @get:Input
     var docker: Boolean = false
+
     @get:Input
     var gradle: Boolean = false
+
     @get:Input
     var nginx: Boolean = false
 
@@ -70,18 +83,22 @@ open class Ssh : Cmd() {
             session(remote()) {
                 if (frontend) copyFolderWithOverride(frontendFolder)
                 if (nginx) copyFolderWithOverride(nginxService)
-                if (backend) copyFolderWithOverride(SshServer.backendDistFolder)
-                if (docker) copyFromRootAndEachSubFolder(dockerComposeFile, dockerfile, dockerignoreFile, ".env")
-                if (gradle) copyGradle()
+
                 if (static) copyFolderIfNotRemote(staticDir)
+                if (postgres) copyFolderIfNotRemote(postgresService)
+
+                if (docker) copyFromRootAndEachSubFolder("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
+                if (gradle) copyGradle()
+
+                if (cloud) backends.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
+
+                if (backend) copyFolderWithOverride(jarLibsFolder(backendFolder))
 
                 directory?.let { copyFolderWithOverride(it) }
 
                 run?.let {
                     println("\n\uD83D\uDD11 Executing command on remote server: { $run }")
-                    println(
-                        execute(it)
-                    )
+                    println(execute(it))
                 }
             }
         }
@@ -104,23 +121,32 @@ open class Ssh : Cmd() {
     }
 
     private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
-    private fun SessionHandler.remoteRm(vararg folders: String) =
-        folders.iterator().forEach { println("> ✂️ Removing remote folder [$it]..."); execute("rm -fr $it") }
+    private fun SessionHandler.remoteRm(vararg folders: String) = folders // .iterator()
+        .forEach { println("> ✂️ Removing remote folder [$it]..."); execute("rm -fr $it") }
 
-    private fun SessionHandler.copyFromRootAndEachSubFolder(vararg files: String) =
-        files.iterator().forEach { file -> copy(file); copyBack(file); copyFront(file) }
+    private fun SessionHandler.copyFromRootAndEachSubFolder(vararg files: String) = files  // .iterator()
+        .forEach { file ->
+            copy(file)
+            copyFront(file)
+            copyBack(file)
+        }
 
+    private fun SessionHandler.copyBack(file: String) {
+        backends.forEach { copy(file, it) }
+    }
 
     private fun SessionHandler.copyFront(file: String) = copy(file, frontendFolder)
-    private fun SessionHandler.copyBack(file: String) = copy(file, backendFolder)
 
     private fun SessionHandler.copyGradle() {
         copyGradleWrapperIfNotExists()
         val buildFile = ifNotGroovyThenKotlin("build.gradle")
-        copy(ifNotGroovyThenKotlin("settings.gradle"))
+        val settingsFile = ifNotGroovyThenKotlin("settings.gradle")
+        copy(settingsFile)
         copy(buildFile)
-        copyBack(buildFile)
         copyFront(buildFile)
+
+        copyBack(buildFile)
+        copyBack(settingsFile)
 
         val buildSrc = "buildSrc"
         "$buildSrc/build".removeLocal()

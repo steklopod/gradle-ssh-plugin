@@ -17,19 +17,24 @@ open class DockerCompose : Cmd() {
     @get:Input
     @Optional
     var composeFile: String? = null
+
     @get:Input
     @Optional
     var service: String? = null
+
     @get:Input
     var exec: String = "up "
+
     @get:Input
     var recreate: Boolean = true
+
     @get:Input
     var isDev: Boolean = false
 
     @TaskAction
     override fun exec() {
         val recreateFlags = "--detach --build --force-recreate"
+        val dockerComposedevFile = "docker-compose.dev.yml"
 
         if (isDev) composeFile = dockerComposedevFile
 

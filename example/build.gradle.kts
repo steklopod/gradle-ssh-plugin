@@ -1,8 +1,8 @@
-plugins { id("online.colaba.ssh") version "1.1.0" }
+plugins { id("online.colaba.ssh") version "1.1.1" }
 
 tasks {
     ssh {
-        host = "online.colaba"
+        host = "me.online"
         user = "user"
 
         frontendFolder = "client"

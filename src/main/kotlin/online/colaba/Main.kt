@@ -1,21 +1,27 @@
 package online.colaba
 
-object Main
+const val defaultHost = "colaba.online"
 
 const val frontendService = "frontend"
 const val backendService = "backend"
-const val nginxService = "nginx"
 
-const val buildGroup = "build"
 const val staticDir = "static"
+const val nginxService = "nginx"
+const val postgresService = "postgres"
 
 const val dockerPrefix = "docker"
-const val dockerfile = "Dockerfile"
-const val dockerignoreFile = ".dockerignore"
-const val dockerComposeFile = "docker-compose.yml"
-const val dockerComposedevFile = "docker-compose.dev.yml"
 const val removeGroup = "remove"
 
+fun jarLibsFolder(folder: String = backendService) = "$folder/build/libs"
+val backends = setOf(
+    "mail",
+    "chat",
+    "common-lib",
+    "gateway",
+    "config-server",
+    "eureka-server",
+    "auth"
+)
 
 val userHomePath: String = System.getProperty("user.home")
 val isWindows: Boolean = System.getProperty("os.name").toLowerCase().contains("windows")

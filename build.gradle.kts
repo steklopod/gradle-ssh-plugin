@@ -1,11 +1,11 @@
 plugins {
     `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.11.0"
     id("org.sonarqube") version "2.8"
 }
 
 
-val pluginsVersion = "1.1.0"
+val pluginsVersion = "1.1.1"
 val sshPlugin = "sshPlugin"
 description = "EASY-DEPLOY gradle needed tasks"
 version = pluginsVersion
@@ -42,7 +42,6 @@ dependencies { implementation("org.hidetake:groovy-ssh:2.10.1") }
 kotlinDslPluginOptions { experimentalWarning.set(false) }
 
 tasks {
-    wrapper { gradleVersion = "6.1-rc-1" }
     val java = "11"
     compileKotlin { kotlinOptions { jvmTarget = java }; sourceCompatibility = java; targetCompatibility = java }
 }
