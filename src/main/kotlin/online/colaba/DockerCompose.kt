@@ -9,8 +9,12 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 
 open class DockerCompose : Cmd() {
+    companion object {
+        fun dockerMainGroupName(projectName: String) = "docker-main-$projectName"
+    }
+
     init {
-        group = "$dockerPrefix-${project.name}"
+        group = dockerMainGroupName(project.name)
         description = "Docker-compose task"
     }
 
@@ -43,7 +47,7 @@ open class DockerCompose : Cmd() {
         if (recreate) exec += recreateFlags
 
         service?.let { exec += " $it" }
-        val runCommand = "$dockerPrefix-compose $exec".trim()
+        val runCommand = "docker-compose $exec".trim()
         super.command = runCommand
         super.exec()
     }

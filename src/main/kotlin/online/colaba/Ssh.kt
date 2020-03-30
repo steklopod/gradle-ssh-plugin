@@ -63,7 +63,7 @@ open class Ssh : Cmd() {
     var backend: Boolean = false
 
     @get:Input
-    var cloud: Boolean = true
+    var cloud: Boolean = false
 
     @get:Input
     var static: Boolean = false
@@ -90,7 +90,7 @@ open class Ssh : Cmd() {
                 if (docker) copyFromRootAndEachSubFolder("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
                 if (gradle) copyGradle()
 
-                if (cloud) backends.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
+                if (cloud) backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
 
                 if (backend) copyFolderWithOverride(jarLibsFolder(backendFolder))
 
@@ -132,7 +132,7 @@ open class Ssh : Cmd() {
         }
 
     private fun SessionHandler.copyBack(file: String) {
-        backends.forEach { copy(file, it) }
+        backendServices.forEach { copy(file, it) }
     }
 
     private fun SessionHandler.copyFront(file: String) = copy(file, frontendFolder)
@@ -143,6 +143,7 @@ open class Ssh : Cmd() {
         val settingsFile = ifNotGroovyThenKotlin("settings.gradle")
         copy(settingsFile)
         copy(buildFile)
+        copy("gradle.properties")
         copyFront(buildFile)
 
         copyBack(buildFile)

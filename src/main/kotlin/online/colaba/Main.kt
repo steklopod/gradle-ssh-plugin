@@ -1,5 +1,14 @@
 package online.colaba
 
+
+val backendServices = setOf(
+    "mail",
+    "chat",
+    "gateway",
+    "config-server",
+    "eureka-server",
+    "auth"
+)
 const val defaultHost = "colaba.online"
 
 const val frontendService = "frontend"
@@ -9,19 +18,7 @@ const val staticDir = "static"
 const val nginxService = "nginx"
 const val postgresService = "postgres"
 
-const val dockerPrefix = "docker"
-const val removeGroup = "remove"
-
 fun jarLibsFolder(folder: String = backendService) = "$folder/build/libs"
-val backends = setOf(
-    "mail",
-    "chat",
-    "common-lib",
-    "gateway",
-    "config-server",
-    "eureka-server",
-    "auth"
-)
 
 val userHomePath: String = System.getProperty("user.home")
 val isWindows: Boolean = System.getProperty("os.name").toLowerCase().contains("windows")
@@ -29,3 +26,10 @@ val windowsPrefix: List<String> = if (isWindows) listOf("cmd", "/c") else listOf
 
 fun String.normalizeForWindows(): String = this.replace("\\", "/")
 fun String.splitBySpace(): List<String> = this.replace("  ", " ").split(" ")
+
+fun Exception.shortStackTrace(searchKeyWord: String = "org.gradle") = apply {
+    stackTrace = stackTrace.filter { it.className.contains(searchKeyWord) }.toTypedArray()
+}
+
+fun Exception.shortStackTraceWithPrint(searchKeyWord: String = "org.gradle") =
+    shortStackTrace(searchKeyWord).apply { printStackTrace() }
