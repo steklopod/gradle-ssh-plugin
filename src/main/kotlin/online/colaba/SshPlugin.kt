@@ -27,17 +27,17 @@ class SshPlugin : Plugin<Project> {
                 static = true
                 postgres = true
 
-                cloud = true
-                backend = false
+                admin = true
+                monolit = false
 
                 run = "cd ${project.name} && echo \$PWD"
                 description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
             }
-            register("publishFront", Ssh::class) { frontend = true }
-            register("publishBack", Ssh::class) { backend = true;  description = "Copy backend folder to remote server" }
+            register("publishFront", Ssh::class)  { frontend = true }
+            register("publishBack", Ssh::class)   { monolit = true;  description = "Copy backend folder to remote server" }
             register("publishGradle", Ssh::class) { gradle = true; description = "Copy gradle needed files to remote server" }
             register("publishDocker", Ssh::class) { docker = true; description = "Copy docker needed files to remote server" }
-            register("publishNginx", Ssh::class) { nginx = true;  description = "Copy nginx folder to remote server" }
+            register("publishNginx", Ssh::class)  { nginx = true;  description = "Copy nginx folder to remote server" }
 
             register("prune", Cmd::class) { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
 
@@ -54,7 +54,6 @@ class SshPlugin : Plugin<Project> {
             val composeDev by registering(DockerCompose::class) { dependsOn(":$backendService:assemble"); isDev = true; description = "Docker compose up from `docker-compose.dev.yml` file after backend `assemble` task" }
             register("composeNginx", DockerCompose::class) { service = nginxService; description = "Docker compose up for nginx container" }
             register("composeFront", DockerCompose::class) { service = frontendService; description = "Docker compose up for frontend container" }
-
             register("composeBack", DockerCompose::class) { service = backendService; description = "Docker compose up for backend container" }
 
             register("recomposeAll") { dependsOn(rm); finalizedBy(compose); description = "Compose up after removing `nginx`, `frontend` & `backend` containers"; group = dockerMainGroupName(project.name) }

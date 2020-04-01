@@ -60,10 +60,10 @@ open class Ssh : Cmd() {
     var postgres: Boolean = false
 
     @get:Input
-    var backend: Boolean = false
+    var monolit: Boolean = false
 
     @get:Input
-    var cloud: Boolean = false
+    var admin: Boolean = false
 
     @get:Input
     var static: Boolean = false
@@ -81,6 +81,9 @@ open class Ssh : Cmd() {
     fun run() {
         Ssh.newService().runSessions {
             session(remote()) {
+                if (monolit) backendServices = setOf(backendFolder)
+                if (admin) backendServices + adminBackendServices
+
                 if (frontend) copyFolderWithOverride(frontendFolder)
                 if (nginx) copyFolderWithOverride(nginxService)
 
@@ -90,9 +93,7 @@ open class Ssh : Cmd() {
                 if (docker) copyFromRootAndEachSubFolder("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
                 if (gradle) copyGradle()
 
-                if (cloud) backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
-
-                if (backend) copyFolderWithOverride(jarLibsFolder(backendFolder))
+                backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
 
                 directory?.let { copyFolderWithOverride(it) }
 

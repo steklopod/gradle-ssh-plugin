@@ -1,7 +1,7 @@
 package online.colaba
 
 
-val backendServices = setOf(
+var backendServices = setOf(
     "mail",
     "chat",
     "gateway",
@@ -9,6 +9,8 @@ val backendServices = setOf(
     "eureka-server",
     "auth"
 )
+val adminBackendServices = setOf("admin-server", "admin-client")
+
 const val defaultHost = "colaba.online"
 
 const val frontendService = "frontend"

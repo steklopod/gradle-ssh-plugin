@@ -28,7 +28,6 @@ open class Cmd : Exec() {
         }
     }
 
-
     fun dockerForEachSubproject(project: Project, dockerCommand: String, vararg ignoringServices: String) {
         project.subprojects.forEach {
             val name = it.name
