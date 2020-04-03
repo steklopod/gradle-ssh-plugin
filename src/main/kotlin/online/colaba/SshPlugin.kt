@@ -45,8 +45,7 @@ class SshPlugin : Plugin<Project> {
             val stopAll by registering (Cmd::class) {dockerForEachSubproject(project, "stop", postgresService); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
             val rm  by registering (Cmd::class) {
                 description = "Docker remove all containers"; group = dockerMainGroupName(project.name)
-                dependsOn(stopAll)
-                dockerForEachSubproject(project, "rm -f", postgresService)
+                command = "docker rm -vf \$(docker ps -a -q)"
                 finalizedBy(ps)
             }
 
