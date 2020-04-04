@@ -82,7 +82,7 @@ open class Ssh : Cmd() {
         Ssh.newService().runSessions {
             session(remote()) {
                 if (monolit) backendServices = setOf(backendFolder)
-                if (admin) backendServices += adminBackendServices
+                if (admin) backendServices += adminServer
 
                 if (frontend) copyFolderWithOverride(frontendFolder)
                 if (nginx) copyFolderWithOverride(nginxService)

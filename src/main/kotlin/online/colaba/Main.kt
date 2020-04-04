@@ -9,7 +9,7 @@ var backendServices = setOf(
     "eureka-server",
     "auth"
 )
-val adminBackendServices = setOf("admin-server", "admin-client")
+const val adminServer = "admin-server"
 
 const val defaultHost = "colaba.online"
 
