@@ -41,7 +41,7 @@ class SshPlugin : Plugin<Project> {
             register("publishDocker", Ssh::class) { docker = true; description = "Copy docker needed files to remote server" }
             register("publishNginx", Ssh::class)  { nginx = true;  description = "Copy nginx folder to remote server" }
 
-            register("pruneFront", Ssh::class)  { clearNuxt = true;  description = "Remove local [node_modules]" }
+            register("pruneFront", Ssh::class)  { clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
             register("prune", Cmd::class) { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
 
             val ps by registering (Cmd::class) { command = "docker ps"; description = "Print all containers"; group = dockerMainGroupName(project.name) }

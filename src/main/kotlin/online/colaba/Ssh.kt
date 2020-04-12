@@ -91,10 +91,7 @@ open class Ssh : Cmd() {
                 if (monolit) backendServices = setOf(backendFolder)
                 if (admin) backendServices += adminServer
 
-
-                if (backend) thread {
-                    backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
-                }
+                if (backend) backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
 
                 // TODO: ignore [node_modules]
                 if (clearNuxt) deleteNodeModulesAndNuxtFolders()
