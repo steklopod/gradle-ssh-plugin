@@ -21,14 +21,16 @@ class SshPlugin : Plugin<Project> {
         tasks {
             register("publish", Ssh::class) {
                 frontend = true
+                backend = true
                 docker = true
                 gradle = true
                 nginx = true
                 static = true
                 postgres = true
                 clearNuxt = true
-                admin = true
                 monolit = false
+
+                admin = true
 
                 run = "cd ${project.name} && echo \$PWD"
                 description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"

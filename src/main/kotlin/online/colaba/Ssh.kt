@@ -58,6 +58,9 @@ open class Ssh : Cmd() {
     var frontend: Boolean = false
 
     @get:Input
+    var backend: Boolean = false
+
+    @get:Input
     var clearNuxt: Boolean = false
 
     @get:Input
@@ -88,11 +91,10 @@ open class Ssh : Cmd() {
                 if (monolit) backendServices = setOf(backendFolder)
                 if (admin) backendServices += adminServer
 
-                backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
+                if (backend) backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
 
                 if (frontend) thread {
-                    clearNuxt()
-                    copyFolderWithOverride(frontendFolder)
+                    clearNuxt(); copyFolderWithOverride(frontendFolder)
                 }
 
                 if (nginx) copyFolderWithOverride(nginxService)
@@ -102,7 +104,6 @@ open class Ssh : Cmd() {
 
                 if (docker) copyFromRootAndEachSubFolder("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
                 if (gradle) copyGradle()
-
 
                 directory?.let { copyFolderWithOverride(it) }
 
@@ -181,7 +182,10 @@ open class Ssh : Cmd() {
         if (File(buildFile).exists()) buildFile else "$buildFile.kts"
 
     private fun String.removeLocal() {
-        File("${project.rootDir}/$this".normalizeForWindows()).apply { if (exists()) deleteRecursively() }
+        File("${project.rootDir}/$this".normalizeForWindows()).apply {
+            if (exists()) deleteRecursively()
+            println("_ ✂️ Removed local folder [$this]")
+        }
     }
 
     private fun SessionHandler.copyFolderIfNotRemote(directory: String = "") =
