@@ -14,6 +14,7 @@ import org.hidetake.groovy.ssh.core.RunHandler
 import org.hidetake.groovy.ssh.core.Service
 import org.hidetake.groovy.ssh.session.SessionHandler
 import java.io.File
+import kotlin.concurrent.thread
 
 const val sshGroup = "ssh"
 
@@ -57,6 +58,9 @@ open class Ssh : Cmd() {
     var frontend: Boolean = false
 
     @get:Input
+    var clearNuxt: Boolean = false
+
+    @get:Input
     var postgres: Boolean = false
 
     @get:Input
@@ -84,7 +88,13 @@ open class Ssh : Cmd() {
                 if (monolit) backendServices = setOf(backendFolder)
                 if (admin) backendServices += adminServer
 
-                if (frontend) copyFolderWithOverride(frontendFolder)
+                backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
+
+                if (frontend) thread {
+                    clearNuxt()
+                    copyFolderWithOverride(frontendFolder)
+                }
+
                 if (nginx) copyFolderWithOverride(nginxService)
 
                 if (static) copyFolderIfNotRemote(staticDir)
@@ -93,7 +103,6 @@ open class Ssh : Cmd() {
                 if (docker) copyFromRootAndEachSubFolder("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
                 if (gradle) copyGradle()
 
-                backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
 
                 directory?.let { copyFolderWithOverride(it) }
 
@@ -103,6 +112,11 @@ open class Ssh : Cmd() {
                 }
             }
         }
+    }
+
+    private fun clearNuxt() {
+        val toRemoveLocal = setOf(".nuxt", "node_modules")
+        if (clearNuxt) toRemoveLocal.forEach { "$$frontendFolder/$it".removeLocal() }
     }
 
     private fun remote() = (server ?: if (host != null) SshServer(hostSsh = host!!, userSsh = user!!)
