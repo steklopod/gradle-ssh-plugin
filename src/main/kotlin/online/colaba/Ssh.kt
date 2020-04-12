@@ -91,11 +91,14 @@ open class Ssh : Cmd() {
                 if (monolit) backendServices = setOf(backendFolder)
                 if (admin) backendServices += adminServer
 
-                if (backend) backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
 
-                if (frontend) thread {
-                    clearNuxt(); copyFolderWithOverride(frontendFolder)
+                if (backend) thread {
+                    backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
                 }
+
+                // TODO: ignore [node_modules]
+                if (clearNuxt) deleteNodeModulesAndNuxtFolders()
+                if (frontend) copyFolderWithOverride(frontendFolder)
 
                 if (nginx) copyFolderWithOverride(nginxService)
 
@@ -115,9 +118,9 @@ open class Ssh : Cmd() {
         }
     }
 
-    private fun clearNuxt() {
-        val toRemoveLocal = setOf(".nuxt", "node_modules")
-        if (clearNuxt) toRemoveLocal.forEach { "$$frontendFolder/$it".removeLocal() }
+    private fun deleteNodeModulesAndNuxtFolders() {
+        val toRemoveLocal = setOf(".nuxt", "node_modules", "package-lock.json")
+        if (clearNuxt) toRemoveLocal.forEach { "$frontendFolder/$it".removeLocal() }
     }
 
     private fun remote() = (server ?: if (host != null) SshServer(hostSsh = host!!, userSsh = user!!)

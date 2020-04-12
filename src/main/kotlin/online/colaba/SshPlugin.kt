@@ -40,8 +40,8 @@ class SshPlugin : Plugin<Project> {
             register("publishGradle", Ssh::class) { gradle = true; description = "Copy gradle needed files to remote server" }
             register("publishDocker", Ssh::class) { docker = true; description = "Copy docker needed files to remote server" }
             register("publishNginx", Ssh::class)  { nginx = true;  description = "Copy nginx folder to remote server" }
-            register("clearLocalFront", Ssh::class)  { clearNuxt = true;  description = "Remove [node_modules]" }
 
+            register("pruneFront", Ssh::class)  { clearNuxt = true;  description = "Remove local [node_modules]" }
             register("prune", Cmd::class) { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
 
             val ps by registering (Cmd::class) { command = "docker ps"; description = "Print all containers"; group = dockerMainGroupName(project.name) }
