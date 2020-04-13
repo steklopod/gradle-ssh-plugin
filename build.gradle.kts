@@ -5,7 +5,7 @@ plugins {
 }
 
 
-val pluginsVersion = "1.2.11"
+val pluginsVersion = "1.2.12"
 val sshPlugin = "sshPlugin"
 description = "EASY-DEPLOY gradle needed tasks"
 version = pluginsVersion

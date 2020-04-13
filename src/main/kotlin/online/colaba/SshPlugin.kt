@@ -20,29 +20,33 @@ class SshPlugin : Plugin<Project> {
 
         tasks {
             register("publish", Ssh::class) {
-                frontend = true
-                backend = true
+                description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
+
+                nginx = true
                 docker = true
                 gradle = true
-                nginx = true
                 static = true
+                backend = true
+                monolit = false
+                frontend = true
                 postgres = true
                 clearNuxt = true
-                monolit = false
 
                 admin = true
 
                 run = "cd ${project.name} && echo \$PWD"
-                description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
+
             }
-            register("publishFront", Ssh::class)  { frontend = true }
-            register("publishBack", Ssh::class)   { monolit = true;  description = "Copy backend folder to remote server" }
-            register("publishGradle", Ssh::class) { gradle = true; description = "Copy gradle needed files to remote server" }
-            register("publishDocker", Ssh::class) { docker = true; description = "Copy docker needed files to remote server" }
-            register("publishNginx", Ssh::class)  { nginx = true;  description = "Copy nginx folder to remote server" }
+
+            register("publishFront", Ssh::class)    { frontend = true;  description = "Copy [frontend] to remote server"  }
+            register("publishBack", Ssh::class)     { monolit = true;   description = "Copy [backend] to remote server" }
+            register("publishGradle", Ssh::class)   { gradle = true;    description = "Copy [gradle] needed files to remote server" }
+            register("publishDocker", Ssh::class)   { docker = true;    description = "Copy [docker] needed files to remote server" }
+            register("publishNginx", Ssh::class)    { nginx = true;     description = "Copy [nginx] to remote server" }
+            register("publishPostgres", Ssh::class) { postgres = true;  description = "Copy [postgres] to remote server" }
 
             register("pruneFront", Ssh::class)  { clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
-            register("prune", Cmd::class) { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
+            register("prune", Cmd::class)       { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
 
             val ps by registering (Cmd::class) { command = "docker ps"; description = "Print all containers"; group = dockerMainGroupName(project.name) }
             val stopAll by registering (Cmd::class) {dockerForEachSubproject(project, "stop", postgresService); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }

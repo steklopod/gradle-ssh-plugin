@@ -114,8 +114,9 @@ open class Ssh : Cmd() {
         }
     }
 
-    private fun SessionHandler.copyInEach(vararg files: String) =
-        files.forEach { file -> copy(file); copyFront(file); copyBack(file) }
+    private fun SessionHandler.copyInEach(vararg files: String) = files.forEach { file ->
+        copy(file); copyFront(file); copyBack(file); copyPostgres(file)
+    }
 
     private fun SessionHandler.copyGradle() {
         copyGradleWrapperIfNotExists()
@@ -173,9 +174,12 @@ open class Ssh : Cmd() {
         execute("rm -fr $it")
     }
 
-    private fun SessionHandler.copyBack(file: String) = backendServices.parallelStream().forEach { copy(file, it) }
-
-    private fun SessionHandler.copyFront(file: String) = copy(file, frontendFolder)
+    private fun SessionHandler.copyBack(file: String) {
+        if (backend) backendServices.parallelStream()
+            .forEach { copy(file, it) }
+    }
+    private fun SessionHandler.copyFront(file: String) = if (frontend) copy(file, frontendFolder) else false
+    private fun SessionHandler.copyPostgres(file: String) = if (postgres) copy(file, postgresService) else false
 
     private fun ifNotGroovyThenKotlin(buildFile: String): String =
         if (File(buildFile).exists()) buildFile else "$buildFile.kts"
