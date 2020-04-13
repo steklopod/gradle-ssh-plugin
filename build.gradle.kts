@@ -5,7 +5,7 @@ plugins {
 }
 
 
-val pluginsVersion = "1.2.5"
+val pluginsVersion = "1.2.11"
 val sshPlugin = "sshPlugin"
 description = "EASY-DEPLOY gradle needed tasks"
 version = pluginsVersion
@@ -37,7 +37,10 @@ pluginBundle {
     }
 }
 
-dependencies { implementation("org.hidetake:groovy-ssh:2.10.1") }
+dependencies {
+//    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5")
+    implementation("org.hidetake:groovy-ssh:2.10.1")
+}
 
 kotlinDslPluginOptions { experimentalWarning.set(false) }
 

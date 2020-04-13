@@ -18,7 +18,6 @@ import kotlin.concurrent.thread
 
 const val sshGroup = "ssh"
 
-
 open class Ssh : Cmd() {
     init {
         group = sshGroup
@@ -88,24 +87,24 @@ open class Ssh : Cmd() {
     fun run() {
         Ssh.newService().runSessions {
             session(remote()) {
+                if (clearNuxt) deleteNodeModulesAndNuxtFolders()
                 if (monolit) backendServices = setOf(backendFolder)
                 if (admin) backendServices += adminServer
 
-                if (backend) backendServices.forEach { copyFolderWithOverride(jarLibsFolder(it)) }
+                if (postgres) copyIfNotRemote(postgresService)
+                if (static) copyIfNotRemote(staticDir)
 
-                // TODO: ignore [node_modules]
-                if (clearNuxt) deleteNodeModulesAndNuxtFolders()
-                if (frontend) copyFolderWithOverride(frontendFolder)
+                if (nginx) copyWithOverride(nginxService)
 
-                if (nginx) copyFolderWithOverride(nginxService)
+                if (frontend) thread { copyWithOverride(frontendFolder) }
 
-                if (static) copyFolderIfNotRemote(staticDir)
-                if (postgres) copyFolderIfNotRemote(postgresService)
+                if (backend) backendServices.parallelStream().forEach { copyWithOverride(jarLibsFolder(it)) }
 
-                if (docker) copyFromRootAndEachSubFolder("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
                 if (gradle) copyGradle()
 
-                directory?.let { copyFolderWithOverride(it) }
+                if (docker) copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
+
+                directory?.let { copyWithOverride(it) }
 
                 run?.let {
                     println("\n\uD83D\uDD11 Executing command on remote server: { $run }")
@@ -115,43 +114,8 @@ open class Ssh : Cmd() {
         }
     }
 
-    private fun deleteNodeModulesAndNuxtFolders() {
-        val toRemoveLocal = setOf(".nuxt", "node_modules", "package-lock.json")
-        if (clearNuxt) toRemoveLocal.forEach { "$frontendFolder/$it".removeLocal() }
-    }
-
-    private fun remote() = (server ?: if (host != null) SshServer(hostSsh = host!!, userSsh = user!!)
-    else SshServer()).remote(checkKnownHosts)
-
-    private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
-    private fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) =
-        session(*remotes, delegateClosureOf(action))
-
-    private fun SessionHandler.put(from: Any, into: String) = put(hashMapOf("from" to from, "into" to into))
-
-    private fun SessionHandler.remoteIsExist(into: String): Boolean {
-        val exists = execute("test -d ${project.name}/$into && echo true || echo false")?.toBoolean() ?: false
-        if (exists) println("\n\uD83D\uDCE6 Directory [$into] is found on remote server. Will not be copied.")
-        else println("\n\uD83D\uDCE6 Directory [$into] is not exist on remote server")
-        return exists
-    }
-
-    private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
-    private fun SessionHandler.remoteRm(vararg folders: String) = folders // .iterator()
-        .forEach { println("> ✂️ Removing remote folder [$it]..."); execute("rm -fr $it") }
-
-    private fun SessionHandler.copyFromRootAndEachSubFolder(vararg files: String) = files  // .iterator()
-        .forEach { file ->
-            copy(file)
-            copyFront(file)
-            copyBack(file)
-        }
-
-    private fun SessionHandler.copyBack(file: String) {
-        backendServices.forEach { copy(file, it) }
-    }
-
-    private fun SessionHandler.copyFront(file: String) = copy(file, frontendFolder)
+    private fun SessionHandler.copyInEach(vararg files: String) =
+        files.forEach { file -> copy(file); copyFront(file); copyBack(file) }
 
     private fun SessionHandler.copyGradle() {
         copyGradleWrapperIfNotExists()
@@ -167,16 +131,51 @@ open class Ssh : Cmd() {
 
         val buildSrc = "buildSrc"
         "$buildSrc/build".removeLocal()
-        copyFolderWithOverride(buildSrc)
+        copyWithOverride(buildSrc)
     }
 
     private fun SessionHandler.copyGradleWrapperIfNotExists() {
-        if (copyFolderIfNotRemote("gradle")) {
+        if (copyIfNotRemote("gradle")) {
             copy("gradlew")
             copy("gradlew.bat")
             execute("chmod +x ${project.name}/gradlew")
         }
     }
+
+    private fun SessionHandler.copyIfNotRemote(directory: String = "") =
+        if (!remoteIsExist(directory)) copyWithOverride(directory) else false
+
+    private fun SessionHandler.copyWithOverride(directory: String = ""): Boolean {
+        val toRemote = "${project.name}/$directory"
+        val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
+        if (!File(fromLocalPath).exists())
+            return false
+        println("\n\uD83D\uDCE6 FOLDER local [$fromLocalPath] \n\t  to remote {$toRemote}\n")
+        remoteRm(toRemote)
+        val toRemoteParent = File(toRemote).parent.normalizeForWindows()
+        println("> \uD83D\uDDC3️ Copy [${fromLocalPath.substringAfterLast('/')}] into remote {$toRemoteParent} in progress...\n")
+        put(File(fromLocalPath), remoteMkDir(toRemoteParent))
+        return true
+    }
+
+    private fun SessionHandler.put(from: Any, into: String) = put(hashMapOf("from" to from, "into" to into))
+
+    private fun SessionHandler.remoteIsExist(into: String): Boolean {
+        val exists = execute("test -d ${project.name}/$into && echo true || echo false")?.toBoolean() ?: false
+        if (exists) println("\n\uD83D\uDCE6 Directory [$into] is found on remote server. Will not be copied.")
+        else println("\n\uD83D\uDCE6 Directory [$into] is not exist on remote server")
+        return exists
+    }
+
+    private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
+    private fun SessionHandler.remoteRm(vararg folders: String) = folders.forEach {
+        println("> ✂️ Removing remote folder [$it]...")
+        execute("rm -fr $it")
+    }
+
+    private fun SessionHandler.copyBack(file: String) = backendServices.parallelStream().forEach { copy(file, it) }
+
+    private fun SessionHandler.copyFront(file: String) = copy(file, frontendFolder)
 
     private fun ifNotGroovyThenKotlin(buildFile: String): String =
         if (File(buildFile).exists()) buildFile else "$buildFile.kts"
@@ -188,22 +187,13 @@ open class Ssh : Cmd() {
         }
     }
 
-    private fun SessionHandler.copyFolderIfNotRemote(directory: String = "") =
-        if (!remoteIsExist(directory)) copyFolderWithOverride(directory) else false
-
-    private fun SessionHandler.copyFolderWithOverride(directory: String = ""): Boolean {
-        val toRemote = "${project.name}/$directory"
-        val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
-        if (!File(fromLocalPath).exists()) return false
-        println("\n\uD83D\uDCE6 FOLDER local [$fromLocalPath] \n\t  to remote {$toRemote}\n")
-        remoteRm(toRemote)
-        val toRemoteParent = File(toRemote).parent.normalizeForWindows()
-        println("> \uD83D\uDDC3️ Copy [${fromLocalPath.substringAfterLast('/')}] into remote {$toRemoteParent} in progress...\n")
-        put(File(fromLocalPath), remoteMkDir(toRemoteParent))
-        return true
+    private fun deleteNodeModulesAndNuxtFolders() {
+        val toRemoveLocal = setOf(".nuxt", ".idea", "node_modules", "package-lock.json", ".DS_Store")
+        if (clearNuxt) toRemoveLocal.forEach { "$frontendFolder/$it".removeLocal() }
     }
 
     private fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)
+
     private fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
         val into = "${project.name}/$remote"
@@ -215,6 +205,13 @@ open class Ssh : Cmd() {
         return false
     }
 
+    private fun remote() = (server ?: if (host != null) SshServer(hostSsh = host!!, userSsh = user!!)
+    else SshServer()).remote(checkKnownHosts)
+
+    private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
+
+    private fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) =
+        session(*remotes, delegateClosureOf(action))
 }
 
 
