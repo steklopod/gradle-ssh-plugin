@@ -14,7 +14,6 @@ import org.hidetake.groovy.ssh.core.RunHandler
 import org.hidetake.groovy.ssh.core.Service
 import org.hidetake.groovy.ssh.session.SessionHandler
 import java.io.File
-import kotlin.concurrent.thread
 
 const val sshGroup = "ssh"
 
@@ -96,7 +95,7 @@ open class Ssh : Cmd() {
 
                 if (nginx) copyWithOverride(nginxService)
 
-                if (frontend) thread { copyWithOverride(frontendFolder) }
+                if (frontend) copyWithOverride(frontendFolder)
 
                 if (backend) backendServices.forEach { copyWithOverride(jarLibsFolder(it)) }
 
