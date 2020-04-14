@@ -98,7 +98,7 @@ open class Ssh : Cmd() {
 
                 if (frontend) thread { copyWithOverride(frontendFolder) }
 
-                if (backend) backendServices.parallelStream().forEach { copyWithOverride(jarLibsFolder(it)) }
+                if (backend) backendServices.forEach { copyWithOverride(jarLibsFolder(it)) }
 
                 if (gradle) copyGradle()
 
@@ -175,9 +175,9 @@ open class Ssh : Cmd() {
     }
 
     private fun SessionHandler.copyBack(file: String) {
-        if (backend) backendServices.parallelStream()
-            .forEach { copy(file, it) }
+        if (backend) backendServices.forEach { copy(file, it) }
     }
+
     private fun SessionHandler.copyFront(file: String) = if (frontend) copy(file, frontendFolder) else false
     private fun SessionHandler.copyPostgres(file: String) = if (postgres) copy(file, postgresService) else false
 
