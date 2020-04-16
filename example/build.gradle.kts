@@ -1,4 +1,4 @@
-plugins { id("online.colaba.ssh") version "1.2.15" }
+plugins { id("online.colaba.ssh") version "1.2.16" }
 
 tasks {
     ssh {

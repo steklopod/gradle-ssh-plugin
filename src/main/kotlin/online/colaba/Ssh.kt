@@ -24,6 +24,17 @@ open class Ssh : Cmd() {
     }
 
     @get:Input
+    var backendServices: Set<String> = mutableSetOf(
+        "auth",
+        "card",
+        "mail",
+        "chat",
+        "gateway",
+        "config-server",
+        "eureka-server"
+    )
+
+    @get:Input
     @Optional
     var host: String? = null
 

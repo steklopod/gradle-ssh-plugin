@@ -1,15 +1,5 @@
 package online.colaba
 
-// TODO: input params
-var backendServices = setOf(
-    "auth",
-    "card",
-    "mail",
-    "chat",
-    "gateway",
-    "config-server",
-    "eureka-server"
-)
 const val adminServer = "admin-server"
 
 const val defaultHost = "colaba.online"

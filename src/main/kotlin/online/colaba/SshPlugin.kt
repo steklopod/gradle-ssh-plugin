@@ -27,15 +27,14 @@ class SshPlugin : Plugin<Project> {
                 gradle = true
                 static = true
                 backend = true
-                monolit = false
                 frontend = true
                 postgres = true
-                clearNuxt = true
-
                 admin = true
 
-                run = "cd ${project.name} && echo \$PWD"
+                monolit = false
+                clearNuxt = false
 
+//              run = "cd ${project.name} && echo \$PWD"
             }
 
             register("publishFront", Ssh::class)    { frontend = true;  description = "Copy [frontend] to remote server"  }
@@ -58,11 +57,11 @@ class SshPlugin : Plugin<Project> {
 
             compose{   }
             val composeDev by registering(DockerCompose::class) { dependsOn(":$backendService:assemble"); isDev = true; description = "Docker compose up from `docker-compose.dev.yml` file after backend `assemble` task" }
-            register("composeNginx", DockerCompose::class) { service = nginxService; description = "Docker compose up for nginx container" }
+            register("composeNginx", DockerCompose::class) { service = nginxService;    description = "Docker compose up for nginx container" }
             register("composeFront", DockerCompose::class) { service = frontendService; description = "Docker compose up for frontend container" }
-            register("composeBack", DockerCompose::class) { service = backendService; description = "Docker compose up for backend container" }
+            register("composeBack", DockerCompose::class)  { service = backendService;  description = "Docker compose up for backend container" }
 
-            register("recomposeAll") { dependsOn(rm); finalizedBy(compose); description = "Compose up after removing `nginx`, `frontend` & `backend` containers"; group = dockerMainGroupName(project.name) }
+            register("recomposeAll")    { dependsOn(rm); finalizedBy(compose);    description = "Compose up after removing `nginx`, `frontend` & `backend` containers"; group = dockerMainGroupName(project.name) }
             register("recomposeAllDev") { dependsOn(rm); finalizedBy(composeDev); description = "Compose up from `docker-compose.dev.yml` after removing `nginx`, `frontend` & `backend` containers"; group = dockerMainGroupName(project.name) }
         }
     }
