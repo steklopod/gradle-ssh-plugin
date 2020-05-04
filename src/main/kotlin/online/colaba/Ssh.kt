@@ -99,7 +99,7 @@ open class Ssh : Cmd() {
         Ssh.newService().runSessions {
             session(remote()) {
                 if (clearNuxt) deleteNodeModulesAndNuxtFolders()
-                if (frontend) thread { copyWithOverride(frontendFolder) }
+                if (frontend) copyWithOverride(frontendFolder)
 
                 if (monolit) backendServices = setOf(backendFolder)
                 if (admin) backendServices += adminServer
