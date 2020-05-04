@@ -14,6 +14,7 @@ import org.hidetake.groovy.ssh.core.RunHandler
 import org.hidetake.groovy.ssh.core.Service
 import org.hidetake.groovy.ssh.session.SessionHandler
 import java.io.File
+import kotlin.concurrent.thread
 
 const val sshGroup = "ssh"
 
@@ -98,6 +99,8 @@ open class Ssh : Cmd() {
         Ssh.newService().runSessions {
             session(remote()) {
                 if (clearNuxt) deleteNodeModulesAndNuxtFolders()
+                if (frontend) thread { copyWithOverride(frontendFolder) }
+
                 if (monolit) backendServices = setOf(backendFolder)
                 if (admin) backendServices += adminServer
 
@@ -106,9 +109,7 @@ open class Ssh : Cmd() {
 
                 if (nginx) copyWithOverride(nginxService)
 
-                if (frontend) copyWithOverride(frontendFolder)
-
-                if (backend) backendServices.forEach { copyWithOverride(jarLibsFolder(it)) }
+                if (backend) backendServices.parallelStream().forEach { copyWithOverride(jarLibsFolder(it)) }
 
                 if (gradle) copyGradle()
 
@@ -135,14 +136,17 @@ open class Ssh : Cmd() {
         copy(settingsFile)
         copy(buildFile)
         copy("gradle.properties")
+
         copyFront(buildFile)
 
         copyBack(buildFile)
         copyBack(settingsFile)
 
+        /*
         val buildSrc = "buildSrc"
         "$buildSrc/build".removeLocal()
         copyWithOverride(buildSrc)
+        */
     }
 
     private fun SessionHandler.copyGradleWrapperIfNotExists() {
@@ -185,7 +189,7 @@ open class Ssh : Cmd() {
     }
 
     private fun SessionHandler.copyBack(file: String) {
-        if (backend) backendServices.forEach { copy(file, it) }
+        if (backend) backendServices.parallelStream().forEach { copy(file, it) }
     }
 
     private fun SessionHandler.copyFront(file: String) = if (frontend) copy(file, frontendFolder) else false

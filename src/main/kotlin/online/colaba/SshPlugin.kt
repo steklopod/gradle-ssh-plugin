@@ -29,10 +29,11 @@ class SshPlugin : Plugin<Project> {
                 backend = true
                 frontend = true
                 postgres = true
+
                 admin = true
+                clearNuxt = true
 
                 monolit = false
-                clearNuxt = false
 
 //              run = "cd ${project.name} && echo \$PWD"
             }
