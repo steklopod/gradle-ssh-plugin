@@ -25,7 +25,7 @@ open class Ssh : Cmd() {
     }
 
     @get:Input
-    var backendServices: Set<String> = mutableSetOf(
+    var backendServices: MutableSet<String> = mutableSetOf(
         "auth",
         "card",
         "mail",
@@ -68,7 +68,7 @@ open class Ssh : Cmd() {
     var frontend: Boolean = false
 
     @get:Input
-    var backend: Boolean = false
+    var backend: Boolean = true
 
     @get:Input
     var clearNuxt: Boolean = false
@@ -80,7 +80,7 @@ open class Ssh : Cmd() {
     var monolit: Boolean = false
 
     @get:Input
-    var admin: Boolean = false
+    var admin: Boolean = true
 
     @get:Input
     var static: Boolean = false
@@ -101,8 +101,8 @@ open class Ssh : Cmd() {
                 if (clearNuxt) deleteNodeModulesAndNuxtFolders()
                 if (frontend) copyWithOverride(frontendFolder)
 
-                if (monolit) backendServices = setOf(backendFolder)
-                if (admin) backendServices += adminServer
+                if (monolit) backendServices = mutableSetOf(backendFolder)
+                if (admin) backendServices.add(adminServer)
 
                 if (postgres) copyIfNotRemote(postgresService)
                 if (static) copyIfNotRemote(staticDir)
@@ -189,7 +189,7 @@ open class Ssh : Cmd() {
     }
 
     private fun SessionHandler.copyBack(file: String) {
-        if (backend) backendServices.parallelStream().forEach { copy(file, it) }
+        if (backend) backendServices.forEach { copy(file, it) }
     }
 
     private fun SessionHandler.copyFront(file: String) = if (frontend) copy(file, frontendFolder) else false

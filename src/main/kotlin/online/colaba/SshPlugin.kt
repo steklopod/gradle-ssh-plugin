@@ -14,7 +14,7 @@ class SshPlugin : Plugin<Project> {
         registerCmdTask()
         registerDockerComposeTask()
 
-        ssh {   }
+        ssh { backend = false; admin = false }
 
         cmd {   }
 
