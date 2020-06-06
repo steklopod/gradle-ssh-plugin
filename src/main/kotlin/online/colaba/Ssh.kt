@@ -80,7 +80,7 @@ open class Ssh : Cmd() {
     var monolit: Boolean = false
 
     @get:Input
-    var admin: Boolean = true
+    var admin: Boolean = false
 
     @get:Input
     var static: Boolean = false
@@ -109,7 +109,7 @@ open class Ssh : Cmd() {
 
                 if (nginx) copyWithOverride(nginxService)
 
-                if (backend) backendServices.forEach { copyWithOverride(jarLibsFolder(it)) }
+                if (backend) backendServices.parallelStream().forEach { copyWithOverride(jarLibsFolder(it)) }
 
                 if (gradle) copyGradle()
 

@@ -14,7 +14,7 @@ class SshPlugin : Plugin<Project> {
         registerCmdTask()
         registerDockerComposeTask()
 
-        ssh { backend = false; admin = false }
+        ssh { backend = false }
 
         cmd {   }
 
@@ -30,7 +30,7 @@ class SshPlugin : Plugin<Project> {
                 frontend = true
                 postgres = true
 
-                admin = true
+                admin = false
                 clearNuxt = true
 
                 monolit = false
@@ -38,16 +38,24 @@ class SshPlugin : Plugin<Project> {
 //              run = "cd ${project.name} && echo \$PWD"
             }
 
-            register("publishFront", Ssh::class)    { frontend = true;  description = "Copy [frontend] to remote server"  }
-            register("publishBack", Ssh::class)     { monolit = true;   description = "Copy [backend] to remote server" }
-            register("publishGradle", Ssh::class)   { gradle = true;    description = "Copy [gradle] needed files to remote server" }
-            register("publishDocker", Ssh::class)   { docker = true;    description = "Copy [docker] needed files to remote server" }
-            register("publishNginx", Ssh::class)    { nginx = true;     description = "Copy [nginx] to remote server" }
-            register("publishPostgres", Ssh::class) { postgres = true;  description = "Copy [postgres] to remote server" }
+            register("front", Ssh::class)    { frontend = true;  description = "Copy [frontend] to remote server"  }
+            register("monolit", Ssh::class)  { monolit = true;   description = "Copy [backend] to remote server" }
+            register("back", Ssh::class)     { backend = true;   description = "Copy all jars to remote server" }
+            register("gradle", Ssh::class)   { gradle = true;    description = "Copy [gradle] needed files to remote server" }
+            register("docker", Ssh::class)   { docker = true;    description = "Copy [docker] needed files to remote server" }
+            register("nginx", Ssh::class)    { nginx = true;     description = "Copy [nginx] to remote server" }
+            register("postgres", Ssh::class) { postgres = true;  description = "Copy [postgres] to remote server" }
 
-            register("pruneFront", Ssh::class)  { clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
-            register("prune", Cmd::class)       { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
+            register("clearFront", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
+            register("prune", Cmd::class)     { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
 
+            compose{   }
+
+            register("composeNginx", DockerCompose::class){ service = nginxService;    description = "Docker compose up for nginx container" }
+            register("composeFront", DockerCompose::class){ service = frontendService; description = "Docker compose up for frontend container" }
+            register("composeBack", DockerCompose::class) { service = backendService;  description = "Docker compose up for backend container" }
+
+            val composeDev by registering(DockerCompose::class) { dependsOn(":$backendService:assemble"); isDev = true; description = "Docker compose up from `docker-compose.dev.yml` file after backend `assemble` task" }
             val ps by registering (Cmd::class) { command = "docker ps"; description = "Print all containers"; group = dockerMainGroupName(project.name) }
             val stopAll by registering (Cmd::class) {dockerForEachSubproject(project, "stop", postgresService); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
             val rm  by registering (Cmd::class) {
@@ -56,14 +64,6 @@ class SshPlugin : Plugin<Project> {
                 finalizedBy(ps)
             }
 
-            compose{   }
-            val composeDev by registering(DockerCompose::class) { dependsOn(":$backendService:assemble"); isDev = true; description = "Docker compose up from `docker-compose.dev.yml` file after backend `assemble` task" }
-            register("composeNginx", DockerCompose::class) { service = nginxService;    description = "Docker compose up for nginx container" }
-            register("composeFront", DockerCompose::class) { service = frontendService; description = "Docker compose up for frontend container" }
-            register("composeBack", DockerCompose::class)  { service = backendService;  description = "Docker compose up for backend container" }
-
-            register("recomposeAll")    { dependsOn(rm); finalizedBy(compose);    description = "Compose up after removing `nginx`, `frontend` & `backend` containers"; group = dockerMainGroupName(project.name) }
-            register("recomposeAllDev") { dependsOn(rm); finalizedBy(composeDev); description = "Compose up from `docker-compose.dev.yml` after removing `nginx`, `frontend` & `backend` containers"; group = dockerMainGroupName(project.name) }
         }
     }
 
