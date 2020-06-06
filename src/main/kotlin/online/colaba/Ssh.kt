@@ -68,7 +68,7 @@ open class Ssh : Cmd() {
     var frontend: Boolean = false
 
     @get:Input
-    var backend: Boolean = true
+    var backend: Boolean = false
 
     @get:Input
     var clearNuxt: Boolean = false
@@ -189,7 +189,7 @@ open class Ssh : Cmd() {
     }
 
     private fun SessionHandler.copyBack(file: String) {
-        if (backend) backendServices.forEach { copy(file, it) }
+        backendServices.forEach { copy(file, it) }
     }
 
     private fun SessionHandler.copyFront(file: String) = if (frontend) copy(file, frontendFolder) else false
