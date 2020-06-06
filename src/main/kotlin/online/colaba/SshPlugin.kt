@@ -38,18 +38,18 @@ class SshPlugin : Plugin<Project> {
 //              run = "cd ${project.name} && echo \$PWD"
             }
 
-            register("front", Ssh::class)    { frontend = true;  description = "Copy [frontend] to remote server"  }
-            register("monolit", Ssh::class)  { monolit = true;   description = "Copy [backend] to remote server" }
-            register("back", Ssh::class)     { backend = true;   description = "Copy all jars to remote server" }
-            register("gradle", Ssh::class)   { gradle = true;    description = "Copy [gradle] needed files to remote server" }
-            register("docker", Ssh::class)   { docker = true;    description = "Copy [docker] needed files to remote server" }
-            register("nginx", Ssh::class)    { nginx = true;     description = "Copy [nginx] to remote server" }
-            register("postgres", Ssh::class) { postgres = true;  description = "Copy [postgres] to remote server" }
+            register("sshFront", Ssh::class)   { frontend = true;  description = "Copy [frontend] to remote server"  }
+            register("sshMonolit", Ssh::class) { monolit = true;   description = "Copy [backend] to remote server" }
+            register("sshBack", Ssh::class)    { backend = true;   description = "Copy all jars to remote server" }
+            register("sshGradle", Ssh::class)  { gradle = true;    description = "Copy [gradle] needed files to remote server" }
+            register("sshDocker", Ssh::class)  { docker = true;    description = "Copy [docker] needed files to remote server" }
+            register("sshNginx", Ssh::class)   { nginx = true;     description = "Copy [nginx] to remote server" }
+            register("sshPostgres", Ssh::class){ postgres = true;  description = "Copy [postgres] to remote server" }
+
+            compose{   }
 
             register("clearFront", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
             register("prune", Cmd::class)     { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
-
-            compose{   }
 
             register("composeNginx", DockerCompose::class){ service = nginxService;    description = "Docker compose up for nginx container" }
             register("composeFront", DockerCompose::class){ service = frontendService; description = "Docker compose up for frontend container" }
