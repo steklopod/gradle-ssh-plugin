@@ -30,8 +30,8 @@ val isWindows: Boolean = System.getProperty("os.name").toLowerCase().contains("w
 val windowsPrefix: List<String> = if (isWindows) listOf("cmd", "/c") else listOf()
 
 
-fun String.normalizeForWindows(): String = this.replace("\\", "/")
-fun String.splitBySpace(): List<String> = this.replace("  ", " ").split(" ")
+fun String.normalizeForWindows(): String = replace("\\", "/")
+fun String.splitBySpace(): List<String> = replace("  ", " ").split(" ")
 
 fun Exception.shortStackTrace(searchKeyWord: String = "org.gradle") = apply {
     stackTrace = stackTrace.filter { it.className.contains(searchKeyWord) }.toTypedArray()
