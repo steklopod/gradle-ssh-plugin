@@ -24,7 +24,7 @@ open class Ssh : Cmd() {
     }
 
     @get:Input
-    var javaLibs: MutableSet<String> = mutableSetOf()
+    var jars: MutableSet<String> = mutableSetOf()
 
     @get:Input
     @Optional
@@ -39,10 +39,10 @@ open class Ssh : Cmd() {
     var server: SshServer? = null
 
     @get:Input
-    var frontendFolder: String = frontendService
+    var frontendFolder: String = FRONTEND
 
     @get:Input
-    var backendFolder: String = backendService
+    var backendFolder: String = BACKEND
 
     @get:Input
     var checkKnownHosts: Boolean = false
@@ -92,16 +92,16 @@ open class Ssh : Cmd() {
                 if (clearNuxt) deleteNodeModulesAndNuxtFolders()
                 if (frontend) copyWithOverride(frontendFolder)
 
-                if (monolit) javaLibs = mutableSetOf(backendFolder)
-                if (admin) javaLibs.add(adminServer)
-                if (config) javaLibs.add(configServer)
+                if (monolit) jars = mutableSetOf(backendFolder)
+                if (admin) jars.add(ADMIN_SERVER)
+                if (config) jars.add(CONFIG_SERVER)
 
-                if (postgres) copyIfNotRemote(postgresService)
-                if (static) copyIfNotRemote(staticDir)
+                if (postgres) copyIfNotRemote(POSTGRES)
+                if (static) copyIfNotRemote(STATIC)
 
-                if (nginx) copyWithOverride(nginxService)
+                if (nginx) copyWithOverride(NGINX)
 
-                if (javaLibs.isNotEmpty()) javaLibs.parallelStream().forEach { copyWithOverride(jarLibsFolder(it)) }
+                if (jars.isNotEmpty()) jars.parallelStream().forEach { copyWithOverride(jarLibsFolder(it)) }
 
                 if (gradle) copyGradle()
 
@@ -181,11 +181,11 @@ open class Ssh : Cmd() {
     }
 
     private fun SessionHandler.copyBack(file: String) {
-        javaLibs.forEach { copy(file, it) }
+        jars.forEach { copy(file, it) }
     }
 
     private fun SessionHandler.copyFront(file: String) = if (frontend) copy(file, frontendFolder) else false
-    private fun SessionHandler.copyPostgres(file: String) = if (postgres) copy(file, postgresService) else false
+    private fun SessionHandler.copyPostgres(file: String) = if (postgres) copy(file, POSTGRES) else false
 
     private fun ifNotGroovyThenKotlin(buildFile: String): String =
         if (File(buildFile).exists()) buildFile else "$buildFile.kts"

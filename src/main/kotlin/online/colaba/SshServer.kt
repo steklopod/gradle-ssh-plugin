@@ -7,7 +7,7 @@ import java.io.File
 
 
 data class SshServer(
-    val hostSsh: String = defaultHost, val userSsh: String = defaultUser, val idRsaPath: String = idRsaPath()
+    val hostSsh: String = DEFAULT_HOST, val userSsh: String = defaultUser, val idRsaPath: String = idRsaPath()
 ) {
     companion object {
         private const val defaultUser = "root"

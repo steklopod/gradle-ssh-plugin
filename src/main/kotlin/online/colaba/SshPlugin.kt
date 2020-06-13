@@ -18,11 +18,13 @@ class SshPlugin : Plugin<Project> {
 
         cmd {   }
 
+        compose{   }
+
         tasks {
             register("publish", Ssh::class) {
                 description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
 
-                javaLibs = backendServices
+                jars = JAVA_JARS
 
                 nginx = true
                 docker = true
@@ -31,39 +33,37 @@ class SshPlugin : Plugin<Project> {
                 frontend = true
                 postgres = true
 
-                admin = false
-                config = false
-                clearNuxt = true
-
+                admin = false  // резерв
+                config = false // резерв
                 monolit = false
-
+                clearNuxt = true // чистит локально node_modules
 //              run = "cd ${project.name} && echo \$PWD"
             }
 
-            register("ssh-java", Ssh::class)            { javaLibs = backendServices; description = "Copy all jars to remote server" }
-            register("ssh-gradle", Ssh::class)          { gradle = true;    description = "Copy [gradle] needed files to remote server" }
-            register("ssh-docker", Ssh::class)          { docker = true;    description = "Copy [docker] needed files to remote server" }
-            register("ssh-$frontendService", Ssh::class){ frontend = true;  description = "Copy [frontend] jar to remote server"  }
-            register("ssh-$backendService", Ssh::class) { monolit = true;   description = "Copy [backend] jar to remote server" }
-            register("ssh-$nginxService", Ssh::class)   { nginx = true;     description = "Copy [nginx] jar to remote server" }
-            register("ssh-$postgresService", Ssh::class){ postgres = true;  description = "Copy [postgres] jar to remote server" }
+            JAVA_JARS.forEach{ register("ssh-$it", Ssh::class){ directory = jarLibsFolder(it); description = "Copy [${jarLibsFolder(it)}] to remote server"  } }
+            register("ssh-jars", Ssh::class)     { jars = JAVA_JARS; description = "Copy all {*.jars} to remote server" }
+            register("ssh-$FRONTEND", Ssh::class){ frontend = true;  description = "Copy [$FRONTEND] jar to remote server" }
+            register("ssh-$NGINX", Ssh::class)   { nginx = true;     description = "Copy [$NGINX] jar to remote server" }
+            register("ssh-$POSTGRES", Ssh::class){ postgres = true;  description = "Copy [$POSTGRES] jar to remote server" }
+            register("ssh-$BACKEND", Ssh::class) { monolit = true;   description = "Copy [$BACKEND] jar to remote server" }
+            register("ssh-gradle", Ssh::class)   { gradle = true;    description = "Copy [gradle] needed files to remote server" }
+            register("ssh-docker", Ssh::class)   { docker = true;    description = "Copy [docker] needed files to remote server" }
 
-            compose{   }
+            JAVA_JARS.forEach{ register("compose-$it", DockerCompose::class){ service = it;  description = "Docker compose up for [$it] container" } }
+            register("compose-$FRONTEND", DockerCompose::class){ service = FRONTEND; description = "Docker compose up for [$FRONTEND] container" }
+            register("compose-$NGINX", DockerCompose::class)   { service = NGINX;    description = "Docker compose up for [$NGINX] container" }
+            register("compose-$POSTGRES", DockerCompose::class){ service = POSTGRES; description = "Docker compose up for [$POSTGRES] container" }
+            register("compose-$BACKEND", DockerCompose::class) { service = BACKEND;  description = "Docker compose up for [$BACKEND] container" }
 
-            register("clear-$frontendService", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
+
+            register("clear-$FRONTEND", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
             register("prune", Cmd::class){ command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
 
-            register("compose-$nginxService", DockerCompose::class)   { service = nginxService;    description = "Docker compose up for [nginx] container" }
-            register("compose-$frontendService", DockerCompose::class){ service = frontendService; description = "Docker compose up for [frontend] container" }
-            register("compose-$backendService", DockerCompose::class) { service = backendService;  description = "Docker compose up for [backend] container" }
-            backendServices.forEach{ register("compose-$it", DockerCompose::class){ service = it;  description = "Docker compose up for [$it] container" } }
-
-            val composeDev by registering(DockerCompose::class) { dependsOn(":$backendService:assemble"); isDev = true; description = "Docker compose up from `docker-compose.dev.yml` file after backend `assemble` task" }
+            val composeDev by registering(DockerCompose::class) { dependsOn(":$BACKEND:assemble"); isDev = true; description = "Docker compose up from `docker-compose.dev.yml` file after backend `assemble` task" }
             val ps by registering (Cmd::class) { command = "docker ps"; description = "Print all containers"; group = dockerMainGroupName(project.name) }
-            val stopAll by registering (Cmd::class) {dockerForEachSubproject(project, "stop", postgresService); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
+            val stopAll by registering (Cmd::class) {dockerForEachSubproject(project, "stop", POSTGRES); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
             val rm  by registering (Cmd::class) {
-                description = "Docker remove all containers"; group = dockerMainGroupName(project.name)
-                command = "docker rm -vf \$(docker ps -q)"
+                command = "docker rm -vf \$(docker ps -q)"; description = "Docker remove all containers"; group = dockerMainGroupName(project.name)
                 finalizedBy(ps)
             }
 

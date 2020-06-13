@@ -14,7 +14,7 @@
 
 ```kotlin
 plugins {
-     id("online.colaba.ssh") version "1.2.33"
+     id("online.colaba.ssh") version "1.2.34"
 }
 
 ssh {
@@ -79,7 +79,7 @@ ___
 
 By default you have preconfigured profiles tasks: 
 * `ssh` - all disabled  by default (**false**)
-* `publish` - all enabled  by default (**true**) [TODO documentation for `javaLibs` property for this task]
+* `publish` - all enabled  by default (**true**) [TODO documentation for `jars` property for this task]
 
 You can customize these properties:
 ```kotlin
@@ -129,4 +129,4 @@ tasks{
 ```
 
 ___
-### TODO documentation for microservices deployment (`ssh-java` task)
+### TODO documentation for microservices deployment (`ssh-jars` task)

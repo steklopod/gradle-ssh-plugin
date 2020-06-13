@@ -1,9 +1,8 @@
 package online.colaba
 
-const val adminServer = "admin-server"
-const val configServer = "config-server"
+const val DEFAULT_HOST = "colaba.online"
 
-val backendServices: MutableSet<String> = mutableSetOf(
+val JAVA_JARS: MutableSet<String> = mutableSetOf(
     "auth",
     "card",
     "mail",
@@ -12,20 +11,24 @@ val backendServices: MutableSet<String> = mutableSetOf(
     "eureka-server"
 )
 
-const val defaultHost = "colaba.online"
+const val STATIC = "static"
 
-const val frontendService = "frontend"
-const val backendService = "backend"
+const val NGINX = "nginx"
+const val BACKEND = "backend"
+const val POSTGRES = "postgres"
+const val FRONTEND = "frontend"
 
-const val staticDir = "static"
-const val nginxService = "nginx"
-const val postgresService = "postgres"
+//Optional:
+const val ADMIN_SERVER = "admin-server"
+const val CONFIG_SERVER = "config-server"
 
-fun jarLibsFolder(folder: String = backendService) = "$folder/build/libs"
+
+fun jarLibsFolder(folder: String = BACKEND) = "$folder/build/libs"
 
 val userHomePath: String = System.getProperty("user.home")
 val isWindows: Boolean = System.getProperty("os.name").toLowerCase().contains("windows")
 val windowsPrefix: List<String> = if (isWindows) listOf("cmd", "/c") else listOf()
+
 
 fun String.normalizeForWindows(): String = this.replace("\\", "/")
 fun String.splitBySpace(): List<String> = this.replace("  ", " ").split(" ")
