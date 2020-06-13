@@ -1,6 +1,16 @@
 package online.colaba
 
 const val adminServer = "admin-server"
+const val configServer = "config-server"
+
+val backendServices: MutableSet<String> = mutableSetOf(
+    "auth",
+    "card",
+    "mail",
+    "chat",
+    "gateway",
+    "eureka-server"
+)
 
 const val defaultHost = "colaba.online"
 

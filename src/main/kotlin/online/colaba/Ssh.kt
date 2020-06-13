@@ -14,7 +14,6 @@ import org.hidetake.groovy.ssh.core.RunHandler
 import org.hidetake.groovy.ssh.core.Service
 import org.hidetake.groovy.ssh.session.SessionHandler
 import java.io.File
-import kotlin.concurrent.thread
 
 const val sshGroup = "ssh"
 
@@ -25,15 +24,7 @@ open class Ssh : Cmd() {
     }
 
     @get:Input
-    var backendServices: MutableSet<String> = mutableSetOf(
-        "auth",
-        "card",
-        "mail",
-        "chat",
-        "gateway",
-        "config-server",
-        "eureka-server"
-    )
+    var javaLibs: MutableSet<String> = mutableSetOf()
 
     @get:Input
     @Optional
@@ -68,9 +59,6 @@ open class Ssh : Cmd() {
     var frontend: Boolean = false
 
     @get:Input
-    var backend: Boolean = false
-
-    @get:Input
     var clearNuxt: Boolean = false
 
     @get:Input
@@ -81,6 +69,9 @@ open class Ssh : Cmd() {
 
     @get:Input
     var admin: Boolean = false
+
+    @get:Input
+    var config: Boolean = false
 
     @get:Input
     var static: Boolean = false
@@ -101,15 +92,16 @@ open class Ssh : Cmd() {
                 if (clearNuxt) deleteNodeModulesAndNuxtFolders()
                 if (frontend) copyWithOverride(frontendFolder)
 
-                if (monolit) backendServices = mutableSetOf(backendFolder)
-                if (admin) backendServices.add(adminServer)
+                if (monolit) javaLibs = mutableSetOf(backendFolder)
+                if (admin) javaLibs.add(adminServer)
+                if (config) javaLibs.add(configServer)
 
                 if (postgres) copyIfNotRemote(postgresService)
                 if (static) copyIfNotRemote(staticDir)
 
                 if (nginx) copyWithOverride(nginxService)
 
-                if (backend) backendServices.parallelStream().forEach { copyWithOverride(jarLibsFolder(it)) }
+                if (javaLibs.isNotEmpty()) javaLibs.parallelStream().forEach { copyWithOverride(jarLibsFolder(it)) }
 
                 if (gradle) copyGradle()
 
@@ -189,7 +181,7 @@ open class Ssh : Cmd() {
     }
 
     private fun SessionHandler.copyBack(file: String) {
-        backendServices.forEach { copy(file, it) }
+        javaLibs.forEach { copy(file, it) }
     }
 
     private fun SessionHandler.copyFront(file: String) = if (frontend) copy(file, frontendFolder) else false

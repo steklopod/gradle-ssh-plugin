@@ -38,9 +38,9 @@ open class DockerCompose : Cmd() {
     @TaskAction
     override fun exec() {
         val recreateFlags = "--detach --build --force-recreate"
-        val dockerComposedevFile = "docker-compose.dev.yml"
+        val devFile = "docker-compose.dev.yml"
 
-        if (isDev) composeFile = dockerComposedevFile
+        if (isDev) composeFile = devFile
 
         composeFile?.let { exec = "-f $composeFile up " }
 

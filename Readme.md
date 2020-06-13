@@ -8,13 +8,13 @@
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=security_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 
 ### Quick start
-1. You must have `id_rsa` private key (on your local machine: `{user.home}/.ssh/id_rsa`) to use this plugin
+1. You must have `id_rsa` private key (on your local machine: `{user.home}/.ssh/id_rsa` or in root of project) to use this plugin
 
 2. In your `build.gradle.kts` file
 
 ```kotlin
 plugins {
-     id("online.colaba.ssh") version "1.2.32"
+     id("online.colaba.ssh") version "1.2.33"
 }
 
 ssh {
@@ -34,11 +34,11 @@ gradle ssh
 ### Available gradle tasks from `ssh` plugin:
 
 Send by `ftp` with `ssh` (copy from local to remote server):
-1. `publishBack` - copy **backend** distribution `*.jar`-file
-2. `publishFront` - copy **frontend** folder
-3. `publishNginx` - copy **nginx** folder
-4. `publishGradle` - copy **gradle** needed files
-5. `publishDocker` - copy **docker** files
+1. `ssh-backend` - copy **backend** distribution `*.jar`-file
+2. `ssh-frontend` - copy **frontend** folder
+3. `ssh-nginx` - copy **nginx** folder
+4. `ssh-gradle` - copy **gradle** needed files
+5. `ssh-docker` - copy **docker** files
 
 All this tasks **includes** in 1 task:
 
@@ -49,16 +49,9 @@ All this tasks **excluded** in 1 task:
 
 Other tasks:
 
-* `compose` - docker compose up all (_including subprojects_) docker-services with recreate and rebuild
-* `composeDev` - docker compose up all (_including subprojects_) docker-services with recreate and rebuild from **docker-compose.dev.yml** file
-* `composeNginx`, `composeBack`, `composeFront` - docker compose up subproject with recreate and rebuild 
-* `recomposeAll` - docker compose up after removing **nginx**, **frontend** & **backend** subproject-containers
-* `recomposeAllDev` - docker compose up after removing **nginx**, **frontend** & **backend** subproject-containers from **docker-compose.dev.yml** file
-
-
+* `compose` - docker compose up all docker-services(_gradle subprojects_) with recreate and rebuild
+* `compose-nginx`, `compose-backend`, `compose-frontend` - docker compose up subproject with recreate and rebuild 
 * `prune` - remove unused docker data
-* `removeBackAndFront` - remove **backend**, **frontend** containers
-* `removeAll` - remove **nginx**, **frontend**, **backend** containers 
 
 > Name of service for all tasks equals to ${project.name} 
 
@@ -86,9 +79,9 @@ ___
 
 By default you have preconfigured profiles tasks: 
 * `ssh` - all disabled  by default (**false**)
-* `publish` - all enabled  by default (**true**)
+* `publish` - all enabled  by default (**true**) [TODO documentation for `javaLibs` property for this task]
 
-You can customize this properties:
+You can customize these properties:
 ```kotlin
         ssh {
             host = "hostexample.com"
@@ -99,7 +92,7 @@ You can customize this properties:
             nginx = true
         }
 ```
-Project's structure example
+Project's structure example for a backend `monolit` architecture
 ```shell script
  project
    |-[backend]
@@ -128,10 +121,12 @@ ___
 
 ##### Optional
 
-
 With `ssh` plugin you have additional bonus task for executing a command line process on local PC [linux/windows]:
 ```kotlin
 tasks{
       cmd { command = "echo ${project.name}" }
 }
 ```
+
+___
+### TODO documentation for microservices deployment (`ssh-java` task)
