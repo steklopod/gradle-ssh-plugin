@@ -1,0 +1,38 @@
+workflow:
+  - ".github/**"
+  - ".gitignore"
+
+build-gradle:
+  - "gradle/**"
+  - "build.gradle.kts"
+  - "settings.gradle.kts"
+  - "*/build.gradle.kts"
+  - "*/settings.gradle.kts"
+  - "gradle.properties"
+
+docker:
+  - "docker-compose.yml"
+  - "*/docker-compose.yml"
+  - "docker-compose.dev.yml"
+  - "*/docker-compose.dev.yml"
+  - "Dockerfile"
+  - "*/Dockerfile"
+  - ".dockerignore"
+  - "*/.dockerignore"
+
+env:
+  - ".env"
+  - "*/.env"
+core:
+  - "src/main/*"
+test:
+  - "**/src/test/*"
+  - "**/*/*Test*"
+license:
+  - LICENSE
+frontend:
+  - frontend/**/*
+  - any: ['*.vue']
+  - any: ['*.js']
+deploy-security:
+  - id_rsa

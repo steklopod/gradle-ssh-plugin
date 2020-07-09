@@ -2,28 +2,31 @@ package online.colaba
 
 const val DEFAULT_HOST = "colaba.online"
 
-val JAVA_JARS: MutableSet<String> = mutableSetOf(
-    "auth",
-    "card",
-    "mail",
-    "chat",
-    "gateway",
-    "eureka-server"
-)
 
 const val STATIC = "static"
 
 const val NGINX = "nginx"
+const val CHAT = "chat"
 const val BACKEND = "backend"
 const val POSTGRES = "postgres"
 const val FRONTEND = "frontend"
+
+val JAVA_JARS: MutableSet<String> = mutableSetOf(
+    "auth",
+    "card",
+    "mail",
+    CHAT,
+    "gateway",
+    "eureka-server"
+)
+
 
 //Optional:
 const val ADMIN_SERVER = "admin-server"
 const val CONFIG_SERVER = "config-server"
 
 
-fun jarLibsFolder(folder: String = BACKEND) = "$folder/build/libs"
+fun jarLibFolder(folder: String = BACKEND) = "$folder/build/libs"
 
 val userHomePath: String = System.getProperty("user.home")
 val isWindows: Boolean = System.getProperty("os.name").toLowerCase().contains("windows")

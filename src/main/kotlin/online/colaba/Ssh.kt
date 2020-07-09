@@ -101,7 +101,7 @@ open class Ssh : Cmd() {
 
                 if (nginx) copyWithOverride(NGINX)
 
-                if (jars.isNotEmpty()) jars.parallelStream().forEach { copyWithOverride(jarLibsFolder(it)) }
+                if (jars.isNotEmpty()) jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
 
                 if (gradle) copyGradle()
 

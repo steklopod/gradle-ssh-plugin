@@ -14,14 +14,12 @@
 
 ```kotlin
 plugins {
-     id("online.colaba.ssh") version "1.2.34"
+     id("online.colaba.ssh") version "1.3.0"
 }
 
 ssh {
     host = "hostexample.com"
-    user = "user"
     directory = "distribution"
-    run = "ls -a"
 }
 ```
 > This tasks will copy local project **distribution** folder into remote **~/{project.name}/** and print it [will execute by ftp with ssh]
@@ -31,6 +29,30 @@ ssh {
 gradle ssh
 ```
 
+### Customization:
+
+#### [CLOUD mode] for deploying Spring Cloud microservices stack (no documentation).
+> [DOCUMENTATION NEEDED issue for [CLOUD mode] microservices deployment](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
+
+1. Register new task in your `build.gradle.kts`:
+```kotlin
+        register("customSshTask", Ssh::class) {
+            host = "hostexample.com"
+            user = "root"
+            gradle = true
+            frontend = true
+            backend = true
+            docker = true
+            nginx = true
+            run = "cd ${project.name} && echo \$PWD"
+        }
+```
+2. Run this task:
+```shell script
+gradle customSshTask
+```
+
+___
 ### Available gradle tasks from `ssh` plugin:
 
 Send by `ftp` with `ssh` (copy from local to remote server):
@@ -52,34 +74,18 @@ Other tasks:
 * `compose` - docker compose up all docker-services(_gradle subprojects_) with recreate and rebuild
 * `compose-nginx`, `compose-backend`, `compose-frontend` - docker compose up subproject with recreate and rebuild 
 * `prune` - remove unused docker data
+> [DOCUMENTATION NEEDED issue](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
 
 > Name of service for all tasks equals to ${project.name} 
 
-### Customization:
-
-1. Register new task in your `build.gradle.kts`:
-```kotlin
-        register("customSshTask", Ssh::class) {
-            host = "hostexample.com"
-            user = "root"
-            gradle = true
-            frontend = true
-            backend = true
-            docker = true
-            nginx = true
-            run = "cd ${project.name} && echo \$PWD"
-        }
-```
-2. Run this task:
-```shell script
-gradle customSshTask
-```
 ___
-#### Preconfigured tasks for publishing/copy by ftp to remote server
+### Preconfigured tasks for publishing/copy by ftp to remote server
 
 By default you have preconfigured profiles tasks: 
 * `ssh` - all disabled  by default (**false**)
 * `publish` - all enabled  by default (**true**) [TODO documentation for `jars` property for this task]
+> [DOCUMENTATION NEEDED issue for [CLOUD mode] microservices deployment](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
+
 
 You can customize these properties:
 ```kotlin
@@ -92,7 +98,11 @@ You can customize these properties:
             nginx = true
         }
 ```
-Project's structure example for a backend `monolit` architecture
+
+___
+
+
+> [MONOLIT mode] Project's structure example for a backend `monolit` architecture
 ```shell script
  project
    |-[backend]
@@ -116,6 +126,7 @@ Project's structure example for a backend `monolit` architecture
 
 ```
 > Default `backend`'s **jar** distribution path: `${project.rootDir}/backend/build/libs/*.jar`
+> [DOCUMENTATION NEEDED issue for [CLOUD mode] microservices deployment](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
 
 ___
 
@@ -127,6 +138,7 @@ tasks{
       cmd { command = "echo ${project.name}" }
 }
 ```
+> [DOCUMENTATION NEEDED issue](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
 
 ___
-### TODO documentation for microservices deployment (`ssh-jars` task)
+### TODO documentation for [CLOUD mode] microservices deployment (`ssh-jars` task)

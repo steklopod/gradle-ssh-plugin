@@ -40,7 +40,7 @@ class SshPlugin : Plugin<Project> {
 //              run = "cd ${project.name} && echo \$PWD"
             }
 
-            JAVA_JARS.forEach{ register("ssh-$it", Ssh::class){ directory = jarLibsFolder(it); description = "Copy [${jarLibsFolder(it)}] to remote server"  } }
+            JAVA_JARS.forEach{ register("ssh-$it", Ssh::class){ directory = jarLibFolder(it); description = "Copy [${jarLibFolder(it)}] to remote server"  } }
             register("ssh-jars", Ssh::class)     { jars = JAVA_JARS; description = "Copy all {*.jars} to remote server" }
             register("ssh-$FRONTEND", Ssh::class){ frontend = true;  description = "Copy [$FRONTEND] jar to remote server" }
             register("ssh-$NGINX", Ssh::class)   { nginx = true;     description = "Copy [$NGINX] jar to remote server" }
@@ -54,7 +54,6 @@ class SshPlugin : Plugin<Project> {
             register("compose-$NGINX", DockerCompose::class)   { service = NGINX;    description = "Docker compose up for [$NGINX] container" }
             register("compose-$POSTGRES", DockerCompose::class){ service = POSTGRES; description = "Docker compose up for [$POSTGRES] container" }
             register("compose-$BACKEND", DockerCompose::class) { service = BACKEND;  description = "Docker compose up for [$BACKEND] container" }
-
 
             register("clear-$FRONTEND", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
             register("prune", Cmd::class){ command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
