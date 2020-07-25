@@ -96,7 +96,10 @@ open class Ssh : Cmd() {
                 if (admin) jars.add(ADMIN_SERVER)
                 if (config) jars.add(CONFIG_SERVER)
 
-                if (postgres) copyIfNotRemote(POSTGRES)
+                if (postgres) {
+                    copyIfNotRemote(POSTGRES)
+                    copyPostgres("docker-entrypoint-initdb.d")
+                }
                 if (static) copyIfNotRemote(STATIC)
 
                 if (nginx) copyWithOverride(NGINX)
