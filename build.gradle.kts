@@ -1,13 +1,13 @@
 plugins {
     `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "0.12.0"
     id("org.sonarqube") version "3.0"
+    id("com.gradle.plugin-publish") version "0.12.0"
+    id("com.github.ben-manes.versions") version "0.29.0"
 }
-
 
 val pluginsVersion = "1.3.10"
 val sshPlugin = "sshPlugin"
-description = "EASY-DEPLOY gradle needed tasks"
+description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
 
