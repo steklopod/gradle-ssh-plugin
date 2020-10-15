@@ -53,7 +53,7 @@ class SshPlugin : Plugin<Project> {
             register("compose-$FRONTEND", DockerCompose::class){ service = FRONTEND; description = "Docker compose up for [$FRONTEND] container" }
             register("compose-$NGINX", DockerCompose::class)   { service = NGINX;    description = "Docker compose up for [$NGINX] container" }
             register("compose-$POSTGRES", DockerCompose::class){ service = POSTGRES; description = "Docker compose up for [$POSTGRES] container" }
-            register("compose-$BACKEND", DockerCompose::class) { service = BACKEND;  description = "Docker compose up for [$BACKEND] container" }
+            register("compose-$ELASTIC", DockerCompose::class) { service = ELASTIC;  description = "Docker compose up for [$ELASTIC] container" }
 
             register("clear-$FRONTEND", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
             register("prune", Cmd::class){ command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }

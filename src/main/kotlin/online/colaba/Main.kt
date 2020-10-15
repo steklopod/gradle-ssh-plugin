@@ -8,6 +8,7 @@ const val STATIC = "static"
 const val NGINX = "nginx"
 const val CHAT = "chat"
 const val BACKEND = "backend"
+const val ELASTIC = "elastic"
 const val POSTGRES = "postgres"
 const val FRONTEND = "frontend"
 

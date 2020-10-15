@@ -77,6 +77,9 @@ open class Ssh : Cmd() {
     var static: Boolean = false
 
     @get:Input
+    var elastic: Boolean = false
+
+    @get:Input
     var docker: Boolean = false
 
     @get:Input
@@ -98,7 +101,9 @@ open class Ssh : Cmd() {
 
                 if (postgres) {
                     copyIfNotRemote(POSTGRES)
+                    copyIfNotRemote("$POSTGRES/backups")
                     copyPostgres("docker-entrypoint-initdb.d")
+                    copyPostgres("postgresql.conf")
                 }
                 if (static) copyIfNotRemote(STATIC)
 
@@ -109,6 +114,8 @@ open class Ssh : Cmd() {
                 if (gradle) copyGradle()
 
                 if (docker) copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
+
+                if (elastic) copy("elasticsearch.yml")
 
                 directory?.let { copyWithOverride(it) }
 

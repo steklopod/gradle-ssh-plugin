@@ -2,16 +2,16 @@ plugins {
     `kotlin-dsl`
     id("org.sonarqube") version "3.0"
     id("com.gradle.plugin-publish") version "0.12.0"
-    id("com.github.ben-manes.versions") version "0.29.0"
+    id("com.github.ben-manes.versions") version "0.33.0"
 }
 
-val pluginsVersion = "1.3.10"
+val pluginsVersion = "1.3.12"
 val sshPlugin = "sshPlugin"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
 
-repositories{ mavenLocal(); mavenCentral() }
+repositories{ mavenLocal(); mavenCentral(); jcenter() }
 
 
 gradlePlugin {
