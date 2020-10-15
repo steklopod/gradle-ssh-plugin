@@ -115,7 +115,10 @@ open class Ssh : Cmd() {
 
                 if (docker) copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
 
-                if (elastic) copy("elasticsearch.yml")
+                if (elastic) {
+                    copyIfNotRemote("$ELASTIC/elastic-data")
+                    copy("$ELASTIC/elasticsearch.yml")
+                }
 
                 directory?.let { copyWithOverride(it) }
 

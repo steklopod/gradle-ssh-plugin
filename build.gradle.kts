@@ -5,7 +5,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.33.0"
 }
 
-val pluginsVersion = "1.3.12"
+val pluginsVersion = "1.3.14"
 val sshPlugin = "sshPlugin"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
