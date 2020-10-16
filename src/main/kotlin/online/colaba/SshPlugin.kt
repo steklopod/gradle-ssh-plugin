@@ -32,6 +32,7 @@ class SshPlugin : Plugin<Project> {
                 static = true
                 frontend = true
                 postgres = true
+                elastic = true
 
                 admin = false  // резерв
                 config = false // резерв
