@@ -5,7 +5,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.33.0"
 }
 
-val pluginsVersion = "1.3.15"
+val pluginsVersion = "1.3.16"
 val sshPlugin = "sshPlugin"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
@@ -31,6 +31,7 @@ pluginBundle {
     (plugins) {
         sshPlugin {
             displayName = "SSH task for easy deploy"
+            description = "SSH task for easy deploy"
             tags = listOf("ssh", "deploy", "sftp", "ftp", "docker", "docker-compose")
             version = pluginsVersion
         }
@@ -48,4 +49,4 @@ tasks {
     compileKotlin { kotlinOptions { jvmTarget = java }; sourceCompatibility = java; targetCompatibility = java }
 }
 
-defaultTasks("tasks", "publishPlugins")
+defaultTasks("clean", "assemble", "publishPlugins")

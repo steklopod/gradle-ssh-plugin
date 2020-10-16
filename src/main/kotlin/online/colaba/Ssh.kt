@@ -80,6 +80,9 @@ open class Ssh : Cmd() {
     var elastic: Boolean = false
 
     @get:Input
+    var kibana: Boolean = false
+
+    @get:Input
     var docker: Boolean = false
 
     @get:Input
@@ -113,9 +116,12 @@ open class Ssh : Cmd() {
 
                 if (gradle) copyGradle()
 
-                if (docker) copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
+                if (docker) copyDockerInEach("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
 
-                if (elastic) copy(file = "elasticsearch.yml", remote = ELASTIC)
+                if (elastic) {
+                    copy("elasticsearch.yml",  ELASTIC)
+                    copy("kibana.yml",  ELASTIC)
+                }
 
                 directory?.let { copyWithOverride(it) }
 
@@ -127,8 +133,10 @@ open class Ssh : Cmd() {
         }
     }
 
-    private fun SessionHandler.copyInEach(vararg files: String) = files.forEach { file ->
-        copy(file); copyFront(file); copyBack(file); copyPostgres(file)
+    private fun SessionHandler.copyDockerInEach(vararg files: String) = files.forEach { file ->
+        copy(file); copyInFrontend(file); copyInAllBackends(file);
+        if (postgres) copyPostgres(file)
+        if (elastic) copy(file, ELASTIC)
     }
 
     private fun SessionHandler.copyGradle() {
@@ -139,10 +147,10 @@ open class Ssh : Cmd() {
         copy(buildFile)
         copy("gradle.properties")
 
-        copyFront(buildFile)
+        copyInFrontend(buildFile)
 
-        copyBack(buildFile)
-        copyBack(settingsFile)
+        copyInAllBackends(buildFile)
+        copyInAllBackends(settingsFile)
 
         /*
         val buildSrc = "buildSrc"
@@ -190,11 +198,11 @@ open class Ssh : Cmd() {
         execute("rm -fr $it")
     }
 
-    private fun SessionHandler.copyBack(file: String) {
+    private fun SessionHandler.copyInAllBackends(file: String) {
         jars.forEach { copy(file, it) }
     }
 
-    private fun SessionHandler.copyFront(file: String) = if (frontend) copy(file, frontendFolder) else false
+    private fun SessionHandler.copyInFrontend(file: String) = if (frontend) copy(file, frontendFolder) else false
     private fun SessionHandler.copyPostgres(file: String) = if (postgres) copy(file, POSTGRES) else false
 
     private fun ifNotGroovyThenKotlin(buildFile: String): String =
