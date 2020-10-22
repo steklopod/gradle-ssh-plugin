@@ -8,9 +8,10 @@ const val STATIC = "static"
 const val NGINX = "nginx"
 const val CHAT = "chat"
 const val BACKEND = "backend"
-const val ELASTIC = "elastic"
 const val POSTGRES = "postgres"
 const val FRONTEND = "frontend"
+const val ELASTIC = "elastic"
+const val ELASTIC_DOCKER_DATA = "elastic-data"
 
 val JAVA_JARS: MutableSet<String> = mutableSetOf(
     "auth",
