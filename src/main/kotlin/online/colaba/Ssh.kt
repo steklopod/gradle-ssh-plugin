@@ -119,8 +119,13 @@ open class Ssh : Cmd() {
                 if (docker) copyDockerInEach("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
 
                 if (elastic) {
-                    copy("elasticsearch.yml",  ELASTIC)
-                    copy("kibana.yml",  ELASTIC)
+                    val cert = "elastic-stack-ca.p12"
+                    listOf(
+                        "elasticsearch.yml", cert, "kibana.yml", "docker-compose.kibana.yml",
+                        "docker-compose.logstash.yml", "logstash.conf", "logstash.yml"
+                    ).forEach { copy(it, ELASTIC) }
+                    execute("chmod 777 ./${project.name}/$ELASTIC/$cert")
+
                     val elasticDockerVolumeDataFolder = "${project.name}/$ELASTIC/$ELASTIC_DOCKER_DATA"
                     if (!remoteIsExist(elasticDockerVolumeDataFolder)) {
                         println("[$elasticDockerVolumeDataFolder] not exist. Creating with chmod 777 -R")
