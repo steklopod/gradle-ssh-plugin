@@ -105,6 +105,8 @@ open class Ssh : Cmd() {
                 if (postgres) {
                     copyIfNotRemote(POSTGRES)
                     copyIfNotRemote("$POSTGRES/backups")
+                    execute("chmod 777 -R ./${project.name}/$POSTGRES/backups")
+
                     copyPostgres("docker-entrypoint-initdb.d")
                     copyPostgres("postgresql.conf")
                 }
@@ -119,18 +121,17 @@ open class Ssh : Cmd() {
                 if (docker) copyDockerInEach("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
 
                 if (elastic) {
-                    val cert = "elastic-stack-ca.p12"
                     listOf(
-                        "elasticsearch.yml", cert, "kibana.yml", "docker-compose.kibana.yml",
+                        "elasticsearch.yml", ELASTIC_CERT_NAME, "kibana.yml", "docker-compose.kibana.yml",
                         "docker-compose.logstash.yml", "logstash.conf", "logstash.yml"
                     ).forEach { copy(it, ELASTIC) }
-                    execute("chmod 777 ./${project.name}/$ELASTIC/$cert")
+                    execute("chmod 777 ./${project.name}/$ELASTIC/$ELASTIC_CERT_NAME")
 
-                    val elasticDockerVolumeDataFolder = "${project.name}/$ELASTIC/$ELASTIC_DOCKER_DATA"
-                    if (!remoteIsExist(elasticDockerVolumeDataFolder)) {
-                        println("[$elasticDockerVolumeDataFolder] not exist. Creating with chmod 777 -R")
-                        remoteMkDir(elasticDockerVolumeDataFolder)
-                        execute("chmod 777 -R ./$elasticDockerVolumeDataFolder")
+                    val elasticDockerVolumeFolder = "${project.name}/$ELASTIC/$ELASTIC_DOCKER_DATA"
+                    if (!remoteIsExist(elasticDockerVolumeFolder)) {
+                        println("[$elasticDockerVolumeFolder] not exist. Creating with chmod 777 -R")
+                        remoteMkDir(elasticDockerVolumeFolder)
+                        execute("chmod 777 -R ./$elasticDockerVolumeFolder")
                     }
                 }
 
