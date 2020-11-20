@@ -228,7 +228,7 @@ open class Ssh : Cmd() {
     }
 
     private fun deleteNodeModulesAndNuxtFolders() {
-        val toRemoveLocal = setOf(".nuxt", ".idea", "node_modules", "package-lock.json", ".DS_Store")
+        val toRemoveLocal = setOf(".nuxt", ".idea", "node_modules", ".DS_Store")
         if (clearNuxt) toRemoveLocal.forEach { "$frontendFolder/$it".removeLocal() }
     }
 
