@@ -5,7 +5,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.36.0"
 }
 
-val pluginsVersion = "1.3.20"
+val pluginsVersion = "1.3.21"
 val sshPlugin = "sshPlugin"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
@@ -39,6 +39,7 @@ pluginBundle {
 }
 
 dependencies {
+    implementation("net.sf.proguard:proguard-gradle:6.3.0beta1")
     implementation("org.hidetake:groovy-ssh:2.10.1")
 }
 

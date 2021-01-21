@@ -69,6 +69,7 @@ class SshPlugin : Plugin<Project> {
                 finalizedBy(ps)
             }
 
+
         }
     }
 

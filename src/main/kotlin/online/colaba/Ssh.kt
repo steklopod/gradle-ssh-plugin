@@ -127,8 +127,9 @@ open class Ssh : Cmd() {
                     ).forEach { copy(it, ELASTIC) }
                     execute("chmod 777 ./${project.name}/$ELASTIC/$ELASTIC_CERT_NAME")
 
-                    val elasticDockerVolumeFolder = "${project.name}/$ELASTIC/$ELASTIC_DOCKER_DATA"
-                    if (!remoteIsExist(elasticDockerVolumeFolder)) {
+                    val elasticDataFolder = "$ELASTIC/$ELASTIC_DOCKER_DATA"
+                    val elasticDockerVolumeFolder = "${project.name}/$elasticDataFolder"
+                    if (!remoteIsExist(elasticDataFolder)) {
                         println("[$elasticDockerVolumeFolder] not exist. Creating with chmod 777 -R")
                         remoteMkDir(elasticDockerVolumeFolder)
                         execute("chmod 777 -R ./$elasticDockerVolumeFolder")
@@ -200,7 +201,7 @@ open class Ssh : Cmd() {
     private fun SessionHandler.remoteIsExist(into: String): Boolean {
         val exists = execute("test -d ${project.name}/$into && echo true || echo false")?.toBoolean() ?: false
         if (exists) println("\n\uD83D\uDCE6 Directory [$into] is found on remote server. Will not be copied.")
-        else println("\n\uD83D\uDCE6 Directory [$into] is not exist on remote server")
+        else println("\n \uD83D\uDCE6 !!! Directory [$into] is not exist on remote server")
         return exists
     }
 
