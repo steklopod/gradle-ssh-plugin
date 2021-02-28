@@ -20,9 +20,6 @@ docker:
   - ".dockerignore"
   - "*/.dockerignore"
 
-env:
-  - ".env"
-  - "*/.env"
 core:
   - "src/main/*"
 test:
@@ -30,9 +27,5 @@ test:
   - "**/*/*Test*"
 license:
   - LICENSE
-frontend:
-  - frontend/**/*
-  - any: ['*.vue']
-  - any: ['*.js']
 deploy-security:
   - id_rsa

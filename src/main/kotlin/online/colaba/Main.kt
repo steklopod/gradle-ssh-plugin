@@ -10,6 +10,7 @@ const val CHAT = "chat"
 const val BACKEND = "backend"
 const val POSTGRES = "postgres"
 const val FRONTEND = "frontend"
+
 const val ELASTIC = "elastic"
 const val ELASTIC_CERT_NAME = "elastic-stack-ca.p12"
 const val ELASTIC_DOCKER_DATA = "elastic-data"

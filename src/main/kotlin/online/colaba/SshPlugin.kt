@@ -35,11 +35,13 @@ class SshPlugin : Plugin<Project> {
                 elastic = true
                 kibana = true
 
-                admin = false  // резерв
-                config = false // резерв
+                clearNuxt = true
+                withBuildSrc = false
+
+                admin = false
+                config = false
                 monolit = false
-                clearNuxt = true // чистит локально node_modules
-//              run = "cd ${project.name} && echo \$PWD"
+                run = "cd ${project.name} && echo \$PWD"
             }
 
             JAVA_JARS.forEach{ register("ssh-$it", Ssh::class){ directory = jarLibFolder(it); description = "Copy [${jarLibFolder(it)}] to remote server"  } }

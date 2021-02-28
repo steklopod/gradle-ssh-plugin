@@ -1,11 +1,11 @@
 plugins {
     `kotlin-dsl`
-    id("org.sonarqube") version "3.0"
+    id("org.sonarqube") version "3.1.1"
     id("com.gradle.plugin-publish") version "0.12.0"
     id("com.github.ben-manes.versions") version "0.36.0"
 }
 
-val pluginsVersion = "1.3.21"
+val pluginsVersion = "1.3.22"
 val sshPlugin = "sshPlugin"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
@@ -41,12 +41,13 @@ pluginBundle {
 dependencies {
     implementation("net.sf.proguard:proguard-gradle:6.3.0beta1")
     implementation("org.hidetake:groovy-ssh:2.10.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 }
 
 kotlinDslPluginOptions { experimentalWarning.set(false) }
 
 tasks {
-    val java = "11"
+    val java = "15"
     compileKotlin { kotlinOptions { jvmTarget = java }; sourceCompatibility = java; targetCompatibility = java }
 }
 
