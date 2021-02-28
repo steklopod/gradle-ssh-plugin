@@ -202,7 +202,7 @@ open class Ssh : Cmd() {
         val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
         val localFileExists = File(fromLocalPath).exists()
         if (localFileExists) {
-            println("\n\uD83D\uDCE6 FOLDER local [$fromLocalPath] \n\t  to remote {$toRemote}\n\t ...removing remote [$toRemote]")
+            println("\n\uD83D\uDCE6 FOLDER local [$fromLocalPath] \n\t  to remote {$toRemote}")
             remoteRm(toRemote)
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
             println("> \uD83D\uDDC3️ Copy [${fromLocalPath.substringAfterLast('/')}] into remote {$toRemoteParent} in progress...\n")
