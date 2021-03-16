@@ -111,7 +111,7 @@ open class Ssh : Cmd() {
 
                     if (postgres) {
                         copyIfNotRemote(POSTGRES)
-                        copyIfNotRemote("$POSTGRES/backups")
+                        if (!copyIfNotRemote("$POSTGRES/backups")) remoteMkDir("$POSTGRES/backups")
                         execute("chmod 777 -R ./${project.name}/$POSTGRES/backups")
 
                         copyPostgres("docker-entrypoint-initdb.d")
@@ -213,14 +213,14 @@ open class Ssh : Cmd() {
 
     private fun SessionHandler.put(from: Any, into: String) = put(hashMapOf("from" to from, "into" to into))
 
-    private fun SessionHandler.remoteExists(into: String): Boolean {
-        val exists = execute("test -d ${project.name}/$into && echo true || echo false")?.toBoolean() ?: false
-        if (exists) println("\n\uD83D\uDCE6 Directory [$into] is EXISTS on remote server.")
-        else println("\n \uD83D\uDCE6 Directory [$into] is NOT EXISTS on remote server.")
+    private fun SessionHandler.remoteExists(remoteFolder: String): Boolean {
+        val exists = execute("test -d ${project.name}/$remoteFolder && echo true || echo false")?.toBoolean() ?: false
+        if (exists) println("\n\uD83D\uDCE6 Directory [$remoteFolder] is EXISTS on remote server.")
+        else println("\n \uD83D\uDCE6 Directory [$remoteFolder] is NOT EXISTS on remote server.")
         return exists
     }
 
-    private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
+    private fun SessionHandler.remoteMkDir(directory: String) = execute("mkdir --parent $directory")
     private fun SessionHandler.remoteRm(vararg folders: String) = folders.forEach {
         println("> ✂️ Removing remote folder [$it]...")
         execute("rm -fr $it")

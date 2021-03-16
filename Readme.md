@@ -16,7 +16,7 @@ For plugin usage you should have `id_rsa` key in root of project for `Continius 
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.3.26"
+    id("online.colaba.ssh") version "1.3.27"
 }
 tasks {
     publish { 
