@@ -33,11 +33,11 @@ class SshPlugin : Plugin<Project> {
                 frontend = true
                 postgres = true
                 elastic = true
-                kibana = true
 
                 clearNuxt = true
                 withBuildSrc = false
 
+                kibana = false
                 admin = false
                 config = false
                 monolit = false

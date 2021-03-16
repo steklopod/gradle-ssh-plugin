@@ -35,7 +35,7 @@ open class Ssh : Cmd() {
 
     @get:Input
     @Optional
-    var user: String? = null
+    var user: String = "root"
 
     @get:Input
     @Optional
@@ -260,8 +260,11 @@ open class Ssh : Cmd() {
         return false
     }
 
-    private fun remote() = (server ?: if (host != null) SshServer(hostSsh = host!!, userSsh = user!!)
-    else SshServer()).remote(checkKnownHosts)
+    private fun remote(): Remote {
+        val sshServer = if (host != null) SshServer(hostSsh = host!!, userSsh = user)
+        else SshServer()
+        return (server ?: sshServer).remote(checkKnownHosts)
+    }
 
     private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
 

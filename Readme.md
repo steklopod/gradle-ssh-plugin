@@ -8,40 +8,41 @@
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=security_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 
 ### Quick start
-1. You must have `id_rsa` private key (on your local machine: `{user.home}/.ssh/id_rsa` or in root of project) to use this plugin
+For plugin usage you should have `id_rsa` key in root of project for `Continius Dilivery` or 
+   on your local machine: `{user.home}/.ssh/id_rsa` for deployment from local machine.
 
-2. In your `build.gradle.kts` file
+* Quickstart:
+1. In root `build.gradle.kts` file
 
 ```kotlin
 plugins {
-     id("online.colaba.ssh") version "1.3.25"
+    id("online.colaba.ssh") version "1.3.26"
 }
-
-ssh {
-    host = "hostexample.com"
-    directory = "distribution"
+tasks {
+    publish { 
+        host = "colaba.space"
+        directory = "distribution"
+    }
 }
 ```
-> This tasks will copy local project **distribution** folder into remote **~/{project.name}/** and print it [will execute by ftp with ssh]
+This task will copy **distribution** folder from local machine to remote  host **~/{project.name}/** 
 
 ### 🎯 Run task:
 ```shell script
-gradle ssh
+gradle publish
 ```
 
 ### Customization:
 
-#### [CLOUD mode] for deploying Spring Cloud microservices stack (no documentation).
-> [DOCUMENTATION NEEDED issue for [CLOUD mode] microservices deployment](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
+#### [CLOUD mode] for deploying Spring Cloud microservices stack.
 
 1. Register new task in your `build.gradle.kts`:
 ```kotlin
         register("customSshTask", Ssh::class) {
-            host = "hostexample.com"
+            host = "my-domain.com"
             user = "root"
             gradle = true
-            frontend = true
-            backend = true
+            frontend = false
             docker = true
             nginx = true
             run = "cd ${project.name} && echo \$PWD"
@@ -51,6 +52,7 @@ gradle ssh
 ```shell script
 gradle customSshTask
 ```
+> [DOCUMENTATION NEEDED issue for [CLOUD mode] microservices deployment](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
 
 ___
 ### Available gradle tasks from `ssh` plugin:
