@@ -54,6 +54,7 @@ class SshPlugin : Plugin<Project> {
             register("ssh-docker", Ssh::class)   { docker = true;    description = "Copy [docker] needed files to remote server" }
 
             JAVA_JARS.forEach{ register("compose-$it", DockerCompose::class){ service = it;  description = "Docker compose up for [$it] container" } }
+            register("compose-$BACKEND", DockerCompose::class) { service = BACKEND; description = "Docker compose up for [$BACKEND] container" }
             register("compose-$FRONTEND", DockerCompose::class){ service = FRONTEND; description = "Docker compose up for [$FRONTEND] container" }
             register("compose-$NGINX", DockerCompose::class)   { service = NGINX;    description = "Docker compose up for [$NGINX] container" }
             register("compose-$POSTGRES", DockerCompose::class){ service = POSTGRES; description = "Docker compose up for [$POSTGRES] container" }
