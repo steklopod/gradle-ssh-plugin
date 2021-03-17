@@ -1,21 +1,20 @@
 plugins {
+    kotlin("jvm") version "1.5.0-M1"
     `kotlin-dsl`
-    val kotlin = "1.4.31"
-    kotlin("jvm") version kotlin
+//    id("org.gradle.kotlin.kotlin-dsl") version "2.1.4"
     id("org.sonarqube") version "3.1.1"
-    id("com.gradle.plugin-publish") version "0.12.0"
-    id("com.github.ben-manes.versions") version "0.36.0"
+    id("com.gradle.plugin-publish") version "0.13.0"
+    id("com.github.ben-manes.versions") version "0.38.0"
 }
 
-val pluginsVersion = "1.3.27"
-val sshPlugin = "sshPlugin"
+val pluginsVersion = "1.3.33"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
 
 repositories{ mavenLocal(); mavenCentral(); jcenter() }
 
-
+val sshPlugin = "sshPlugin"
 gradlePlugin {
     plugins {
         create(sshPlugin) {
@@ -23,13 +22,10 @@ gradlePlugin {
             description = "Ssh needed tasks for FTP deploy: all you need for easy deployment"
         }
     }
-
 }
-
 pluginBundle {
     website = "https://github.com/steklopod/gradle-ssh-plugin"
     vcsUrl = "https://github.com/steklopod/gradle-ssh-plugin.git"
-
     (plugins) {
         sshPlugin {
             displayName = "SSH task for easy deploy"

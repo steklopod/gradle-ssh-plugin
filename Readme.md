@@ -7,25 +7,30 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=security_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 
-### Quick start
 For plugin usage you should have `id_rsa` key in root of project for `Continius Dilivery` or 
-   on your local machine: `{user.home}/.ssh/id_rsa` for deployment from local machine.
+   on your local machine: `{user.home}/.ssh/id_rsa` for deployment from local machine. To make it run:
 
-* Quickstart:
-1. In root `build.gradle.kts` file
+```shell
+ssh-keygen -t rsa -m PEM
+```
+
+### Quick start
+
+In root of project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.3.27"
+    id("online.colaba.ssh") version "1.3.33"
 }
+
 tasks {
     publish { 
-        host = "colaba.space"
+        host = "my-website.com"
         directory = "distribution"
     }
 }
 ```
-This task will copy **distribution** folder from local machine to remote  host **~/{project.name}/** 
+This task will copy folders & files from local machine to remote host **~/${project.name}/...** folder 
 
 ### 🎯 Run task:
 ```shell script

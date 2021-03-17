@@ -1,6 +1,6 @@
 package online.colaba
 
-import org.gradle.api.GradleException
+import org.gradle.internal.impldep.com.amazonaws.services.kms.model.NotFoundException
 import org.hidetake.groovy.ssh.connection.AllowAnyHosts
 import org.hidetake.groovy.ssh.core.Remote
 import java.io.File
@@ -20,7 +20,7 @@ data class SshServer(
             if (exists) println("> OK : [$rsaKeyName] found in root folder of project")
             else {
                 if (existsDefault) return defaultRsaPath
-                else throw SshException("You don't have [$defaultRsaPath] file. Or you can put [$rsaKeyName] file in root directory.")
+                else throw NotFoundException("You don't have [$defaultRsaPath] file. Or you can put [$rsaKeyName] file in root directory.")
             }
             return idRsaPath
         }
@@ -34,7 +34,7 @@ data class SshServer(
             "identity" to File(idRsaPath)
         )
         if (checkKnownHosts) {
-            println("* If you don't want to scan [known_hosts] local file - set `checkKnownHosts = false` in gradle [ssh] task.")
+            println("* If you don't want to scan [known_hosts] local file - set `checkKnownHosts = false` in gradle [ssh, publish] tasks.")
             config.remove("knownHosts")
         }
         return Remote(config)
@@ -42,4 +42,3 @@ data class SshServer(
     }
 }
 
-class SshException(override val message: String) : GradleException()

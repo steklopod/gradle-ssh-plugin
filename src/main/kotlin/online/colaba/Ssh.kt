@@ -31,7 +31,7 @@ open class Ssh : Cmd() {
 
     @get:Input
     @Optional
-    var host: String? = null
+    var host: String = DEFAULT_HOST
 
     @get:Input
     @Optional
@@ -111,7 +111,7 @@ open class Ssh : Cmd() {
 
                     if (postgres) {
                         copyIfNotRemote(POSTGRES)
-                        if (!copyIfNotRemote("$POSTGRES/backups")) remoteMkDir("$POSTGRES/backups")
+                        if (!copyIfNotRemote("$POSTGRES/backups")) remoteMkDir("${project.name}/$POSTGRES/backups")
                         execute("chmod 777 -R ./${project.name}/$POSTGRES/backups")
 
                         copyPostgres("docker-entrypoint-initdb.d")
@@ -182,11 +182,10 @@ open class Ssh : Cmd() {
     }
 
     private suspend fun SessionHandler.copyGradleWrapperIfNotExists() {
-        if (copyIfNotRemote("gradle")) {
-            copy("gradlew")
-            copy("gradlew.bat")
-            execute("chmod +x ${project.name}/gradlew")
-        }
+        copyIfNotRemote("gradle")
+        copy("gradlew")
+        copy("gradlew.bat")
+        execute("chmod +x ${project.name}/gradlew")
     }
 
     private suspend fun SessionHandler.copyIfNotRemote(directory: String = ""): Boolean =
@@ -220,7 +219,7 @@ open class Ssh : Cmd() {
         return exists
     }
 
-    private fun SessionHandler.remoteMkDir(directory: String) = execute("mkdir --parent $directory")
+    private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
     private fun SessionHandler.remoteRm(vararg folders: String) = folders.forEach {
         println("> ✂️ Removing remote folder [$it]...")
         execute("rm -fr $it")
@@ -260,11 +259,9 @@ open class Ssh : Cmd() {
         return false
     }
 
-    private fun remote(): Remote {
-        val sshServer = if (host != null) SshServer(hostSsh = host!!, userSsh = user)
-        else SshServer()
-        return (server ?: sshServer).remote(checkKnownHosts)
-    }
+    private fun remote(): Remote = (server ?: SshServer(hostSsh = host, userSsh = user))
+        .remote(checkKnownHosts)
+
 
     private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
 
