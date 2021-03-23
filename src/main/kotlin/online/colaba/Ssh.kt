@@ -25,77 +25,32 @@ open class Ssh : Cmd() {
         group = sshGroup
         description = "Publish by FTP your distribution with SSH commands"
     }
+    @get:Input @Optional var host: String = DEFAULT_HOST
+    @get:Input @Optional var user: String = "root"
 
-    @get:Input
-    var jars: MutableSet<String> = mutableSetOf()
+    @get:Input @Optional var frontendFolder: String = FRONTEND
+    @get:Input @Optional var directory: String? = null
+    @get:Input @Optional var backendFolder: String = BACKEND
+    @get:Input @Optional var jars: MutableSet<String> = mutableSetOf()
 
-    @get:Input
-    @Optional
-    var host: String = DEFAULT_HOST
+    @get:Input @Optional var run: String? = null
 
-    @get:Input
-    @Optional
-    var user: String = "root"
-
-    @get:Input
-    @Optional
-    var server: SshServer? = null
-
-    @get:Input
-    var frontendFolder: String = FRONTEND
-
-    @get:Input
-    var backendFolder: String = BACKEND
-
-    @get:Input
-    var checkKnownHosts: Boolean = false
-
-    @get:Input
-    @Optional
-    var directory: String? = null
-
-    @get:Input
-    @Optional
-    var run: String? = null
-
-    @get:Input
-    var frontend: Boolean = false
-
-    @get:Input
-    var clearNuxt: Boolean = false
-
-    @get:Input
-    var postgres: Boolean = false
-
-    @get:Input
-    var monolit: Boolean = false
-
-    @get:Input
-    var admin: Boolean = false
-
-    @get:Input
-    var config: Boolean = false
-
-    @get:Input
-    var static: Boolean = false
-
-    @get:Input
-    var elastic: Boolean = false
-
-    @get:Input
-    var kibana: Boolean = false
-
-    @get:Input
-    var docker: Boolean = false
-
-    @get:Input
-    var gradle: Boolean = false
-
-    @get:Input
-    var nginx: Boolean = false
-
-    @get:Input
-    var withBuildSrc: Boolean = false
+    @get:Input var gradle: Boolean = false
+    @get:Input var gradleForce: Boolean = false
+    @get:Input var monolit: Boolean = false
+    @get:Input var docker: Boolean = false
+    @get:Input var frontend: Boolean = false
+    @get:Input var clearNuxt: Boolean = false
+    @get:Input var postgres: Boolean = false
+    @get:Input var nginx: Boolean = false
+    @get:Input var static: Boolean = false
+    @get:Input var elastic: Boolean = false
+    @get:Input var kibana: Boolean = false
+    @get:Input var admin: Boolean = false
+    @get:Input var config: Boolean = false
+    @get:Input var withBuildSrc: Boolean = false
+    @get:Input var checkKnownHosts: Boolean = false
+    @get:Input @Optional var server: SshServer? = null
 
     @TaskAction
     fun run() {
@@ -105,9 +60,9 @@ open class Ssh : Cmd() {
                     if (clearNuxt) deleteNodeModulesAndNuxtFolders()
                     if (frontend) copyWithOverrideAsync(frontendFolder)
 
-                    if (monolit) jars = mutableSetOf(backendFolder)
                     if (admin) jars.add(ADMIN_SERVER)
                     if (config) jars.add(CONFIG_SERVER)
+                    if (monolit) jars = mutableSetOf(backendFolder)
 
                     if (postgres) {
                         copyIfNotRemote(POSTGRES)
@@ -142,6 +97,7 @@ open class Ssh : Cmd() {
                             execute("chmod -R 777 ./$elasticDockerVolumeFolder")
                         }
                     }
+
                     if (kibana) listOf("kibana.yml", "docker-compose.kibana.yml").forEach { copy(it, ELASTIC) }
 
                     directory?.let { copyWithOverrideAsync(it) }
@@ -182,7 +138,7 @@ open class Ssh : Cmd() {
     }
 
     private suspend fun SessionHandler.copyGradleWrapperIfNotExists() {
-        copyIfNotRemote("gradle")
+        if (gradleForce) copy("gradle") else copyIfNotRemote("gradle")
         copy("gradlew")
         copy("gradlew.bat")
         execute("chmod +x ${project.name}/gradlew")
@@ -274,3 +230,7 @@ fun Project.registerSshTask() = tasks.register<online.colaba.Ssh>(sshGroup)
 
 val Project.ssh: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>(sshGroup)
+
+fun Project.registerSshBackendTask() = tasks.register<online.colaba.Ssh>("sshBackend")
+val Project.sshBackend: TaskProvider<online.colaba.Ssh>
+    get() = tasks.named<online.colaba.Ssh>("sshBackend")

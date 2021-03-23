@@ -20,7 +20,7 @@ In root of project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.3.34"
+    id("online.colaba.ssh") version "1.3.35"
 }
 
 tasks {
@@ -148,4 +148,4 @@ tasks{
 > [DOCUMENTATION NEEDED issue](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
 
 ___
-### TODO documentation for [CLOUD mode] microservices deployment (`ssh-jars` task)
+> TODO: documentation for [CLOUD mode] microservices deployment (`ssh-jars` task)

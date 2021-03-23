@@ -10,15 +10,18 @@ class SshPlugin : Plugin<Project> {
     override fun apply(project: Project): Unit = project.run {
         description = "SSH needed deploy-tasks +++ Docker-compose for root "
 
-        registerSshTask()
+        ssh { description = "Template for SSH deploy. All props are set to `false`" }
+
+        sshBackend{ monolit = true; description = "Copy [$BACKEND] jar to remote server" }
+
+        cmd {  }
+
+        compose{  }
+
         registerCmdTask()
         registerDockerComposeTask()
-
-        ssh { }
-
-        cmd {   }
-
-        compose{   }
+        registerSshTask()
+        registerSshBackendTask()
 
         tasks {
             register("publish", Ssh::class) {
@@ -35,12 +38,12 @@ class SshPlugin : Plugin<Project> {
                 elastic = true
 
                 clearNuxt = true
-                withBuildSrc = false
 
+                monolit = false
                 kibana = false
                 admin = false
                 config = false
-                monolit = false
+                withBuildSrc = false
                 run = "cd ${project.name} && echo \$PWD"
             }
 
@@ -49,9 +52,8 @@ class SshPlugin : Plugin<Project> {
             register("ssh-$FRONTEND", Ssh::class){ frontend = true;  description = "Copy [$FRONTEND] jar to remote server" }
             register("ssh-$NGINX", Ssh::class)   { nginx = true;     description = "Copy [$NGINX] jar to remote server" }
             register("ssh-$POSTGRES", Ssh::class){ postgres = true;  description = "Copy [$POSTGRES] jar to remote server" }
-            register("ssh-$BACKEND", Ssh::class) { monolit = true;   description = "Copy [$BACKEND] jar to remote server" }
-            register("ssh-gradle", Ssh::class)   { gradle = true;    description = "Copy [gradle] needed files to remote server" }
             register("ssh-docker", Ssh::class)   { docker = true;    description = "Copy [docker] needed files to remote server" }
+            register("ssh-gradle", Ssh::class)   { gradle = true;    gradleForce = true; description = "Copy [gradle] needed files to remote server" }
 
             JAVA_JARS.forEach{ register("compose-$it", DockerCompose::class){ service = it;  description = "Docker compose up for [$it] container" } }
             register("compose-$BACKEND", DockerCompose::class) { service = BACKEND; description = "Docker compose up for [$BACKEND] container" }

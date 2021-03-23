@@ -7,7 +7,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.38.0"
 }
 
-val pluginsVersion = "1.3.34"
+val pluginsVersion = "1.3.35"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
@@ -42,11 +42,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 }
 
-kotlinDslPluginOptions { experimentalWarning.set(false) }
-
+val java = "15"
 tasks {
-    val java = "15"
-    compileKotlin { kotlinOptions { jvmTarget = java }; sourceCompatibility = java; targetCompatibility = java }
+    compileKotlin { kotlinOptions { freeCompilerArgs += listOf("-Xskip-prerelease-check"); jvmTarget = java }; sourceCompatibility = java; targetCompatibility = java }
 }
+kotlinDslPluginOptions { experimentalWarning.set(false); jvmTarget.set(java) }
 
 defaultTasks("clean", "assemble", "publishPlugins")
