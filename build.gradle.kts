@@ -1,40 +1,32 @@
 plugins {
-    kotlin("jvm") version "1.5.0-M1"
     `kotlin-dsl`
-//    id("org.gradle.kotlin.kotlin-dsl") version "2.1.4"
+    kotlin("jvm") version "1.5.0-M1"
     id("org.sonarqube") version "3.1.1"
     id("com.gradle.plugin-publish") version "0.13.0"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
-
-val pluginsVersion = "1.3.36"
+val pluginsVersion = "1.3.45"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
 
-repositories{ mavenLocal(); mavenCentral(); jcenter() }
+repositories{ mavenLocal(); mavenCentral() }
 
 val sshPlugin = "sshPlugin"
-gradlePlugin {
-    plugins {
-        create(sshPlugin) {
-            id = "$group.ssh"; implementationClass = "$group.SshPlugin"
-            description = "Ssh needed tasks for FTP deploy: all you need for easy deployment"
-        }
-    }
-}
+gradlePlugin { plugins { create(sshPlugin) {
+    id = "$group.ssh"; implementationClass = "$group.SshPlugin"
+    description = "Ssh needed tasks for FTP deploy: all you need for easy deployment"
+} } }
 pluginBundle {
     website = "https://github.com/steklopod/gradle-ssh-plugin"
     vcsUrl = "https://github.com/steklopod/gradle-ssh-plugin.git"
-    (plugins) {
-        sshPlugin {
-            displayName = "SSH task for easy deploy"
-            description = "SSH task for easy deploy"
-            tags = listOf("ssh", "deploy", "sftp", "ftp", "docker", "docker-compose")
-            version = pluginsVersion
-        }
+    (plugins) { sshPlugin {
+        displayName = "SSH task for easy deploy"
+        description = "SSH task for easy deploy"
+        tags = listOf("ssh", "deploy", "sftp", "ftp", "docker", "docker-compose")
+        version = pluginsVersion
     }
-}
+} }
 
 dependencies {
     implementation("net.sf.proguard:proguard-gradle:6.3.0beta1")
@@ -42,10 +34,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 }
 
-val java = "15"
-tasks {
-    compileKotlin { kotlinOptions { freeCompilerArgs += listOf("-Xskip-prerelease-check"); jvmTarget = java }; sourceCompatibility = java; targetCompatibility = java }
-}
-kotlinDslPluginOptions { experimentalWarning.set(false); jvmTarget.set(java) }
+tasks { compileKotlin { kotlinOptions { jvmTarget = "15" } } }
 
 defaultTasks("clean", "assemble", "publishPlugins")

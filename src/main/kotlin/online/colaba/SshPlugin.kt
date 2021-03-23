@@ -9,19 +9,15 @@ import org.gradle.kotlin.dsl.*
 class SshPlugin : Plugin<Project> {
     override fun apply(project: Project): Unit = project.run {
         description = "SSH needed deploy-tasks +++ Docker-compose for root "
-
-        ssh { description = "Template for SSH deploy. All props are set to `false`" }
-
-        sshBackend{ monolit = true; description = "Copy [$BACKEND] jar to remote server" }
-
-        cmd {  }
-
-        compose{  }
-
         registerCmdTask()
         registerDockerComposeTask()
         registerSshTask()
         registerSshBackendTask()
+
+        ssh { }
+        sshBackend{ }
+        cmd { }
+        compose{ }
 
         tasks {
             register("publish", Ssh::class) {
@@ -73,7 +69,6 @@ class SshPlugin : Plugin<Project> {
                 command = "docker rm -vf \$(docker ps -q)"; description = "Docker remove all containers"; group = dockerMainGroupName(project.name)
                 finalizedBy(ps)
             }
-
 
         }
     }

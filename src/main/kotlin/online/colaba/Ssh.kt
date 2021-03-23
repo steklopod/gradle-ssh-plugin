@@ -53,9 +53,9 @@ open class Ssh : Cmd() {
     @get:Input @Optional var server : SshServer? = null
 
     @TaskAction fun run() { Ssh.newService().runSessions { session(remote()) { runBlocking {
-    log.info("Remote folder: 🧿${project.name}🧿")
-    log.info("HOST: $host ")
-    log.info("USER: $user ")
+    println("Remote folder: 🧿${project.name}🧿")
+    println("HOST: $host ")
+    println("USER: $user ")
 
     if (static) copyIfNotRemote(STATIC)
     if (nginx)  copyWithOverrideAsync(NGINX)
@@ -98,7 +98,7 @@ open class Ssh : Cmd() {
 
     directory?.let { copyWithOverrideAsync(it) }
 
-    log.info("🔮 Executing command on remote server [ $host ] 🔮 \n🔮 {{ `$run` }} 🔮\n" + execute(run) +"\n\n")
+    println("🔮 Executing command on remote server [ $host ] 🔮 \n🔮 {{ `$run` }} 🔮\n" + execute(run) +"\n\n")
 
 } } } }
 
@@ -156,10 +156,10 @@ open class Ssh : Cmd() {
 
     private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
     private fun SessionHandler.removeRemote(vararg folders: String) = folders.forEach {
-        execute("rm -fr $it"); log.info("🗑️️ Removed REMOTE folder [ $it ] 🗑️️")
+        execute("rm -fr $it"); println("🗑️️ Removed REMOTE folder [ $it ] 🗑️️")
     }
     private fun String.removeLocal() { File("${project.rootDir}/$this".normalizeForWindows()).apply {
-        if (exists()) deleteRecursively(); log.warn("✂️ Removed LOCAL folder: [ $this ] ✂️")
+        if (exists()) deleteRecursively(); println("✂️ Removed LOCAL folder: [ $this ] ✂️")
     } }
 
     private fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
@@ -169,7 +169,7 @@ open class Ssh : Cmd() {
             put(from, remoteMkDir(into))
             println("\uD83D\uDDA5️ FILE from local [$from] \n\t to remote {$into}")
             return true
-        } else log.info("\t☣️ > Skip not found: $from\n")
+        } else println("\t☣️ > Skip not found: $from\n")
         return false
     }
     private fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)
@@ -179,17 +179,18 @@ open class Ssh : Cmd() {
     private fun remote(): Remote = (server ?: SshServer(hostSsh = host, userSsh = user)).remote(checkKnownHosts)
     private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
     private fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) = session(*remotes, delegateClosureOf(action))
-
-    companion object {
-        private val log = LoggerFactory.getLogger(this::class.java)
-    }
 }
 
 
-fun Project.registerSshTask() = tasks.register<online.colaba.Ssh>(sshGroup)
-val Project.ssh: TaskProvider<online.colaba.Ssh>
-    get() = tasks.named<online.colaba.Ssh>(sshGroup)
-
 fun Project.registerSshBackendTask() = tasks.register<online.colaba.Ssh>("sshBackend")
 val Project.sshBackend: TaskProvider<online.colaba.Ssh>
-    get() = tasks.named<online.colaba.Ssh>("sshBackend")
+    get() = tasks.named<online.colaba.Ssh>("sshBackend"){
+        description = "Copy [$BACKEND] jar to remote server"
+        monolit = true
+    }
+
+fun Project.registerSshTask() = tasks.register<online.colaba.Ssh>(sshGroup)
+val Project.ssh: TaskProvider<online.colaba.Ssh>
+    get() = tasks.named<online.colaba.Ssh>(sshGroup){
+        description = "Template for SSH deploy. All props are set to `false`"
+    }
