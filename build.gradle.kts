@@ -7,7 +7,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.38.0"
 }
 
-val pluginsVersion = "1.3.35"
+val pluginsVersion = "1.3.36"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"

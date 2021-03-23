@@ -53,7 +53,7 @@ class SshPlugin : Plugin<Project> {
             register("ssh-$NGINX", Ssh::class)   { nginx = true;     description = "Copy [$NGINX] jar to remote server" }
             register("ssh-$POSTGRES", Ssh::class){ postgres = true;  description = "Copy [$POSTGRES] jar to remote server" }
             register("ssh-docker", Ssh::class)   { docker = true;    description = "Copy [docker] needed files to remote server" }
-            register("ssh-gradle", Ssh::class)   { gradle = true;    gradleForce = true; description = "Copy [gradle] needed files to remote server" }
+            register("ssh-gradle", Ssh::class)   { gradle = true;    description = "Copy [gradle] needed files to remote server" }
 
             JAVA_JARS.forEach{ register("compose-$it", DockerCompose::class){ service = it;  description = "Docker compose up for [$it] container" } }
             register("compose-$BACKEND", DockerCompose::class) { service = BACKEND; description = "Docker compose up for [$BACKEND] container" }

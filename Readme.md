@@ -20,7 +20,7 @@ In root of project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.3.35"
+    id("online.colaba.ssh") version "1.3.36"
 }
 
 tasks {
