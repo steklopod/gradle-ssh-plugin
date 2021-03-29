@@ -14,28 +14,20 @@ open class Cmd : Exec() {
         description = "Execute a command line process on local PC [linux/windows]"
     }
 
-    @get:Input
-    var command = "echo ${project.name}"
+    @get:Input var command = "echo ${project.name}"
 
-    @TaskAction
-    override fun exec() {
+    @TaskAction override fun exec() {
         commandLine = windowsPrefix + command.splitBySpace()
         println("> Executing command: $commandLine\n")
         super.exec()
     }
 
     fun dockerForEachSubproject(project: Project, dockerCommand: String, vararg ignoringServices: String) {
-        project.subprojects.forEach {
-            val name = it.name
-            if (!ignoringServices.toSet().contains(name)) {
-                command = "docker $dockerCommand $name"
-            }
-        }
-    }
+        project.subprojects.forEach { if (!ignoringServices.toSet().contains(it.name))
+            command = "docker $dockerCommand ${it.name}"
+    } }
 }
 
-
 fun Project.registerCmdTask() = tasks.register<Cmd>("cmd")
-
 val Project.cmd: TaskProvider<Cmd>
     get() = tasks.named<Cmd>("cmd")

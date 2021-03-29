@@ -57,20 +57,17 @@ class SshPlugin : Plugin<Project> {
                 }
             }
 
-            register("ssh-docker", Ssh::class)   { docker = true;    description = "Copy [docker] needed files to remote server" }
-            register("ssh-gradle", Ssh::class)   { gradle = true;    description = "Copy [gradle] needed files to remote server" }
+            register("ssh-docker", Ssh::class){ docker = true; description = "Copy [docker] needed files to remote server" }
+            register("ssh-gradle", Ssh::class){ gradle = true; description = "Copy [gradle] needed files to remote server" }
 
-            subprojects.forEach { register("compose-${it.name}", DockerCompose::class){ service = it.name;  description = "Docker compose up for [${it.name}] container" } }
+            subprojects.forEach { register("compose-${it.name}", DockerCompose::class){ service = it.name; description = "Docker compose up for [${it.name}] container" } }
 
             register("clear-$FRONTEND", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
             register("prune", Cmd::class){ command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
 
-
-            register("composeDev", DockerCompose::class) { dependsOn(":$BACKEND:assemble"); isDev = true; description = "Docker compose up from `docker-compose.dev.yml` file after backend `assemble` task" }
             register("stopAll",Cmd::class) { dockerForEachSubproject(project, "stop", POSTGRES); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
             val ps by registering (Cmd::class) { command = "docker ps"; description = "Print all containers"; group = dockerMainGroupName(project.name) }
-            register("rm", Cmd::class) {
-                command = "docker rm -vf \$(docker ps -q)"; description = "Docker remove all containers"; group = dockerMainGroupName(project.name)
+            register("rm-all", Cmd::class) { command = "docker rm -vf \$(docker ps -q)"; description = "Docker remove all containers"; group = dockerMainGroupName(project.name)
                 finalizedBy(ps)
             }
 } } }

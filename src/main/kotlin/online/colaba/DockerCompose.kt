@@ -12,31 +12,18 @@ open class DockerCompose : Cmd() {
     companion object {
         fun dockerMainGroupName(projectName: String) = "docker-main-$projectName"
     }
-
     init {
         group = dockerMainGroupName(project.name)
         description = "Docker-compose task"
     }
 
-    @get:Input
-    @Optional
-    var composeFile: String? = null
+    @get:Input @Optional var composeFile: String? = null
+    @get:Input @Optional var service    : String? = null
 
-    @get:Input
-    @Optional
-    var service: String? = null
-
-    @get:Input
-    var exec: String = "up "
-
-    @get:Input
-    var recreate: Boolean = true
-
-    @get:Input
-    var isDev: Boolean = false
-
-    @get:Input
-    var noDeps: Boolean = true
+    @get:Input var exec    : String = "up "
+    @get:Input var recreate: Boolean = true
+    @get:Input var isDev   : Boolean = false
+    @get:Input var noDeps  : Boolean = true
 
     @TaskAction
     override fun exec() {
