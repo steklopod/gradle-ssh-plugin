@@ -16,7 +16,6 @@ import org.hidetake.groovy.ssh.core.Remote
 import org.hidetake.groovy.ssh.core.RunHandler
 import org.hidetake.groovy.ssh.core.Service
 import org.hidetake.groovy.ssh.session.SessionHandler
-import org.slf4j.LoggerFactory
 import java.io.File
 
 const val sshGroup = "ssh"
@@ -33,7 +32,7 @@ open class Ssh : Cmd() {
 
     @get:Input var frontendFolder      : String  = FRONTEND
     @get:Input var backendFolder       : String  = BACKEND
-    @get:Input var jars                : MutableSet<String> = mutableSetOf()
+    @get:Input var jars                : Set<String> = JAVA_JARS
     @get:Input @Optional var directory : String? = null
 
     @get:Input var monolit          : Boolean = false
@@ -52,10 +51,11 @@ open class Ssh : Cmd() {
     @get:Input var checkKnownHosts  : Boolean = false
     @get:Input @Optional var server : SshServer? = null
 
-    @TaskAction fun run() { Ssh.newService().runSessions { session(remote()) { runBlocking {
+    @TaskAction fun run() {
     println("Remote folder: 🧿${project.name}🧿")
     println("HOST: $host ")
     println("USER: $user ")
+    Ssh.newService().runSessions { session(remote()) { runBlocking {
 
     if (static) copyIfNotRemote(STATIC)
     if (nginx)  copyWithOverrideAsync(NGINX)
@@ -71,9 +71,7 @@ open class Ssh : Cmd() {
         copyPostgres("postgresql.conf")
     }
     // Jars
-    if (admin)   jars.add(ADMIN_SERVER)
-    if (config)  jars.add(CONFIG_SERVER)
-    if (monolit) jars = mutableSetOf(backendFolder)
+    if (monolit) jars = setOf(backendFolder)
     if (jars.isNotEmpty()) jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
 
     if (gradle) copyGradle()
@@ -104,12 +102,13 @@ open class Ssh : Cmd() {
 
 
     private fun SessionHandler.copyInBackends    (file: String) { jars.forEach { copy(file, it) } }
-    private fun SessionHandler.copyInFrontend    (file: String)  = if (frontend) copy(file, frontendFolder) else false
-    private fun SessionHandler.copyPostgres      (file: String)  = if (postgres) copy(file, POSTGRES) else false
+    private fun SessionHandler.copyInFrontend    (file: String)  = copy(file, frontendFolder)
+    private fun SessionHandler.copyPostgres      (file: String)  = copy(file, POSTGRES)
     private fun SessionHandler.copyInEach(vararg files: String) = files.forEach { file ->
         copy(file); copyInFrontend(file); copyInBackends(file);
         if (postgres) copyPostgres(file); if (elastic) copy(file, ELASTIC); if (postgres) copy(file, POSTGRES);
-        if (nginx) copy(file, NGINX); if (admin) copy(file, ADMIN_SERVER); if (config) copy(file, CONFIG_SERVER)
+        if (nginx) copy(file, NGINX);
+        if (!monolit || jars.size == 1) { if (admin) copy(file, ADMIN_SERVER); if (config) copy(file, CONFIG_SERVER) }
     }
 
     private suspend fun SessionHandler.copyGradle() = coroutineScope {
@@ -134,12 +133,12 @@ open class Ssh : Cmd() {
         val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
         val localFileExists = File(fromLocalPath).exists()
         if (localFileExists) {
-            println("\n\uD83D\uDCE6 FOLDER local [$fromLocalPath] \n\t  to remote {$toRemote}")
+            println("📦 FOLDER local [$fromLocalPath] \n\t  to remote {$toRemote}")
             removeRemote(toRemote)
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
             println("> \uD83D\uDDC3️ Copy [${fromLocalPath.substringAfterLast('/')}] into remote {$toRemoteParent} in progress...\n")
             put(File(fromLocalPath), remoteMkDir(toRemoteParent))
-        } else println("\n\uD83D\uDCE6 FOLDER local [$fromLocalPath] not exists, so it not will be copied to server.")
+        } else println("📦 FOLDER local [$fromLocalPath] not exists, so it not will be copied to server.")
         return localFileExists
     }
     private suspend fun SessionHandler.copyWithOverrideAsync(directory: String) =
@@ -149,7 +148,7 @@ open class Ssh : Cmd() {
 
     private fun SessionHandler.remoteExists(remoteFolder: String): Boolean {
         val exists = execute("test -d ${project.name}/$remoteFolder && echo true || echo false")?.toBoolean() ?: false
-        if (exists) println("\n\uD83D\uDCE6 Directory [$remoteFolder] is EXISTS on remote server.")
+        if (exists) println("📦 🧱 Directory [$remoteFolder] is EXISTS on remote server.")
         else println("\n \uD83D\uDCE6 Directory [$remoteFolder] is NOT EXISTS on remote server.")
         return exists
     }

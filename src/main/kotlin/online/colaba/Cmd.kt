@@ -19,13 +19,9 @@ open class Cmd : Exec() {
 
     @TaskAction
     override fun exec() {
-        try {
-            commandLine = windowsPrefix + command.splitBySpace()
-            println("> Executing command: $commandLine\n")
-            super.exec()
-        } catch (e: Exception) {
-            e.shortStackTraceWithPrint(project.name)
-        }
+        commandLine = windowsPrefix + command.splitBySpace()
+        println("> Executing command: $commandLine\n")
+        super.exec()
     }
 
     fun dockerForEachSubproject(project: Project, dockerCommand: String, vararg ignoringServices: String) {
