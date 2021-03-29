@@ -3,7 +3,11 @@ package online.colaba
 import online.colaba.DockerCompose.Companion.dockerMainGroupName
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.getValue
+import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.provideDelegate
+import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.registering
 import java.io.File
 
 
@@ -61,11 +65,11 @@ class SshPlugin : Plugin<Project> {
             register("clear-$FRONTEND", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
             register("prune", Cmd::class){ command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
 
-            val ps by registering (Cmd::class) { command = "docker ps"; description = "Print all containers"; group = dockerMainGroupName(project.name) }
 
-            val composeDev by registering(DockerCompose::class) { dependsOn(":$BACKEND:assemble"); isDev = true; description = "Docker compose up from `docker-compose.dev.yml` file after backend `assemble` task" }
-            val stopAll by registering (Cmd::class) {dockerForEachSubproject(project, "stop", POSTGRES); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
-            val rm  by registering (Cmd::class) {
+            register("composeDev", DockerCompose::class) { dependsOn(":$BACKEND:assemble"); isDev = true; description = "Docker compose up from `docker-compose.dev.yml` file after backend `assemble` task" }
+            register("stopAll",Cmd::class) { dockerForEachSubproject(project, "stop", POSTGRES); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
+            val ps by registering (Cmd::class) { command = "docker ps"; description = "Print all containers"; group = dockerMainGroupName(project.name) }
+            register("rm", Cmd::class) {
                 command = "docker rm -vf \$(docker ps -q)"; description = "Docker remove all containers"; group = dockerMainGroupName(project.name)
                 finalizedBy(ps)
             }
