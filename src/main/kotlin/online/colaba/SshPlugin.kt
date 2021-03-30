@@ -17,10 +17,8 @@ class SshPlugin : Plugin<Project> {
         registerCmdTask()
         registerDockerComposeTask()
         registerSshTask()
-        registerSshBackendTask()
 
         ssh { }
-        sshBackend{ }
         cmd { }
         compose{ }
 
@@ -38,7 +36,6 @@ class SshPlugin : Plugin<Project> {
 
                 clearNuxt = true
 
-                monolit = false
                 kibana = false
                 admin = false
                 config = false
@@ -48,13 +45,9 @@ class SshPlugin : Plugin<Project> {
 
             subprojects.forEach {
                 val name = it.name
-                val fromLocalPath = "${it.rootDir}/${jarLibFolder(name)}".normalizeForWindows()
-                val localFileExists = File(fromLocalPath).exists()
-                if (localFileExists) register("ssh-$name", Ssh::class) {
-                    directory = jarLibFolder(name); description = "Copy [${jarLibFolder(name)}] to remote server"
-                } else register("ssh-$name", Ssh::class) {
-                    directory = name; description = "Copy [$name] to remote server"
-                }
+                if (it.localExists("src/main"))
+                       register("ssh-$name", Ssh::class) { directory = jarLibFolder(name); description = "Copy backend [${jarLibFolder(name)}] jar to remote server"
+                } else register("ssh-$name", Ssh::class) { directory = name; description = "Copy folder [$name] to remote server" }
             }
 
             register("ssh-docker", Ssh::class){ docker = true; description = "Copy [docker] needed files to remote server" }

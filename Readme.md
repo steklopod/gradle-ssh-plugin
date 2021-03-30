@@ -7,29 +7,28 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=steklopod_gradle-ssh-plugin&metric=security_rating)](https://sonarcloud.io/dashboard?id=steklopod_gradle-ssh-plugin)
 
-For plugin usage you should have `id_rsa` key in root of project for `Continius Dilivery` or 
-   on your local machine: `{user.home}/.ssh/id_rsa` for deployment from local machine. To make it run:
+### Copy from local to remote server. 
+#### From zero-config to full customization
 
-```shell
-ssh-keygen -t rsa -m PEM
-```
+* There will be as many tasks as gradle subprojects in your project.
 
 ### Quick start
 
-In root of project `build.gradle.kts` file:
+In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.3.50"
+    id("online.colaba.ssh") version "1.3.52"
 }
 
 tasks {
     publish { 
-        host = "my-website.com"
-        directory = "distribution"
+        host = "my-ip-or-domain.com"
     }
 }
 ```
+That's all. 
+
 This task will copy folders & files from local machine to remote host **~/${project.name}/...** folder 
 
 ### 🎯 Run task:
@@ -39,113 +38,130 @@ gradle publish
 
 ### Customization:
 
-#### [CLOUD mode] for deploying Spring Cloud microservices stack.
-
 1. Register new task in your `build.gradle.kts`:
 ```kotlin
-        register("customSshTask", Ssh::class) {
-            host = "my-domain.com"
-            user = "root"
-            gradle = true
-            frontend = false
-            docker = true
-            nginx = true
-            run = "cd ${project.name} && echo \$PWD"
-        }
+register("customSshTask", Ssh::class) {
+   host = "my-domain.com"
+   user = "root"
+   gradle = true
+   frontend = false
+   docker = true
+   nginx = true
+   directory = "distribution"
+   run = "cd ${project.name} && echo \$PWD"
+}
 ```
 2. Run this task:
 ```shell script
 gradle customSshTask
 ```
-> [DOCUMENTATION NEEDED issue for [CLOUD mode] microservices deployment](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
 
 ___
 ### Available gradle tasks from `ssh` plugin:
 
-Send by `ftp` with `ssh` (copy from local to remote server):
-1. `ssh-backend` - copy **backend** distribution `*.jar`-file
-2. `ssh-frontend` - copy **frontend** folder
-3. `ssh-nginx` - copy **nginx** folder
-4. `ssh-gradle` - copy **gradle** needed files
-5. `ssh-docker` - copy **docker** files
+By default you have preconfigured profiles tasks:
+* `ssh` - all options are `disabled`  by default (**false**)
+* `publish` - all options are `enabled` by default (**true**) 
 
-All this tasks **includes** in 1 task:
+#### Example of tasks:
+1. `ssh-backend` - copy **backend** distribution `*.jar`-file to remote server
+2. `ssh-frontend` - copy **frontend** folder to remote server
+3. `ssh-nginx` - copy **nginx** folder to remote server
+4. ...
+
+#### Additional (build in) tasks:   
+1. `ssh-gradle` - copy **gradle** needed files to remote server
+2. `ssh-docker` - copy **docker** files to remote server
+3. ...
+
+### All options are `true` in 1 task:
 
 * `publish` - all enabled  by default (**true**)
 
 All this tasks **excluded** in 1 task:
 * `ssh` task, where all disabled  by default (**false**) but can be included manually.
 
+___
 Other tasks:
 
 * `compose` - docker compose up all docker-services(_gradle subprojects_) with recreate and rebuild
 * `compose-nginx`, `compose-backend`, `compose-frontend` - docker compose up subproject with recreate and rebuild 
 * `prune` - remove unused docker data
-> [DOCUMENTATION NEEDED issue](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
 
 > Name of service for all tasks equals to ${project.name} 
 
 ___
-### Preconfigured tasks for publishing/copy by ftp to remote server
-
-By default you have preconfigured profiles tasks: 
-* `ssh` - all disabled  by default (**false**)
-* `publish` - all enabled  by default (**true**) [TODO documentation for `jars` property for this task]
-> [DOCUMENTATION NEEDED issue for [CLOUD mode] microservices deployment](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
 
 
 You can customize these properties:
 ```kotlin
-        ssh {
-            host = "hostexample.com"
-            user = "root"
-            frontendFolder = "client"
-            backendFolder = "server"
-            directory = "copy_me_to_remote"
-            nginx = true
-        }
+ssh {
+   host = "hostexample.com"
+   user = "root"
+   frontendFolder = "client"
+   directory = "copy_me_to_remote"
+   nginx = true
+}
 ```
 
 ___
 
 
-> [MONOLIT mode] Project's structure example for a backend `monolit` architecture
+> Project's structure example. There could be as many backends as you need.
 ```shell script
  project
    |-[backend]
-              | - [build/libs]/*.jar
+              | - [src/main/java/build/libs]/*.jar
               | - Dockerfile
               | - Dockerfile.dev
               | - docker-compose.yml
               | - docker-compose.dev.yml
+              | - ...
+   |-[backend-2]
+              | - [src/main/koltin/build/libs]/*.jar
+              | - ...
+   |-[backend-3]
+              | - [src/main/scala/build/libs]/*.jar
               | - ...
    |-[frontend]
               | - docker-compose.yml
               | - ...
    |-[nginx]
               | - ...
-   |-[gradle]
+   |-[postgres]
+              | - [backups]
               | - ...
+   |-[elastic]
+              | - ...
+   |-[static]
+              | - ...
+   |-[gradle]
+              | - [wrapper]
    |- gradlew
    |- gradlew.bat
    |- docker-compose.yml
    |- ...
 
 ```
-> Default `backend`'s **jar** distribution path: `${project.rootDir}/backend/build/libs/*.jar`
-> [DOCUMENTATION NEEDED issue for [CLOUD mode] microservices deployment](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
-
 ___
 
-##### Optional
+##### Bonus
 
-With `ssh` plugin you have additional bonus task for executing a command line process on local PC [linux/windows]:
+With `ssh` plugin you have additional bonus task for executing a command line process [linux/windows]:
 ```kotlin
 tasks{
       cmd { command = "echo ${project.name}" }
 }
 ```
-> [DOCUMENTATION NEEDED issue](https://github.com/steklopod/gradle-ssh-plugin/issues/1)
-
 ___
-> TODO: documentation for [CLOUD mode] microservices deployment (`ssh-jars` task)
+### Information:
+For plugin usage you should have `id_rsa` key in root of project for `Continius Dilivery` or
+on your local machine: `{user.home}/.ssh/id_rsa` for deployment from local machine. To make it run:
+
+> on local machine:
+```shell
+ssh-keygen -t rsa -m PEM
+chmod 400 ~/.ssh/id_rsa
+ssh-copy-id -i ./id_rsa.pub root@my.server.ip
+ssh-add .ssh/id_rsa
+```

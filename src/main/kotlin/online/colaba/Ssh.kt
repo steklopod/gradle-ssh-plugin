@@ -30,12 +30,11 @@ open class Ssh : Cmd() {
 
     @get:Input var run : String = "cd ${project.name} && echo \$PWD"
 
-    @get:Input var frontendFolder      : String  = FRONTEND
-    @get:Input var backendFolder       : String  = BACKEND
-    @get:Input var jars                : Set<String> = JAVA_JARS
-    @get:Input @Optional var directory : String? = null
+    @get:Input @Optional var directory : String?     = null
 
-    @get:Input var monolit          : Boolean = false
+    @get:Input var jars             : Set<String> = setOf()
+    @get:Input var frontendFolder   : String      = FRONTEND
+
     @get:Input var gradle           : Boolean = false
     @get:Input var docker           : Boolean = false
     @get:Input var frontend         : Boolean = false
@@ -57,22 +56,32 @@ open class Ssh : Cmd() {
     println("USER: $user ")
     Ssh.newService().runSessions { session(remote()) { runBlocking {
 
-    if (static) copyIfNotRemote(STATIC)
-    if (nginx)  copyWithOverrideAsync(NGINX)
+    var isInitRun = false
+
+    if (static) isInitRun = !copyIfNotRemote(STATIC)
+    if (isInitRun) println("🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉")
+    if (nginx) copyWithOverrideAsync(NGINX)
 
     if (clearNuxt) deleteNodeModulesAndNuxtFolders()
     if (frontend)  copyWithOverrideAsync(frontendFolder)
 
-    if (postgres) {
-        copyIfNotRemote(POSTGRES)
-        if (!copyIfNotRemote("$POSTGRES/backups")) remoteMkDir("${project.name}/$POSTGRES/backups")
-        execute("chmod 777 -R ./${project.name}/$POSTGRES/backups")
+    if (postgres) if (remoteExists(POSTGRES)) {
         copyPostgres("docker-entrypoint-initdb.d")
         copyPostgres("postgresql.conf")
+    } else {
+        copyWithOverride(POSTGRES)
+        val backupsFolder = "$POSTGRES/backups"
+        println("[$POSTGRES] folder not exists on remote $host host. Created new and [$backupsFolder]")
+        remoteMkDir("${project.name}/$backupsFolder")
+        copyWithOverride(backupsFolder)
+        execute("chmod 777 -R ./${project.name}/$backupsFolder")
     }
+
     // Jars
-    if (monolit) jars = setOf(backendFolder)
-    if (jars.isNotEmpty()) jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
+    if (jars.isEmpty()) jars = project.subprojects.filter { it.localExists("src/main") }.map { name }.toSet()
+    if (jars.isEmpty()) System.err.println("⚰️ Can't find java/kotlin backends in subprojects.")
+    else println("\n>>> Current BACKENDS: $jars \n")
+    jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
 
     if (gradle) copyGradle()
 
@@ -97,21 +106,24 @@ open class Ssh : Cmd() {
     directory?.let { copyWithOverrideAsync(it) }
 
     println("🔮 Executing command on remote server [ $host ] 🔮 \n🔮 {{ `$run` }} 🔮\n" + execute(run) +"\n\n")
-
+    println("🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
+    println("🩸🩸🔫🔫🔫🔫🔫 N I C E 🔫🔫🔫🔫🔫🩸🩸")
+    println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸")
 } } } }
 
 
-    private fun SessionHandler.copyInBackends    (file: String) { jars.forEach { copy(file, it) } }
-    private fun SessionHandler.copyInFrontend    (file: String)  = copy(file, frontendFolder)
-    private fun SessionHandler.copyPostgres      (file: String)  = copy(file, POSTGRES)
-    private fun SessionHandler.copyInEach(vararg files: String) = files.forEach { file ->
-        copy(file); copyInFrontend(file); copyInBackends(file);
-        if (postgres) copyPostgres(file); if (elastic) copy(file, ELASTIC); if (postgres) copy(file, POSTGRES);
-        if (nginx) copy(file, NGINX);
-        if (!monolit || jars.size == 1) { if (admin) copy(file, ADMIN_SERVER); if (config) copy(file, CONFIG_SERVER) }
-    }
+     fun SessionHandler.copyInBackends    (file: String) { jars.forEach { copy(file, it) } }
+     fun SessionHandler.copyInFrontend    (file: String)  = copy(file, frontendFolder)
+     fun SessionHandler.copyPostgres      (file: String)  = copy(file, POSTGRES)
+     fun SessionHandler.copyInEach(vararg files: String) = files.forEach { file ->
+         copy(file)
+         copyPostgres(file)
+         copyInBackends(file)
+         if (elastic) copy(file, ELASTIC)
+         if (!frontend) copyInFrontend(file); if (!nginx) copy(file, NGINX) // Копируется целиком папка.
+     }
 
-    private suspend fun SessionHandler.copyGradle() = coroutineScope {
+     suspend fun SessionHandler.copyGradle() = coroutineScope {
         fun ifNotGroovyThenKotlin(buildFile: String): String = (if (File(buildFile).exists()) buildFile else "$buildFile.kts").apply{
                 copyInEach(this) }
         copy("gradle")
@@ -125,10 +137,10 @@ open class Ssh : Cmd() {
     }
 
 
-    private suspend fun SessionHandler.copyIfNotRemote(directory: String = ""): Boolean =
+     suspend fun SessionHandler.copyIfNotRemote(directory: String = ""): Boolean =
         remoteExists(directory).apply { if (!this) copyWithOverrideAsync(directory) }
 
-    private fun SessionHandler.copyWithOverride(directory: String = ""): Boolean {
+     fun SessionHandler.copyWithOverride(directory: String = ""): Boolean {
         val toRemote = "${project.name}/$directory"
         val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
         val localFileExists = File(fromLocalPath).exists()
@@ -141,52 +153,45 @@ open class Ssh : Cmd() {
         } else println("📦 FOLDER local [$fromLocalPath] not exists, so it not will be copied to server.")
         return localFileExists
     }
-    private suspend fun SessionHandler.copyWithOverrideAsync(directory: String) =
+
+     suspend fun SessionHandler.copyWithOverrideAsync(directory: String) =
         coroutineScope { launch { copyWithOverride(directory) } }
 
-    private fun SessionHandler.put(from: Any, into: String) = put(hashMapOf("from" to from, "into" to into))
+     fun SessionHandler.put(from: Any, into: String) = put(hashMapOf("from" to from, "into" to into))
 
-    private fun SessionHandler.remoteExists(remoteFolder: String): Boolean {
+     fun SessionHandler.remoteExists(remoteFolder: String): Boolean {
         val exists = execute("test -d ${project.name}/$remoteFolder && echo true || echo false")?.toBoolean() ?: false
         if (exists) println("📦 🧱 Directory [$remoteFolder] is EXISTS on remote server.")
         else println("\n \uD83D\uDCE6 Directory [$remoteFolder] is NOT EXISTS on remote server.")
         return exists
     }
 
-    private fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
-    private fun SessionHandler.removeRemote(vararg folders: String) = folders.forEach {
+     fun SessionHandler.remoteMkDir(into: String) = into.apply { execute("mkdir --parent $this") }
+     fun SessionHandler.removeRemote(vararg folders: String) = folders.forEach {
         execute("rm -fr $it"); println("🗑️️ Removed REMOTE folder [ $it ] 🗑️️")
     }
-    private fun String.removeLocal() { File("${project.rootDir}/$this".normalizeForWindows()).apply {
+     fun String.removeLocal() { File("${project.rootDir}/$this".normalizeForWindows()).apply {
         if (exists()) deleteRecursively(); println("✂️ Removed LOCAL folder: [ $this ] ✂️")
     } }
 
-    private fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
+     fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
         val into = "${project.name}/$remote"
         if (from.exists()) {
             put(from, remoteMkDir(into))
             println("\uD83D\uDDA5️ FILE from local [$from] \n\t to remote {$into}")
             return true
-        } else println("\t☣️ > Skip not found: $from\n")
+        } else println("\t🪠 Skip local not found: $from 🪠")
         return false
     }
-    private fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)
+     fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)
 
-    private fun deleteNodeModulesAndNuxtFolders() = setOf(".nuxt", ".idea", "node_modules", ".DS_Store").forEach { "$frontendFolder/$it".removeLocal() }
+     fun deleteNodeModulesAndNuxtFolders() = setOf(".nuxt", ".idea", "node_modules", ".DS_Store").forEach { "$frontendFolder/$it".removeLocal() }
 
-    private fun remote(): Remote = (server ?: SshServer(hostSsh = host, userSsh = user)).remote(checkKnownHosts)
-    private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
-    private fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) = session(*remotes, delegateClosureOf(action))
+     fun remote(): Remote = (server ?: SshServer(hostSsh = host, userSsh = user)).remote(checkKnownHosts)
+     fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
+     fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) = session(*remotes, delegateClosureOf(action))
 }
-
-
-fun Project.registerSshBackendTask() = tasks.register<online.colaba.Ssh>("sshBackend")
-val Project.sshBackend: TaskProvider<online.colaba.Ssh>
-    get() = tasks.named<online.colaba.Ssh>("sshBackend"){
-        description = "Copy [$BACKEND] jar to remote server"
-        monolit = true
-    }
 
 fun Project.registerSshTask() = tasks.register<online.colaba.Ssh>(sshGroup)
 val Project.ssh: TaskProvider<online.colaba.Ssh>
