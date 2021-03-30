@@ -78,9 +78,9 @@ open class Ssh : Cmd() {
     }
 
     // Jars
-    if (jars.isEmpty()) jars = project.subprojects.filter { it.localExists("src/main") }.map { name }.toSet()
+    if (jars.isEmpty()) jars = project.subprojects.filter { it.localExists("src/main") }.map { it.name }.toSet()
     if (jars.isEmpty()) System.err.println("⚰️ Can't find java/kotlin backends in subprojects.")
-    else println("\n>>> Current BACKENDS: $jars \n")
+    else println("\n⚰️⚰️⚰️ Current BACKENDS: $jars \n")
     jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
 
     if (gradle) copyGradle()
@@ -115,7 +115,7 @@ open class Ssh : Cmd() {
      fun SessionHandler.copyInBackends    (file: String) { jars.forEach { copy(file, it) } }
      fun SessionHandler.copyInFrontend    (file: String)  = copy(file, frontendFolder)
      fun SessionHandler.copyPostgres      (file: String)  = copy(file, POSTGRES)
-     fun SessionHandler.copyInEach(vararg files: String) = files.forEach { file ->
+     fun SessionHandler.copyInEach(vararg files: String)  = files.forEach { file ->
          copy(file)
          copyPostgres(file)
          copyInBackends(file)
@@ -145,12 +145,11 @@ open class Ssh : Cmd() {
         val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
         val localFileExists = File(fromLocalPath).exists()
         if (localFileExists) {
-            println("📦 FOLDER local [$fromLocalPath] \n\t  to remote {$toRemote}")
             removeRemote(toRemote)
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
-            println("> \uD83D\uDDC3️ Copy [${fromLocalPath.substringAfterLast('/')}] into remote {$toRemoteParent} in progress...\n")
             put(File(fromLocalPath), remoteMkDir(toRemoteParent))
-        } else println("📦 FOLDER local [$fromLocalPath] not exists, so it not will be copied to server.")
+            println("🗃️ Deploy local folder [$directory] \n\t\t  into remote {$toRemoteParent}/... is done\n")
+        } else println("📦 FOLDER local [$directory] not exists, so it not will be copied to server.")
         return localFileExists
     }
 
@@ -162,7 +161,7 @@ open class Ssh : Cmd() {
      fun SessionHandler.remoteExists(remoteFolder: String): Boolean {
         val exists = execute("test -d ${project.name}/$remoteFolder && echo true || echo false")?.toBoolean() ?: false
         if (exists) println("📦 🧱 Directory [$remoteFolder] is EXISTS on remote server.")
-        else println("\n \uD83D\uDCE6 Directory [$remoteFolder] is NOT EXISTS on remote server.")
+        else println("\n📦 Directory [$remoteFolder] is NOT EXISTS on remote server.")
         return exists
     }
 
@@ -179,9 +178,9 @@ open class Ssh : Cmd() {
         val into = "${project.name}/$remote"
         if (from.exists()) {
             put(from, remoteMkDir(into))
-            println("\uD83D\uDDA5️ FILE from local [$from] \n\t to remote {$into}")
+            println("\uD83D\uDDA5️ FILE from local [ .$remote/${file.name} ] \n\t to remote {$into}")
             return true
-        } else println("\t🪠 Skip local not found: $from 🪠")
+        } else println("\t 🪠 Skip not found (local): .$remote/${file.name} 🪠")
         return false
     }
      fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)

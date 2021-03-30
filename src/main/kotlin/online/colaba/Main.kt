@@ -22,6 +22,5 @@ val windowsPrefix: List<String> = if (isWindows) listOf("cmd", "/c") else listOf
 
 fun String.normalizeForWindows(): String = replace("\\", "/").replace("//", "/")
 fun String.splitBySpace(): List<String>  = replace("  ", " ").split(" ")
-fun Project.localExists(directory: String) = File("${rootDir}/$name/$directory".normalizeForWindows()).exists().apply {
-    if (this) println("Creating SSH task for JVM backend [$name]")
-}
+fun Project.localExists(directory: String) = File("${rootDir}/$name/$directory".normalizeForWindows()).exists()
+//    .apply { if (this) println("Created SSH task for JVM backend [$name]") }
