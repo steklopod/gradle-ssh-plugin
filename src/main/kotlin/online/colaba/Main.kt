@@ -5,7 +5,6 @@ import java.io.File
 
 const val DEFAULT_HOST = "colaba.online"
 
-const val POSTGRES  = "postgres"
 const val STATIC    = "static"
 const val NGINX     = "nginx"
 const val FRONTEND  = "frontend"

@@ -25,13 +25,12 @@ class SshPlugin : Plugin<Project> {
         tasks {
             register("publish", Ssh::class) {
                 description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
-
+                postgres = "postgres"
+                frontend = true
                 nginx = true
                 docker = true
                 gradle = true
                 static = true
-                frontend = true
-                postgres = true
                 elastic = true
 
                 clearNuxt = true
@@ -45,7 +44,7 @@ class SshPlugin : Plugin<Project> {
 
             subprojects.forEach {
                 val name = it.name
-                if (it.localExists("src/main"))
+                if (it.localExists("src/main") || it.localExists("build/libs"))
                        register("ssh-$name", Ssh::class) { directory = jarLibFolder(name); description = "Copy backend [${jarLibFolder(name)}] jar to remote server"
                 } else register("ssh-$name", Ssh::class) { directory = name; description = "Copy folder [$name] to remote server" }
             }
@@ -58,7 +57,7 @@ class SshPlugin : Plugin<Project> {
             register("clear-$FRONTEND", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
             register("prune", Cmd::class){ command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name) }
 
-            register("stopAll",Cmd::class) { dockerForEachSubproject(project, "stop", POSTGRES); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
+            register("stopAll",Cmd::class) { dockerForEachSubproject(project, "stop"); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
             val ps by registering (Cmd::class) { command = "docker ps"; description = "Print all containers"; group = dockerMainGroupName(project.name) }
             register("rm-all", Cmd::class) { command = "docker rm -vf \$(docker ps -q)"; description = "Docker remove all containers"; group = dockerMainGroupName(project.name)
                 finalizedBy(ps)
