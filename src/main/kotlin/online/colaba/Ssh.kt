@@ -53,8 +53,10 @@ open class Ssh : Cmd() {
     println("USER: $user ")
     Ssh.newService().runSessions { session(remote()) { runBlocking {
 
-    var isInitRun = false
+    val isInitRun = remoteExists("")
     var frontendFolder: String? = null
+
+    if (isInitRun) println("🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉") else println("🍄🍄🍄 REDEPLOY STARTED...")
 
     fun copyInEach(vararg files: String) = files.forEach { file ->
         copy(file)
@@ -77,24 +79,24 @@ open class Ssh : Cmd() {
         if (withBuildSrc) "buildSrc".run { "$this/build".removeLocal(); copyWithOverrideAsync(this) }
     }
 
-
-    if (static) isInitRun = !copyIfNotRemote(STATIC)
-    if (isInitRun) println("🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉")
+    if (static) !copyIfNotRemote(STATIC)
     if (nginx) copyWithOverrideAsync(NGINX)
-
 
     frontendName()?.run {
         if (frontend) {
-            println("📣 Copy [$this] folder:  📣\n")
+            println("📣 Found local frontend [$this] ⬅️ folder 📣\n")
             frontendFolder = this
-            if (clearNuxt) deleteNodeModulesAndNuxtFolders(this)
+            if (clearNuxt) {
+                println("Removing local files from [$frontendFolder] ⬅️:")
+                deleteNodeModulesAndNuxtFolders(this)
+            }
             copyWithOverrideAsync(this)
         }
     }
 
     postgresName()?.run {
         postgres = this
-        println("🌀 Copy postgres needed files: [$this] 🌀")
+        println("🌀 POSTGRES folder: [$this] 🌀")
         if (remoteExists(this)) {
             copy("docker-entrypoint-initdb.d", this)
             copy("postgresql.conf", this)
@@ -106,18 +108,18 @@ open class Ssh : Cmd() {
                 execute("chmod 777 -R ./$backupsFolder")
                 copyWithOverride(backupsFolder)
             } else remoteMkDir("${project.name}/$backupsFolder")
-            println("🔆 [$backupsFolder] is done")
+            println("\n🔆 BACKUPS folder [$backupsFolder] now is on remote server 🔆 \n")
         }
     }
 
-    if (jars.isEmpty()) jars = project.subprojects.filter { it.localExists("src/main") }.map { it.name }.toSet()
+    if (jars.isEmpty()) jars = project.subprojects.filter { !it.name.endsWith("lib") && it.localExists("src/main")  }.map { it.name }.toSet()
     if (jars.isEmpty()) System.err.println("⚰️ Can't find java/kotlin backends in subprojects.")
-    else println("\n⚰️⚰️⚰️ Current BACKENDS: $jars \n")
+    else println("\n🍐🥝️🍌 Current BACKENDS: $jars \n")
     jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
 
     if (gradle) copyGradle()
 
-    if (docker) copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore", ".env")
+    if (docker) copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore"/*, ".env"*/)
 
     if (elastic) {
         listOf("elasticsearch.yml", ELASTIC_CERT_NAME,
@@ -128,27 +130,33 @@ open class Ssh : Cmd() {
         val elasticDataFolder = "$ELASTIC/$ELASTIC_DOCKER_DATA"
         val elasticDockerVolumeFolder = "${project.name}/$elasticDataFolder"
         if (!remoteExists(elasticDataFolder)) {
-            println("[$elasticDockerVolumeFolder] not exist. Creating with chmod 777")
+            println("🤖 [$elasticDockerVolumeFolder] not exist")
             remoteMkDir(elasticDockerVolumeFolder)
-            execute("chmod -R 777 ./$elasticDockerVolumeFolder")
         }
     }
     if (kibana) listOf("kibana.yml", "docker-compose.kibana.yml").forEach { copy(it, ELASTIC) }
 
     directory?.let { copyWithOverrideAsync(it) }
 
-    println("\n🔮 Executing command on 🔜 remote server [ $host ] 🔮 \n🔮 `$run`  🔮\n\t" + execute(run) +"\n\n")
+    println("\n🔮 Executing command on remote server [ $host ]🔜🔜🔜 ")
+    println("🔮🔮🔮$run🔮🔮🔮")
+    println("🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮")
+    println("🔮🔮🔮 RESULT: " + execute(run) +"🔮🔮🔮")
+    println("🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮")
     println("🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
-    println("🩸🩸🔫🔫🔫🔫🔫 N I C E 🔫🔫🔫🔫🔫🩸🩸")
+    println("🩸🩸🔫🔫🔫🔫 N I C E 🔫🔫🔫🔫🩸🩸")
     println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸")
 
 
 } } } }
 
     fun findInSubprojects(file: String) = project.subprojects.firstOrNull { it.localExists(file) }?.name
-    // TODO: startsWith <-- to 1st place after test
-    fun postgresName() = postgres?: findInSubprojects ( "postgresql.conf") ?:findInSubprojects ( "docker-entrypoint-initdb.d") /*?: findInSubprojects(POSTGRES)*/
-    fun frontendName() = findInSubprojects ( "package.json") /*?: findInSubprojects(FRONTEND)*/
+    fun postgresName(): String? = postgres
+                ?: findInSubprojects("postgresql.conf") ?: findInSubprojects("docker-entrypoint-initdb.d")
+                ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith("postgres")}
+
+    fun frontendName() = findInSubprojects ( "package.json") ?: project.subprojects.map { it.name }
+        .firstOrNull { it.startsWith("front") }
 
 
      suspend fun SessionHandler.copyIfNotRemote(directory: String = ""): Boolean =
@@ -162,7 +170,7 @@ open class Ssh : Cmd() {
             removeRemote(toRemote)
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
             put(File(fromLocalPath), remoteMkDir(toRemoteParent))
-            println("🗃️ Deploy local folder [$directory] ⬅️\n\t\t into remote 🔜 {$toRemoteParent}/... is done\n")
+            println("🗃️ Deploy local folder [$directory] ⬅️\n\t into remote 🔜 {$toRemoteParent}/[$directory]    is done\n")
         } else println("📦 LOCAL folder [$directory] ⬅️ NOT EXISTS, so it not will be copied to server.")
         return localFileExists
     }
@@ -192,9 +200,9 @@ open class Ssh : Cmd() {
         val into = "${project.name}/$remote"
         if (from.exists()) {
             put(from, remoteMkDir(into))
-            println("\uD83D\uDDA5️ FILE from local [ $remote/${file.name} ] ⬅️ \n\t to remote 🔜 {$into}")
+            println("💾️ FILE from local [ $remote/${file.name} ] ⬅️ \n\t to remote 🔜 {$into}")
             return true
-        } else if (!file.name.contains(".env")) println("\t 🪠 Skip not found (local) : $remote/${file.name} ⬅️ 🪠")
+        } else println("\t 🪠 Skip not found (local) ⬅️: $remote/${file.name} ")
          return false
      }
      fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)

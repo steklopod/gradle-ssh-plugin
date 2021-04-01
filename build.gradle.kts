@@ -4,7 +4,7 @@ plugins {
     id("com.gradle.plugin-publish") version "0.13.0"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
-val pluginsVersion = "1.4.0"
+val pluginsVersion = "1.4.1"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
@@ -33,6 +33,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 }
 
-tasks { compileKotlin { kotlinOptions { jvmTarget = "15" } } }
+tasks { compileKotlin { kotlinOptions { jvmTarget = "15"; useIR = true } } }
 
 defaultTasks("clean", "assemble", "publishPlugins")

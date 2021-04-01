@@ -18,7 +18,7 @@ In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.4.0"
+    id("online.colaba.ssh") version "1.4.1"
 }
 
 tasks {
@@ -59,27 +59,18 @@ gradle customSshTask
 ___
 ### Available gradle tasks from `ssh` plugin:
 
-By default you have preconfigured profiles tasks:
+By default you have preconfigured tasks:
 * `ssh` - all options are `disabled`  by default (**false**)
-* `publish` - all options are `enabled` by default (**true**) 
+* `publish` - all options are `enabled` by default (**true**)
+* `ssh-gradle` - copy **gradle** needed files to remote server in every subproject
+* `ssh-docker` - copy **docker** files to remote server
+* `ssh-jars` - copy **${subproject}/nuild/libs/___.jar** file to remote server  in every subproject
 
-#### Example of tasks:
+#### Example of tasks which will become available for your project:
 1. `ssh-backend` - copy **backend** distribution `*.jar`-file to remote server
 2. `ssh-frontend` - copy **frontend** folder to remote server
 3. `ssh-nginx` - copy **nginx** folder to remote server
 4. ...
-
-#### Additional (build in) tasks:   
-1. `ssh-gradle` - copy **gradle** needed files to remote server
-2. `ssh-docker` - copy **docker** files to remote server
-3. ...
-
-### All options are `true` in 1 task:
-
-* `publish` - all enabled  by default (**true**)
-
-All this tasks **excluded** in 1 task:
-* `ssh` task, where all disabled  by default (**false**) but can be included manually.
 
 ___
 Other tasks:
@@ -89,7 +80,6 @@ Other tasks:
 * `prune` - remove unused docker data
 
 > Name of service for all tasks equals to ${project.name} 
-
 ___
 
 
@@ -97,8 +87,6 @@ You can customize these properties:
 ```kotlin
 ssh {
    host = "hostexample.com"
-   user = "root"
-   frontendFolder = "client"
    directory = "copy_me_to_remote"
    nginx = true
 }

@@ -44,7 +44,7 @@ class SshPlugin : Plugin<Project> {
 
             subprojects.forEach {
                 val name = it.name
-                if (it.localExists("src/main") || it.localExists("build/libs"))
+                if (!name.endsWith("lib") && it.localExists("src/main") || it.localExists("build/libs"))
                        register("ssh-$name", Ssh::class) { directory = jarLibFolder(name); description = "Copy backend [${jarLibFolder(name)}] jar to remote server"
                 } else register("ssh-$name", Ssh::class) { directory = name; description = "Copy folder [$name] to remote server" }
             }
