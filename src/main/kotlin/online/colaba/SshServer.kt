@@ -1,6 +1,5 @@
 package online.colaba
 
-import org.gradle.internal.impldep.com.amazonaws.services.kms.model.NotFoundException
 import org.hidetake.groovy.ssh.connection.AllowAnyHosts
 import org.hidetake.groovy.ssh.core.Remote
 import java.io.File
@@ -20,7 +19,7 @@ data class SshServer(
             if (exists) println("> OK : [$rsaKeyName] found in root folder of project")
             else {
                 if (existsDefault) return defaultRsaPath
-                else throw NotFoundException("You don't have [$defaultRsaPath] file. Or you can put [$rsaKeyName] file in root directory.")
+                else throw RuntimeException("You don't have [$defaultRsaPath] file. Or you can put [$rsaKeyName] file in root directory.")
             }
             return idRsaPath
         }
