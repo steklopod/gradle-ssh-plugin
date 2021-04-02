@@ -209,7 +209,7 @@ open class Ssh : Cmd() {
 
      fun deleteNodeModulesAndNuxtFolders(frontendLocalFolder: String) = setOf(".nuxt", ".idea", "node_modules", ".DS_Store").forEach { "$frontendLocalFolder/$it".removeLocal() }
 
-     fun remote(): Remote = (server ?: SshServer(hostSsh = host, userSsh = user)).remote(checkKnownHosts)
+     fun remote(): Remote = (server ?: SshServer(hostSsh = host, userSsh = user, rootFolder = "${project.rootDir}/${project.name}")).remote(checkKnownHosts)
      fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
      fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) = session(*remotes, delegateClosureOf(action))
 }
@@ -218,4 +218,12 @@ fun Project.registerSshTask() = tasks.register<online.colaba.Ssh>(sshGroup)
 val Project.ssh: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>(sshGroup){
         description = "Template for SSH deploy. All props are set to `false`"
+    }
+
+fun Project.registerFrontTask() = tasks.register<online.colaba.Ssh>("sshFront")
+val Project.sshFront: TaskProvider<online.colaba.Ssh>
+    get() = tasks.named<online.colaba.Ssh>("sshFront"){
+        frontend = true
+        clearNuxt = true
+        description = "Template for SSH frontend folder deploy."
     }

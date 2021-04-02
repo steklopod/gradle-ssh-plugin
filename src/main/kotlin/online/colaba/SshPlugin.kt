@@ -17,8 +17,10 @@ class SshPlugin : Plugin<Project> {
         registerCmdTask()
         registerDockerComposeTask()
         registerSshTask()
+        registerFrontTask()
 
         ssh { }
+        sshFront { }
         cmd { }
         compose{ }
 
@@ -41,13 +43,10 @@ class SshPlugin : Plugin<Project> {
                 withBuildSrc = false
                 run = "cd ${project.name} && echo \$PWD"
             }
-
-            subprojects.forEach {
-                val name = it.name
-                if (!name.endsWith("lib") && it.localExists("src/main") || it.localExists("build/libs"))
-                       register("ssh-$name", Ssh::class) { directory = jarLibFolder(name); description = "Copy backend [${jarLibFolder(name)}] jar to remote server"
-                } else register("ssh-$name", Ssh::class) { directory = name; description = "Copy folder [$name] to remote server" }
-            }
+            val (backendJARs, wholeFolder) = subprojects.filter { !name.endsWith("lib") }
+                .partition { it.localExists("src/main") || it.localExists("build/libs") }
+            backendJARs.forEach { register("ssh-${it.name}", Ssh::class) { directory = jarLibFolder(it.name); description = "Copy backend [${jarLibFolder(it.name)}] jar to remote server" } }
+            wholeFolder.forEach { register("ssh-${it.name}", Ssh::class) { directory = it.name; description = "Copy whole folder [${it.name}] to remote server" } }
 
             register("ssh-docker", Ssh::class){ docker = true; description = "Copy [docker] needed files to remote server" }
             register("ssh-gradle", Ssh::class){ gradle = true; description = "Copy [gradle] needed files to remote server" }
