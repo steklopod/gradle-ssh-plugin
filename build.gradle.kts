@@ -4,7 +4,7 @@ plugins {
     id("com.gradle.plugin-publish") version "0.13.0"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
-val pluginsVersion = "1.4.2"
+val pluginsVersion = "1.4.3"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
@@ -30,7 +30,7 @@ pluginBundle {
 dependencies {
     implementation("net.sf.proguard:proguard-gradle:6.3.0beta1")
     implementation("org.hidetake:groovy-ssh:2.10.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
 }
 
 tasks { compileKotlin { kotlinOptions { jvmTarget = "15"; useIR = true } } }

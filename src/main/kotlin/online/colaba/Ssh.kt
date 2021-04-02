@@ -138,16 +138,15 @@ open class Ssh : Cmd() {
 
     directory?.let { copyWithOverrideAsync(it) }
 
-    println("\n🔮 Executing command on remote server [ $host ]🔜🔜🔜 ")
-    println("🔮🔮🔮$run🔮🔮🔮")
-    println("🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮")
-    println("🔮🔮🔮 RESULT: " + execute(run) +"🔮🔮🔮")
-    println("🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮")
-    println("🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
-    println("🩸🩸🔫🔫🔫🔫 N I C E 🔫🔫🔫🔫🩸🩸")
+    println("\n🔮 Executing command on remote server [ $host ]:")
+    println("🔮$run")
+    println("\n🔜🔜🔜🔜🔜🔜🔜🔜🔜")
+    println("\n🔮🔮🔮🔮🔮🔮🔮🔮")
+    println("🔮🔮🔮 RESULT: " + execute(run))
+    println("🔮🔮🔮🔮🔮🔮🔮🔮")
+    println("\n\n🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
+    println("🩸🩸🔫🔫🔫🔫🔫 N I C E 🔫🔫🔫🔫🩸🩸")
     println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸")
-
-
 } } } }
 
     fun findInSubprojects(file: String) = project.subprojects.firstOrNull { it.localExists(file) }?.name
@@ -187,7 +186,7 @@ open class Ssh : Cmd() {
         return exists
     }
 
-     fun SessionHandler.remoteMkDir(into: String) = into.normalizeForWindows().apply { if(!into.contains(".")) execute("mkdir --parent $this") else println("`.` dot int path: [$into] - will not run command: [mkdir --parent $this]") }
+     fun SessionHandler.remoteMkDir(into: String) = into.normalizeForWindows().apply { if(!contains(".")) execute("mkdir --parent $this") else println("`.` dot in path: [$into] - will not run command: [mkdir --parent $this]") }
      fun SessionHandler.removeRemote(vararg folders: String) = folders.forEach {
         execute("rm -fr $it"); println("🗑️️ Removed REMOTE folder 🔜 [ $it ] 🗑️️")
     }
@@ -198,11 +197,12 @@ open class Ssh : Cmd() {
      fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
         val into = "${project.name}/$remote"
-        if (from.exists()) {
+         val name = file.name
+         if (from.exists()) {
             put(from, remoteMkDir(into))
-            println("💾️ FILE from local [ $remote/${file.name} ] ⬅️ \n\t to remote 🔜 {$into}")
+            println("💾️ FILE from local [ $remote/$name ] ⬅️\n\t to remote 🔜 {$into}/[$name]")
             return true
-        } else println("\t 🪠 Skip not found (local) ⬅️: $remote/${file.name} ")
+        } else println("\t 🪠 Skip not found (local) ⬅️: $remote/$name ")
          return false
      }
      fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)
