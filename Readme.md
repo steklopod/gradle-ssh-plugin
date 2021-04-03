@@ -16,7 +16,20 @@ In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.4.35"
+    id("online.colaba.ssh") version "1.5"
+}
+group = "space.colaba"
+
+```
+That's all! 
+
+This task will copy folders & files from local machine to remote host **~/${project.name}/...** folder 
+
+> You can set host, or it will computed
+
+```kotlin
+plugins {
+    id("online.colaba.ssh") version "1.5"
 }
 
 tasks {
@@ -25,10 +38,6 @@ tasks {
     }
 }
 ```
-That's all! 
-
-This task will copy folders & files from local machine to remote host **~/${project.name}/...** folder 
-
 #### Run task:
 ```shell script
 gradle publish

@@ -18,9 +18,14 @@ class SshPlugin : Plugin<Project> {
         registerDockerComposeTask()
         registerSshTask()
         registerFrontTask()
+        registerJarsTask()
+        registerPostgresTask()
 
         ssh { }
+        sshJars { }
         sshFront { }
+        sshPostgres{ }
+
         cmd { }
         compose{ }
 
@@ -29,6 +34,7 @@ class SshPlugin : Plugin<Project> {
                 description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
                 postgres = "postgres"
                 frontend = true
+                backend = true
                 nginx = true
                 docker = true
                 gradle = true
@@ -43,8 +49,10 @@ class SshPlugin : Plugin<Project> {
                 withBuildSrc = false
                 run = "cd ${project.name} && echo \$PWD"
             }
-            val (backendJARs, wholeFolder) = subprojects.filter { !name.endsWith("lib") }
+            val (backendJARs, wholeFolder) = subprojects
+                .filter { !name.endsWith("lib") && !name.contains("postgres")  && !name.contains("front")}
                 .partition { it.localExists("src/main") || it.localExists("build/libs") }
+
             backendJARs.forEach { register("ssh-${it.name}", Ssh::class) { directory = jarLibFolder(it.name); description = "Copy backend [${jarLibFolder(it.name)}] jar to remote server" } }
             wholeFolder.forEach { register("ssh-${it.name}", Ssh::class) { directory = it.name; description = "Copy whole folder [${it.name}] to remote server" } }
 

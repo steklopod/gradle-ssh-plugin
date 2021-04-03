@@ -25,16 +25,18 @@ open class Ssh : Cmd() {
         group = sshGroup
         description = "Publish by FTP your distribution with SSH commands"
     }
-    @get:Input var host: String = DEFAULT_HOST
-    @get:Input var user: String = "root"
-    @get:Input var run : String = "cd ${project.name} && echo \$PWD"
+    @get:Input var user                : String = "root"
+    @get:Input @Optional var host      : String? = null
 
     @get:Input @Optional var postgres  : String? = null
     @get:Input @Optional var directory : String? = null
 
+    @get:Input var run : String = "cd ${project.name} && echo \$PWD"
+
     @get:Input var jars             : Set<String> = setOf()
     @get:Input var gradle           : Boolean = false
     @get:Input var docker           : Boolean = false
+    @get:Input var backend          : Boolean = false
     @get:Input var frontend         : Boolean = false
     @get:Input var clearNuxt        : Boolean = false
     @get:Input var nginx            : Boolean = false
@@ -49,14 +51,15 @@ open class Ssh : Cmd() {
 
     @TaskAction fun run() {
     println("🔜 Remote folder: 🧿${project.name}🧿")
+    host = host ?: project.group.toString().split(".").let { it[1] + "." + it[0] }
     println("HOST: $host ")
     println("USER: $user ")
     Ssh.newService().runSessions { session(remote()) { runBlocking {
 
-    val isInitRun = remoteExists("")
+    val isInitRun = !remoteExists("")
     var frontendFolder: String? = null
 
-    if (isInitRun) println("🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉") else println("🍄🍄🍄 REDEPLOY STARTED...")
+    if (isInitRun) println("\n🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉\n") else println("\n🍄🍄🍄 REDEPLOY STARTED 🍄🍄🍄\n")
 
     fun copyInEach(vararg files: String) = files.forEach { file ->
         copy(file)
@@ -84,7 +87,7 @@ open class Ssh : Cmd() {
 
     frontendName()?.run {
         if (frontend) {
-            println("📣 Found local frontend [$this] ⬅️ folder 📣\n")
+            println("\n📣 Found local frontend [$this] ⬅️ folder 📣\n")
             frontendFolder = this
             if (clearNuxt) {
                 println("Removing local files from [$frontendFolder] ⬅️:")
@@ -94,15 +97,18 @@ open class Ssh : Cmd() {
         }
     }
 
-    postgresName()?.run {
-        postgres = this
-        println("🌀 POSTGRES folder: [$this] 🌀")
-        if (remoteExists(this)) {
-            copy("docker-entrypoint-initdb.d", this)
-            copy("postgresql.conf", this)
-        } else copyWithOverride(this)
+    postgres?.run {
+        val folder = if (project.localExists(this)) this
+        else findInSubprojects("postgresql.conf") ?: findInSubprojects("docker-entrypoint-initdb.d")
+            ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith("postgres") }?: throw RuntimeException("[$this] local postgres folder not found")
+        postgres = folder
+        println("🌀 Found local POSTGRES folder: [$folder] 🌀")
+        if (remoteExists(folder)) {
+            copy("docker-entrypoint-initdb.d", folder)
+            copy("postgresql.conf", folder)
+        } else copyWithOverride(folder)
 
-        val backupsFolder = "$this/backups"
+        val backupsFolder = "$folder/backups"
         if (!remoteExists(backupsFolder)) {
             if (project.localExists(backupsFolder)) {
                 execute("chmod 777 -R ./$backupsFolder")
@@ -112,11 +118,12 @@ open class Ssh : Cmd() {
         }
     }
 
-    if (jars.isEmpty()) jars = project.subprojects.filter { !it.name.endsWith("lib") && it.localExists("src/main")  }.map { it.name }.toSet()
-    if (jars.isEmpty()) System.err.println("⚰️ Can't find java/kotlin backends in subprojects.")
-    else println("\n🍐🥝️🍌 Current BACKENDS: $jars \n")
-    jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
-
+    if(backend) {
+        if (jars.isEmpty()) jars = project.subprojects.filter { !it.name.endsWith("lib") && it.localExists("src/main")  }.map { it.name }.toSet()
+        if (jars.isEmpty()) System.err.println("⚰️ Can't find java/kotlin backends in subprojects.")
+        println("\n🍐🥝️🍌 Current BACKENDS: $jars \n")
+        jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
+    }
     if (gradle) copyGradle()
 
     if (docker) copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore"/*, ".env"*/)
@@ -139,20 +146,17 @@ open class Ssh : Cmd() {
     directory?.let { copyWithOverrideAsync(it) }
 
     println("\n🔮 Executing command on remote server [ $host ]:")
-    println("🔮$run")
-    println("\n🔜🔜🔜🔜🔜🔜🔜🔜🔜")
-    println("\n🔮🔮🔮🔮🔮🔮🔮🔮")
+    println("🔜🔜🔜 $run")
+    println("\n🔮🔮🔮🔮🔮🔮🔮")
     println("🔮🔮🔮 RESULT: " + execute(run))
-    println("🔮🔮🔮🔮🔮🔮🔮🔮")
+    println("🔮🔮🔮🔮🔮🔮🔮")
     println("\n\n🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
     println("🩸🩸🔫🔫🔫🔫🔫 N I C E 🔫🔫🔫🔫🩸🩸")
     println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸")
 } } } }
 
     fun findInSubprojects(file: String) = project.subprojects.firstOrNull { it.localExists(file) }?.name
-    fun postgresName(): String? = postgres
-                ?: findInSubprojects("postgresql.conf") ?: findInSubprojects("docker-entrypoint-initdb.d")
-                ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith("postgres")}
+
 
     fun frontendName() = findInSubprojects ( "package.json") ?: project.subprojects.map { it.name }
         .firstOrNull { it.startsWith("front") }
@@ -169,8 +173,8 @@ open class Ssh : Cmd() {
             removeRemote(toRemote)
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
             put(File(fromLocalPath), remoteMkDir(toRemoteParent))
-            println("🗃️ Deploy local folder [$directory] ⬅️\n\t into remote 🔜 {$toRemoteParent}/[$directory]    is done\n")
-        } else println("📦 LOCAL folder [$directory] ⬅️ NOT EXISTS, so it not will be copied to server.")
+            println("🗃️ Deploy local folder [$directory] ⬅️\n\t into remote 🔜 {$toRemoteParent}/[$directory] is done\n")
+        } else println("📦 LOCAL folder ☝️[$directory] ⬅️ NOT EXISTS, so it not will be copied to server.")
         return localFileExists
     }
 
@@ -181,8 +185,8 @@ open class Ssh : Cmd() {
 
      fun SessionHandler.remoteExists(remoteFolder: String): Boolean {
         val exists = execute("test -d ${project.name}/$remoteFolder && echo true || echo false")?.toBoolean() ?: false
-        if (exists) println("\n🧱 Directory [$remoteFolder]🔜 is EXISTS on remote server.")
-        else println("\n📦 Directory [$remoteFolder]🔜 is NOT EXISTS on remote server.")
+        if (exists) println("\n🧱 Directory [${project.name}/$remoteFolder]🔜 is EXISTS on remote server")
+        else println("\n📦 Directory [${project.name}/$remoteFolder]🔜 is NOT EXISTS on remote server")
         return exists
     }
 
@@ -190,9 +194,13 @@ open class Ssh : Cmd() {
      fun SessionHandler.removeRemote(vararg folders: String) = folders.forEach {
         execute("rm -fr $it"); println("🗑️️ Removed REMOTE folder 🔜 [ $it ] 🗑️️")
     }
-     fun String.removeLocal() { File("${project.rootDir}/$this".normalizeForWindows()).apply {
-        if (exists()) deleteRecursively(); println("✂️ Removed LOCAL folder: [ $this ] ✂️")
-    } }
+    fun String.removeLocal() {
+        val file = File("${project.rootDir}/$this".normalizeForWindows())
+        if (file.exists()) {
+            file.deleteRecursively()
+            println("✂️ Removed LOCAL folder: [ $this ] ✂️")
+        } else println("nothing to remove locally for: [$this]")
+    }
 
      fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
@@ -209,7 +217,9 @@ open class Ssh : Cmd() {
 
      fun deleteNodeModulesAndNuxtFolders(frontendLocalFolder: String) = setOf(".nuxt", ".idea", "node_modules", ".DS_Store").forEach { "$frontendLocalFolder/$it".removeLocal() }
 
-     fun remote(): Remote = (server ?: SshServer(hostSsh = host, userSsh = user, rootFolder = project.rootDir.toString())).remote(checkKnownHosts)
+     fun remote(): Remote {
+         return (server ?: SshServer(hostSsh = host!!, userSsh = user, rootFolder = project.rootDir.toString())).remote(checkKnownHosts)
+     }
      fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
      fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) = session(*remotes, delegateClosureOf(action))
 }
@@ -226,4 +236,18 @@ val Project.sshFront: TaskProvider<online.colaba.Ssh>
         frontend = true
         clearNuxt = true
         description = "Template for SSH frontend folder deploy."
+    }
+
+fun Project.registerJarsTask() = tasks.register<online.colaba.Ssh>("sshJars")
+val Project.sshJars: TaskProvider<online.colaba.Ssh>
+    get() = tasks.named<online.colaba.Ssh>("sshJars"){
+        backend = true
+        description = "Template for SSH backends jars folder deploy."
+    }
+
+fun Project.registerPostgresTask() = tasks.register<online.colaba.Ssh>("sshPostgres")
+val Project.sshPostgres: TaskProvider<online.colaba.Ssh>
+    get() = tasks.named<online.colaba.Ssh>("sshPostgres"){
+        postgres = "postgres"
+        description = "Template for SSH backends jars folder deploy."
     }

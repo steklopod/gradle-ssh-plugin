@@ -26,7 +26,6 @@ data class SshServer(
             config.remove("knownHosts")
         }
         return Remote(config)
-        // .apply { host = hostSsh; user = userSsh; identity = File(idRsaPath) }
     }
 
     companion object {
@@ -43,7 +42,7 @@ data class SshServer(
         private fun rsaInProjectPath(rootFolder: String?): String? = rootFolder?.let {
             val location = "$it/id_rsa".normalizeForWindows()
             if (File(location).exists()) {
-                println("⚡ OK ⚡ [$rsaKeyName] found in local ROOT OF PROJECT: [$location]⬅️")
+                println("⚡ OK: [$rsaKeyName] key has found in local  folder (root of the project) ⬅️")
                 location
             } else {
                 println("🚩🚩🚩 [$rsaKeyName] 🚨NOT FOUND🚨 in ⚡⚡⚡ROOT OF PROJECT⚡⚡⚡: [$location]⬅️")
