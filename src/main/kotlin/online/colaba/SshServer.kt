@@ -5,7 +5,11 @@ import org.hidetake.groovy.ssh.core.Remote
 import java.io.File
 
 
-data class SshServer(val hostSsh: String = DEFAULT_HOST, val userSsh: String = defaultUser, val rootFolder: String? = null) {
+data class SshServer(
+    val hostSsh: String = DEFAULT_HOST,
+    val userSsh: String = defaultUser,
+    val rootFolder: String? = null
+) {
 
     fun remote(checkKnownHosts: Boolean): Remote {
         val config: MutableMap<String, *> = mutableMapOf(
@@ -36,18 +40,22 @@ data class SshServer(val hostSsh: String = DEFAULT_HOST, val userSsh: String = d
         private fun rsaInProjectPath(rootFolder: String?): String? = rootFolder?.let {
             val location = "$it/id_rsa".normalizeForWindows()
             if (File(location).exists()) {
-                println(">>> OK : [$rsaKeyName] found in ROOT OF PROJECT: [$rootFolder]⬅️ FOLDER")
+                println("⚡ OK ⚡ [$rsaKeyName] found in local ROOT OF PROJECT: [$location]⬅️")
                 location
             } else {
-                println("!!! [$rsaKeyName] NOT found in ROOT OF PROJECT: [$rootFolder]⬅️ FOLDER")
+                println("🚩🚩🚩 [$rsaKeyName] 🚨NOT FOUND🚨 in ⚡⚡⚡ROOT OF PROJECT⚡⚡⚡: [$location]⬅️")
                 null
             }
         }
 
         private fun rsaInLocalSshFolderPath(): String? = if (File(defaultRsaPath).exists()) {
-            println("> [$rsaKeyName] found in LOCAL DEFAULT [$defaultRsaPath]⬅️ folder of project. Move it in root folder of your project")
+            println("⚡ OK ⚡ [$rsaKeyName] found in LOCAL DEFAULT [$defaultRsaPath]⬅️.")
+            println("⚡ Move it in root folder of your project to allow SSH deploy in CI/CD")
             defaultRsaPath
-        } else null
+        } else {
+            println("⚡⚡⚡ [$rsaKeyName] 🚨NOT FOUND🚨 in ⚡⚡⚡LOCAL DEFAULT⚡⚡⚡ [$defaultRsaPath]⬅️.")
+            null
+        }
     }
 
 }

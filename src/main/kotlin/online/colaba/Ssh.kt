@@ -209,7 +209,7 @@ open class Ssh : Cmd() {
 
      fun deleteNodeModulesAndNuxtFolders(frontendLocalFolder: String) = setOf(".nuxt", ".idea", "node_modules", ".DS_Store").forEach { "$frontendLocalFolder/$it".removeLocal() }
 
-     fun remote(): Remote = (server ?: SshServer(hostSsh = host, userSsh = user, rootFolder = "${project.rootDir}/${project.name}")).remote(checkKnownHosts)
+     fun remote(): Remote = (server ?: SshServer(hostSsh = host, userSsh = user, rootFolder = project.rootDir.toString())).remote(checkKnownHosts)
      fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
      fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) = session(*remotes, delegateClosureOf(action))
 }
