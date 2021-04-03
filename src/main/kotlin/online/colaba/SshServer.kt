@@ -16,6 +16,9 @@ data class SshServer(
             "knownHosts" to AllowAnyHosts.instance,
             "host" to hostSsh,
             "user" to userSsh,
+            "password" to false,
+            "ignoreError" to true,
+            "agent" to true,
             "identity" to idRsaPath(rootFolder)
         )
         if (checkKnownHosts) {
@@ -32,7 +35,7 @@ data class SshServer(
         private val defaultRsaPath = "$userHomePath/.ssh/${rsaKeyName}".normalizeForWindows()
 
         fun idRsaPath(rootFolder: String?): String? = rootFolder?.let {
-            rsaInProjectPath(rootFolder)
+            rsaInProjectPath(it)
                 ?: rsaInLocalSshFolderPath()
                 ?: throw RuntimeException("You don't have [$defaultRsaPath] file. Put [$rsaKeyName] file in root directory.")
         }
