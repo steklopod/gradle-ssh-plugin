@@ -4,7 +4,7 @@ plugins {
     id("com.gradle.plugin-publish") version "0.13.0"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
-val pluginsVersion = "1.5"
+val pluginsVersion = "1.6"
 description = "Easy deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
@@ -22,13 +22,12 @@ pluginBundle {
     (plugins) { sshPlugin {
         displayName = "SSH task for easy deploy"
         description = "SSH task for easy deploy"
-        tags = listOf("ssh", "deploy", "sftp", "ftp", "docker", "docker-compose")
+        tags = listOf("ssh", "deploy", "CI/CD", "sftp", "ftp", "docker", "docker-compose")
         version = pluginsVersion
     }
 } }
 
 dependencies {
-    implementation("net.sf.proguard:proguard-gradle:6.3.0beta1")
     implementation("org.hidetake:groovy-ssh:2.10.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
 }

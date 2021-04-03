@@ -5,20 +5,15 @@ import org.hidetake.groovy.ssh.core.Remote
 import java.io.File
 
 
-data class SshServer(
-    val hostSsh: String = DEFAULT_HOST,
-    val userSsh: String = defaultUser,
-    val rootFolder: String? = null
-) {
+data class SshServer(val hostSsh: String, val userSsh: String = defaultUser, val rootFolder: String) {
 
     fun remote(checkKnownHosts: Boolean): Remote {
         val config: MutableMap<String, *> = mutableMapOf(
             "knownHosts" to AllowAnyHosts.instance,
             "host" to hostSsh,
             "user" to userSsh,
-            "password" to false,
-            "ignoreError" to true,
-            "agent" to true,
+            "password" to null,
+            "authentications" to listOf("publickey"),
             "identity" to idRsaPath(rootFolder)
         )
         if (checkKnownHosts) {
@@ -33,11 +28,9 @@ data class SshServer(
         private const val rsaKeyName = "id_rsa"
         private val defaultRsaPath = "$userHomePath/.ssh/${rsaKeyName}".normalizeForWindows()
 
-        fun idRsaPath(rootFolder: String?): String? = rootFolder?.let {
-            rsaInProjectPath(it)
-                ?: rsaInLocalSshFolderPath()
-                ?: throw RuntimeException("You don't have [$defaultRsaPath] file. Put [$rsaKeyName] file in root directory.")
-        }
+        fun idRsaPath(rootFolder: String?): File = File(rootFolder?.let {
+            rsaInProjectPath(it) ?: rsaInLocalSshFolderPath()
+        } ?: throw RuntimeException("You don't have [$defaultRsaPath] file. Put [$rsaKeyName] file in root directory."))
 
         private fun rsaInProjectPath(rootFolder: String?): String? = rootFolder?.let {
             val location = "$it/id_rsa".normalizeForWindows()
