@@ -26,6 +26,8 @@ open class Cmd : Exec() {
         project.subprojects.forEach { if (!ignoringServices.toSet().contains(it.name))
             command = "docker $dockerCommand ${it.name}"
     } }
+
+    private fun String.splitBySpace(): List<String>  = replace("  ", " ").split(" ")
 }
 
 fun Project.registerCmdTask() = tasks.register<Cmd>("cmd")

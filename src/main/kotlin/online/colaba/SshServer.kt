@@ -12,7 +12,6 @@ data class SshServer(val hostSsh: String, val userSsh: String = defaultUser, val
             "knownHosts" to AllowAnyHosts.instance,
             "host" to hostSsh,
             "user" to userSsh,
-            "password" to null,
             "authentications" to listOf("publickey"),
             "identity" to idRsaPath(rootFolder)
         )
@@ -35,7 +34,7 @@ data class SshServer(val hostSsh: String, val userSsh: String = defaultUser, val
         private fun rsaInProjectPath(rootFolder: String?): String? = rootFolder?.let {
             val location = "$it/id_rsa".normalizeForWindows()
             if (File(location).exists()) {
-                println("⚡ OK: [$rsaKeyName] key has found in local  folder (root of the project) ⬅️")
+                println("⚡ OK: [$rsaKeyName] key has been found in local folder (root of the project) ⬅️")
                 location
             } else {
                 println("🚩🚩🚩 [$rsaKeyName] 🚨NOT FOUND🚨 in ⚡⚡⚡ROOT OF PROJECT⚡⚡⚡: [$location]⬅️")
