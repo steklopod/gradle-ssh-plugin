@@ -91,13 +91,12 @@ open class Ssh : Cmd() {
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder: [$this] ⬅️  📣\n")
         frontendFolder = this
-        if (clearNuxt) {
-            println("⬅️[nuxt]: removing local frontend  temporary files from [$frontendFolder] ⬅️:")
-            deleteNodeModulesAndNuxtFolders(this)
-        }
         copyWithOverrideAsync(this)
     } }
-
+    if (clearNuxt) { frontendName()?.run {
+        println("[nuxt] ✂️: removing local frontend temporary files from [$frontendFolder] ⬅️:")
+        deleteNodeModulesAndNuxtFolders(this)
+    } }
     postgres?.run {
         val folder = if (project.localExists(this)) this else postgresName() ?: throw RuntimeException("[$this] local postgres folder not found")
         postgres = folder
@@ -114,8 +113,7 @@ open class Ssh : Cmd() {
                 copyWithOverride(folderBackups)
             } else remoteMkDir("${project.name}/$folderBackups")
             println("\n🔆 BACKUPS folder [$folderBackups] now is on remote server 🔆 \n")
-        }
-    }
+    } }
 
     if (backend) {
         findJARs()
@@ -125,7 +123,7 @@ open class Ssh : Cmd() {
 
     if (docker) launch { copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore") }
 
-    if (elastic) launch {
+    if (elastic && project.localExists(ELASTIC)) launch {
         val cert = "$ELASTIC/$ELASTIC_CERT_NAME"
         if (project.localExists(cert)) {
             execute("chmod -R 777 ./${project.name}/$cert")
@@ -138,10 +136,10 @@ open class Ssh : Cmd() {
         if (!remoteExists(elasticDataFolder)) {
             println("🤖 [$elasticDockerVolumeFolder] not exist")
             remoteMkDir(elasticDockerVolumeFolder)
-        }
-    }
-    if (logstash) listOf("docker-compose.logstash.yml", "logstash.conf", "logstash.yml").forEach { copy(it, ELASTIC) }
-    if (kibana) launch { listOf("kibana.yml", "docker-compose.kibana.yml").forEach {  copy(it, ELASTIC) } }
+    } }
+
+    if (logstash && project.localExists(ELASTIC)) listOf("docker-compose.logstash.yml", "logstash.conf", "logstash.yml").forEach { copy("$ELASTIC/$it", ELASTIC) }
+    if (kibana && project.localExists(ELASTIC)) launch { listOf("kibana.yml", "docker-compose.kibana.yml").forEach {  copy("$ELASTIC/$it", ELASTIC) } }
 
     if (envFiles) launch { copyInEach( ".env") }
 
@@ -205,7 +203,7 @@ open class Ssh : Cmd() {
         return exists
     }
 
-     private fun SessionHandler.remoteMkDir(into: String) = into.normalizeForWindows().apply { execute("mkdir --parent ${normalizeForWindows()}") }
+     private fun SessionHandler.remoteMkDir(into: String) = into.normalizeForWindows().apply { execute("mkdir --parent $this") }
      private fun SessionHandler.removeRemote(vararg folders: String) = folders.forEach {
         execute("rm -fr $it"); println("🗑️️ Removed REMOTE folder 🔜 [ $it ] 🗑️️")
     }

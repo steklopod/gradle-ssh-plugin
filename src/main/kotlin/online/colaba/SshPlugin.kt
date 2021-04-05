@@ -36,7 +36,7 @@ tasks {
     register("ssh-docker", Ssh::class){ docker = true; description = "Copy [docker] needed files to remote server" }
     register("ssh-gradle", Ssh::class){ gradle = true; description = "Copy [gradle] needed files to remote server" }
 
-    register("deploy", Ssh::class) {
+    register("scp", Ssh::class) {
         description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
         postgres = "postgres"
         frontend = true
@@ -56,7 +56,7 @@ tasks {
         run = "cd ${project.name} && echo \$PWD"
     }
 
-    register("clear-$FRONTEND", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
+    register("clear-frontend", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
 
     // Docker helpers
     subprojects.forEach { register("compose-${it.name}", DockerCompose::class){ service = it.name; description = "Docker compose up for [${it.name}] container" } }

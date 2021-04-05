@@ -16,7 +16,7 @@ data class SshServer(val hostSsh: String, val userSsh: String = defaultUser, val
             "identity" to idRsaPath(rootFolder)
         )
         if (checkKnownHosts) {
-            println("* If you don't want to scan [known_hosts] local file - set `checkKnownHosts = false` in gradle [ssh, deploy] tasks.")
+            println("* If you don't want to scan [known_hosts] local file - set `checkKnownHosts = false` in gradle [ssh, scp] tasks.")
             config.remove("knownHosts")
         }
         return Remote(config)

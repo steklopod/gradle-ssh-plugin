@@ -5,7 +5,6 @@ import java.io.File
 
 const val STATIC    = "static"
 const val NGINX     = "nginx"
-const val FRONTEND  = "frontend"
 //Elastic:
 const val ELASTIC             = "elastic"
 const val ELASTIC_CERT_NAME   = "elastic-stack-ca.p12"
@@ -29,7 +28,7 @@ fun Project.computeHostFromGroup(): String {
         projGroup = subprojects.find { it.group.toString().isNotEmpty() && projGroup.contains(".") }?.group.toString()
         if (projGroup.isEmpty() || !projGroup.contains(".")) {
             System.err.println("Error when computing `host` from `project.group`. SET GROUP AS REVERSED HOST in your `build.gradle.kts`: \n\n1) example how to set remote host (for ALL tasks): \n\n\tgroup = \"online.colaba\"")
-            System.err.println("\n2) another way how to set directly remote host (in EACH task): \n\ntasks { \n\tdeploy { \n\t\thost =  \"colaba.online\" \n\t} \n}")
+            System.err.println("\n2) another way how to set directly remote host (in EACH task): \n\ntasks { \n\tscp { \n\t\thost =  \"colaba.online\" \n\t} \n}")
             throw RuntimeException("Host and group is not set! Set at least one of them.")
         }
     }

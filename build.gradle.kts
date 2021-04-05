@@ -4,8 +4,8 @@ plugins {
     id("com.gradle.plugin-publish") version "0.13.0"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
-val pluginsVersion = "1.6.7"
-description = "Easy deploy gradle needed tasks"
+val pluginsVersion = "1.7"
+description = "Easy SCP deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
 
@@ -14,7 +14,7 @@ repositories{ mavenLocal(); mavenCentral() }
 val sshPlugin = "sshPlugin"
 gradlePlugin { plugins { create(sshPlugin) {
     id = "$group.ssh"; implementationClass = "$group.SshPlugin"
-    description = "Ssh needed tasks for FTP deploy: all you need for easy deployment"
+    description = "Ssh needed tasks for FTP deploy (SCP): all you need for easy deployment"
 } } }
 pluginBundle {
     website = "https://github.com/steklopod/gradle-ssh-plugin"
