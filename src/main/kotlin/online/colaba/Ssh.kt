@@ -88,27 +88,23 @@ open class Ssh : Cmd() {
     if (static) !copyIfNotRemote(STATIC)
     if (nginx) copyWithOverrideAsync(NGINX)
 
-    if (frontend) {
-        frontendName()?.run {
-            println("\n📣 Found local frontend folder: [$this] ⬅️  📣\n")
-            frontendFolder = this
-            if (clearNuxt) {
-                println("⬅️[nuxt]: removing local frontend  temporary files from [$frontendFolder] ⬅️:")
-                deleteNodeModulesAndNuxtFolders(this)
-            }
-            copyWithOverrideAsync(this)
+    if (frontend) { frontendName()?.run {
+        println("\n📣 Found local frontend folder: [$this] ⬅️  📣\n")
+        frontendFolder = this
+        if (clearNuxt) {
+            println("⬅️[nuxt]: removing local frontend  temporary files from [$frontendFolder] ⬅️:")
+            deleteNodeModulesAndNuxtFolders(this)
         }
-    }
+        copyWithOverrideAsync(this)
+    } }
 
     postgres?.run {
-        val folder = if (project.localExists(this)) this
-        else findInSubprojects("postgresql.conf") ?: findInSubprojects("docker-entrypoint-initdb.d")
-            ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith("postgres") }?: throw RuntimeException("[$this] local postgres folder not found")
+        val folder = if (project.localExists(this)) this else postgresName() ?: throw RuntimeException("[$this] local postgres folder not found")
         postgres = folder
         println("🌀 Found local POSTGRES folder: [$folder] 🌀")
         if (remoteExists(folder)) {
-            copy("docker-entrypoint-initdb.d", folder)
-            copy("postgresql.conf", folder)
+            copy(postgresConfigFolder, folder)
+            copy(postgresConfigFile, folder)
         } else copyWithOverride(folder)
 
         val folderBackups = "$folder/backups"
@@ -177,9 +173,8 @@ open class Ssh : Cmd() {
         return frontendFolder
     }
 
-    private fun postgresName(): String? = postgres
-        ?: findInSubprojects("postgresql.conf") ?: findInSubprojects("docker-entrypoint-initdb.d")
-        ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith("postgres")}
+    private fun postgresName(): String? = findInSubprojects(postgresConfigFile) ?: findInSubprojects("docker-entrypoint-initdb.d")
+        ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith(postgresConfigFolder) }
 
      private suspend fun SessionHandler.copyIfNotRemote(directory: String = ""): Boolean =
         remoteExists(directory).apply { if (!this) copyWithOverrideAsync(directory) }
@@ -210,7 +205,7 @@ open class Ssh : Cmd() {
         return exists
     }
 
-     private fun SessionHandler.remoteMkDir(into: String) = into.normalizeForWindows().apply { execute("mkdir --parent $this") }
+     private fun SessionHandler.remoteMkDir(into: String) = into.normalizeForWindows().apply { execute("mkdir --parent ${normalizeForWindows()}") }
      private fun SessionHandler.removeRemote(vararg folders: String) = folders.forEach {
         execute("rm -fr $it"); println("🗑️️ Removed REMOTE folder 🔜 [ $it ] 🗑️️")
     }
@@ -219,19 +214,19 @@ open class Ssh : Cmd() {
         if (file.exists()) {
             file.deleteRecursively()
             println("✂️ Removed LOCAL folder: [ $this ] ✂️")
-        } else println("nothing to remove locally for: [$this]")
+        } else println("\t...nothing to remove ✂️ locally ⬅️ for: [$this]")
     }
 
      private fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
-        val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
-        val into = "${project.name}/$remote"
+         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
+         val into = "${project.name}/$remote".normalizeForWindows()
          val name = file.name
          if (from.exists()) {
             put(from, remoteMkDir(into))
             println("💾️ FILE from local [ $remote/$name ] ⬅️\n\t to remote 🔜 {$into}/[$name]")
             return true
         } else println("\t 🪠 Skip not found (local) ⬅️: $remote/$name ")
-         return false
+        return false
      }
      private fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)
 
