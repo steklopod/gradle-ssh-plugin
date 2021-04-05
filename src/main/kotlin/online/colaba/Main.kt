@@ -21,11 +21,15 @@ fun String.normalizeForWindows(): String = replace("\\", "/").replace("//", "/")
 fun Project.localExists(directory: String): Boolean = File("${rootDir}/$name/$directory".normalizeForWindows()).exists()
 
 fun Project.computeHostFromGroup(): String {
-    val projGroup = group.toString()
+    var projGroup = group.toString()
     if (projGroup.isEmpty() || !projGroup.contains(".")) {
-        System.err.println("Error when computing `host` from `project.group`. SET GROUP AS REVERSED HOST in your `build.gradle.kts`: \n\n1) example how to set remote host (for ALL tasks): \n\n\tgroup = \"online.colaba\"")
-        System.err.println("\n2) another way how to set directly remote host (in EACH task): \n\ntasks { \n\tpublish { \n\t\thost =  \"colaba.online\" \n\t} \n}")
-        throw RuntimeException("Host and group is not set! Set at least one of them.")
+        projGroup = subprojects.find { it.group.toString().isNotEmpty() && projGroup.contains(".") }?.group.toString()
+        if (projGroup.isEmpty() || !projGroup.contains(".") || projGroup.split(".").size != 2) {
+            System.err.println("Error when computing `host` from `project.group`. SET GROUP AS REVERSED HOST in your `build.gradle.kts`: \n\n1) example how to set remote host (for ALL tasks): \n\n\tgroup = \"online.colaba\"")
+            System.err.println("\n2) another way how to set directly remote host (in EACH task): \n\ntasks { \n\tpublish { \n\t\thost =  \"colaba.online\" \n\t} \n}")
+            throw RuntimeException("Host and group is not set! Set at least one of them.")
+        }
     }
-    return projGroup.split(".").let { it[1] + "." + it[0] }
+    val (domainZone, host) = projGroup.split(".")
+    return "$host.$domainZone"
 }

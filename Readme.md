@@ -16,7 +16,7 @@ In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.6.4"
+    id("online.colaba.ssh") version "1.6.5"
 }
 group = "online.colaba"
 
@@ -29,7 +29,7 @@ This task will copy folders & files from local machine to remote host **~/${proj
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.6.4"
+    id("online.colaba.ssh") version "1.6.5"
 }
 
 tasks {
