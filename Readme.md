@@ -16,7 +16,7 @@ In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.6.6"
+    id("online.colaba.ssh") version "1.6.7"
 }
 group = "online.colaba"
 
@@ -29,18 +29,18 @@ This task will copy folders & files from local machine to remote host **~/${proj
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.6.6"
+    id("online.colaba.ssh") version "1.6.7"
 }
 
 tasks {
-    publish { 
+    deploy { 
         host = "colaba.online"
     }
 }
 ```
 #### Run task:
 ```shell script
-gradle publish
+gradle deploy
 ```
 ___
 ### 🔮 Customization:
@@ -77,7 +77,7 @@ ___
 
 By default you have preconfigured tasks:
 * `ssh` - all options are `disabled`  by default (**false**)
-* `publish` - all options are `enabled` by default (**true**)
+* `deploy` - all options are `enabled` by default (**true**)
 * `ssh-gradle` - copy **gradle** needed files to remote server in every subproject
 * `ssh-docker` - copy **docker** files to remote server
 * `ssh-jars` - copy **${subproject}/nuild/libs/___.jar** file to remote server  in every subproject

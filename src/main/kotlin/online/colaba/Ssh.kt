@@ -23,7 +23,7 @@ const val sshGroup = "ssh"
 open class Ssh : Cmd() {
     init {
         group = sshGroup
-        description = "Publish by FTP your distribution with SSH commands"
+        description = "Deploy by FTP your distribution with SSH commands"
     }
     @get:Input var user                : String = "root"
     @get:Input @Optional var host      : String? = null

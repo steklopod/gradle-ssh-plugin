@@ -36,7 +36,7 @@ tasks {
     register("ssh-docker", Ssh::class){ docker = true; description = "Copy [docker] needed files to remote server" }
     register("ssh-gradle", Ssh::class){ gradle = true; description = "Copy [gradle] needed files to remote server" }
 
-    register("publish", Ssh::class) {
+    register("deploy", Ssh::class) {
         description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
         postgres = "postgres"
         frontend = true
