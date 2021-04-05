@@ -11,11 +11,21 @@ const val ELASTIC             = "elastic"
 const val ELASTIC_CERT_NAME   = "elastic-stack-ca.p12"
 const val ELASTIC_DOCKER_DATA = "elastic-data"
 
-fun jarLibFolder(folder: String = "backend") = "$folder/build/libs"
-
 val userHomePath: String        = System.getProperty("user.home")
 val isWindows: Boolean          = System.getProperty("os.name").toLowerCase().contains("windows")
 val windowsPrefix: List<String> = if (isWindows) listOf("cmd", "/c") else listOf()
 
+fun jarLibFolder(folder: String = "backend") = "$folder/build/libs"
+
 fun String.normalizeForWindows(): String = replace("\\", "/").replace("//", "/").replace("//", "/")
 fun Project.localExists(directory: String): Boolean = File("${rootDir}/$name/$directory".normalizeForWindows()).exists()
+
+fun Project.computeHostFromGroup(): String {
+    val projGroup = group.toString()
+    if (projGroup.isEmpty() || !projGroup.contains(".")) {
+        System.err.println("Error when computing `host` from `project.group`. SET GROUP AS REVERSED HOST in your `build.gradle.kts`: \n\n1) example how to set remote host (for ALL tasks): \n\n\tgroup = \"online.colaba\"")
+        System.err.println("\n2) another way how to set directly remote host (in EACH task): \n\ntasks { \n\tpublish { \n\t\thost =  \"colaba.online\" \n\t} \n}")
+        throw RuntimeException("Host and group is not set! Set at least one of them.")
+    }
+    return projGroup.split(".").let { it[1] + "." + it[0] }
+}

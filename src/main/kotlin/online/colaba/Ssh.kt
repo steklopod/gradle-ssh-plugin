@@ -53,7 +53,7 @@ open class Ssh : Cmd() {
 
     @TaskAction fun run() {
     println("🔜 Remote folder: 🧿${project.name}🧿")
-    host = host ?: project.group.toString().split(".").let { it[1] + "." + it[0] }
+    host = host ?: project.computeHostFromGroup()
     println("HOST: $host ")
     println("USER: $user ")
     Ssh.newService().runSessions { session(remote()) { runBlocking {
@@ -156,7 +156,7 @@ open class Ssh : Cmd() {
     println("\n🔮🔮🔮🔮🔮🔮🔮")
     println("🔮🔮🔮 RESULT: " + execute(run))
     println("🔮🔮🔮🔮🔮🔮🔮")
-    println("\n🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
+    println("\n🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
     println("🩸🩸🔫🔫🔫 C O L A B A 🔫🔫🔫🩸🩸")
     println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸")
 } } } }
