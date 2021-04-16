@@ -23,7 +23,7 @@ open class Cmd : Exec() {
     }
 
     fun dockerForEachSubproject(project: Project, dockerCommand: String, vararg ignoringServices: String) {
-        project.subprojects.forEach { if (!ignoringServices.toSet().contains(it.name))
+        project.subprojects.filter { !it.name.contains("static") }.forEach { if (!ignoringServices.toSet().contains(it.name))
             command = "docker $dockerCommand ${it.name}"
     } }
 
