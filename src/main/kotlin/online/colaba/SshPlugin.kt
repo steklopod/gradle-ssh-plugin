@@ -68,13 +68,11 @@ tasks {
     subprojects.forEach { register("compose-${it.name}", DockerCompose::class){ service = it.name; description = "Docker compose up for [${it.name}] container" } }
 
     val ps by registering (Cmd::class) { command = "docker ps";   description = "Print all containers"; group = dockerMainGroupName(project.name) }
-    val stopAll by registering (Cmd::class) { dockerForEachSubproject(project, "stop"); description = "Docker stop all containers"; group = dockerMainGroupName(project.name)
-        dependsOn(ps);
-    }
+    val stopAll by registering (Cmd::class) { dockerForEachSubproject(project, "stop"); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
     val prune by registering (Cmd::class)  { command = "docker system prune -fa";        description = "Remove unused docker data"; group = dockerMainGroupName(project.name)
         finalizedBy(ps) }
     val rmStaticVolume by registering (Cmd::class) { command = "docker volume rm -f ${project.name}_static";  description = "Removing static volume";group = dockerMainGroupName(project.name);
-        finalizedBy(prune) }
+        dependsOn(offVolumes) }
     register("rm-all", Cmd::class) { command = "docker rm -vf $(docker ps -q)";  description = "Docker remove all containers"; group = dockerMainGroupName(project.name);
         dependsOn(stopAll);
         finalizedBy(rmStaticVolume) }

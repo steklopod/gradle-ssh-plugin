@@ -98,7 +98,10 @@ open class Ssh : Cmd() {
         deleteNodeModulesAndNuxtFolders(this)
     } }
     postgres?.run {
-        val folder = if (project.localExists(this)) this else postgresName() ?: throw RuntimeException("[$this] local postgres folder not found")
+        val folder = if (project.localExists(this)) this else postgresName()
+        if (folder == null) {
+            println(">>> local [postgres] folder not found"); return@run
+        }
         postgres = folder
         println("🌀 Found local POSTGRES folder: [$folder] 🌀")
         if (remoteExists(folder)) {
