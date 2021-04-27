@@ -19,8 +19,9 @@ sshJars { }
 sshFront { }
 sshPostgres{ }
 
-registerCmdTask(); registerDockerComposeTask()
+registerCmdTask(); registerDockerComposeTask(); registerSchemaTask()
 cmd { }
+schema{ }
 compose{ }
 
 
