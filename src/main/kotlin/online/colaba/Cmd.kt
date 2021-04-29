@@ -22,10 +22,13 @@ open class Cmd : Exec() {
         super.exec()
     }
 
-    fun dockerForEachSubproject(project: Project, dockerCommand: String, vararg ignoringServices: String) {
-        project.subprojects.filter { !it.name.contains("static") }.forEach { if (!ignoringServices.toSet().contains(it.name))
-            command = "docker $dockerCommand ${it.name}"
-    } }
+    fun composeForEachSubproject(project: Project, dockerCommand: String, vararg ignoringServices: String) {
+        val services = project.subprojects.map { it.name }.filter { !it.contains("static") && !ignoringServices.toSet().contains(it) }
+        services.forEach {
+            command = "docker-compose $dockerCommand $it"
+            exec()
+        }
+    }
 
     private fun String.splitBySpace(): List<String>  = replace("  ", " ").split(" ")
 }

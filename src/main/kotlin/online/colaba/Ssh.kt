@@ -41,6 +41,7 @@ open class Ssh : Cmd() {
     @get:Input var clearNuxt        : Boolean = false
     @get:Input var nginx            : Boolean = false
     @get:Input var static           : Boolean = false
+    @get:Input var staticOverride   : Boolean = false
     @get:Input var elastic          : Boolean = false
     @get:Input var kibana           : Boolean = false
     @get:Input var admin            : Boolean = false
@@ -85,7 +86,9 @@ open class Ssh : Cmd() {
         if (withBuildSrc) "buildSrc".run { "$this/build".removeLocal(); copyWithOverrideAsync(this) }
     }
 
+    if(staticOverride) copyWithOverrideAsync(STATIC)
     if (static) !copyIfNotRemote(STATIC)
+
     if (nginx) copyWithOverrideAsync(NGINX)
 
     if (frontend) { frontendName()?.run {
