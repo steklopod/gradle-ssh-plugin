@@ -69,13 +69,13 @@ tasks {
     val stopAll by registering (Cmd::class) { composeForEachSubproject(project, "stop"); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
     val rm      by registering (Cmd::class) { dependsOn(stopAll); composeForEachSubproject(project, "rm -f"); description = "Docker remove all containers"; group = dockerMainGroupName(project.name) }
     val prune   by registering (Cmd::class) { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name); finalizedBy(ps) }
-    val rmStaticVolume by registering (Cmd::class) { command = "docker volume rm -f ${project.name}_static";  description = "Removing static volume"; group = dockerMainGroupName(project.name);
+    val rmVolumes by registering (Cmd::class) { rmVolumes(project.name);  description = "Removing all unused volumes"; group = dockerMainGroupName(project.name);
         dependsOn(offVolumes)
-        finalizedBy(prune)
+        finalizedBy(ps)
     }
 
     register("rm-all", Cmd::class) { description = "Docker remove all containers"; group = dockerMainGroupName(project.name);
         dependsOn(rm)
-        finalizedBy(rmStaticVolume)
+        finalizedBy(rmVolumes)
     }
 } } }

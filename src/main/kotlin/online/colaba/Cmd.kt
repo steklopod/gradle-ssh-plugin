@@ -23,12 +23,21 @@ open class Cmd : Exec() {
     }
 
     fun composeForEachSubproject(project: Project, dockerCommand: String, vararg ignoringServices: String) {
-        val services = project.subprojects.map { it.name }.filter { !it.contains("static") && !ignoringServices.toSet().contains(it) }
-        services.forEach {
+        subprojectsNames(project, ignoringServices).forEach {
             command = "docker-compose $dockerCommand $it"
             exec()
         }
     }
+
+    fun rmVolumes(projectName: String, vararg volumes: String) {
+        volumes.toSet().ifEmpty { setOf("static", "backups", "elastic-data", "postgres-data") }.forEach {
+            command = "docker volume rm -f ${projectName}_$it"
+            exec()
+        }
+    }
+
+    private fun subprojectsNames(project: Project, ignoringServices: Array<out String>): List<String> = project.subprojects.map { it.name }
+        .filter { !it.contains("static") &&  !it.contains("-lib") && !ignoringServices.toSet().contains(it) }
 
     private fun String.splitBySpace(): List<String>  = replace("  ", " ").split(" ")
 }
