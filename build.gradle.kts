@@ -4,7 +4,7 @@ plugins {
     id("com.gradle.plugin-publish") version "0.14.0"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
-val pluginsVersion = "1.8.5"
+val pluginsVersion = "1.8.51"
 description = "Easy SCP deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"

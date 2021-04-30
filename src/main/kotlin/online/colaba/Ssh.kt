@@ -133,7 +133,7 @@ open class Ssh : Cmd() {
         val cert = "$ELASTIC/$ELASTIC_CERT_NAME"
         if (project.localExists(cert)) {
             copy(ELASTIC_CERT_NAME, ELASTIC)
-            execute("chmod -R 777 ./${project.name}/$cert")
+            execute("chmod 777 -R ./${project.name}/$ELASTIC/$ELASTIC-data")
         }
         copy("elasticsearch.yml", ELASTIC)
 
