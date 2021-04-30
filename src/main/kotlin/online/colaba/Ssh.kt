@@ -109,15 +109,14 @@ open class Ssh : Cmd() {
         println("🌀 Found local POSTGRES folder: [$folder] 🌀")
         if (remoteExists(folder)) {
             copy(postgresConfigFolder, folder)
-            copy(postgresConfigFile, folder)
+            copy(postgresConfigFolder, folder)
         } else copyWithOverride(folder)
 
         val folderBackups = "$folder/backups"
         if (!remoteExists(folderBackups)) {
-            if (project.localExists(folderBackups)) {
-                execute("chmod 777 -R ./$folderBackups")
-                copyWithOverride(folderBackups)
-            } else remoteMkDir("${project.name}/$folderBackups")
+            if (project.localExists(folderBackups)) copyWithOverride(folderBackups)
+            else remoteMkDir("${project.name}/$folderBackups")
+            execute("chmod -R 777 ./${project.name}/$folderBackups")
             println("\n🔆 BACKUPS folder [$folderBackups] now is on remote server 🔆 \n")
     } }
 
@@ -129,11 +128,12 @@ open class Ssh : Cmd() {
 
     if (docker) launch { copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore") }
 
-    if (elastic && project.localExists(ELASTIC)) launch {
+    if (elastic && project.localExists(ELASTIC)) {
+        println("🔩 Start copying elastic... ")
         val cert = "$ELASTIC/$ELASTIC_CERT_NAME"
         if (project.localExists(cert)) {
-            execute("chmod -R 777 ./${project.name}/$cert")
             copy(ELASTIC_CERT_NAME, ELASTIC)
+            execute("chmod -R 777 ./${project.name}/$cert")
         }
         copy("elasticsearch.yml", ELASTIC)
 
@@ -142,7 +142,7 @@ open class Ssh : Cmd() {
         if (!remoteExists(elasticDataFolder)) {
             println("🤖 [$elasticDockerVolumeFolder] not exist")
             remoteMkDir(elasticDockerVolumeFolder)
-    } }
+    }}
 
     if (logstash && project.localExists(ELASTIC)) listOf("docker-compose.logstash.yml", "logstash.conf", "logstash.yml").forEach { copy("$ELASTIC/$it", ELASTIC) }
     if (kibana && project.localExists(ELASTIC)) launch { listOf("kibana.yml", "docker-compose.kibana.yml").forEach {  copy("$ELASTIC/$it", ELASTIC) } }

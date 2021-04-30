@@ -16,31 +16,11 @@ open class DockerCompose : Cmd() {
         group = dockerMainGroupName(project.name)
         description = "Docker-compose task"
     }
-
-    @get:Input @Optional var composeFile: String? = null
-    @get:Input @Optional var service    : String? = null
-
-    @get:Input var exec    : String = "up "
-    @get:Input var recreate: Boolean = true
-    @get:Input var isDev   : Boolean = false
-    @get:Input var noDeps  : Boolean = true
+    @get:Input var exec : String = "up"
 
     @TaskAction
     override fun exec() {
-        var recreateFlags = "--detach --build --force-recreate"
-        if (noDeps) recreateFlags += " --no-deps"
-
-        val devFile = "docker-compose.dev.yml"
-
-        if (isDev) composeFile = devFile
-
-        composeFile?.let { exec = "-f $composeFile up " }
-
-        if (recreate) exec += recreateFlags
-
-        service?.let { exec += " $it" }
-        val runCommand = "docker-compose $exec".trim()
-        super.command = runCommand
+        super.command = "docker-compose $exec"
         super.exec()
     }
 }

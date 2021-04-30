@@ -29,13 +29,6 @@ open class Cmd : Exec() {
         }
     }
 
-    fun rmVolumes(projectName: String, vararg volumes: String) {
-        volumes.toSet().ifEmpty { setOf("static", "backups", "elastic-data", "postgres-data") }.forEach {
-            command = "docker volume rm -f ${projectName}_$it"
-            exec()
-        }
-    }
-
     private fun subprojectsNames(project: Project, ignoringServices: Array<out String>): List<String> = project.subprojects.map { it.name }
         .filter { !it.contains("static") &&  !it.contains("-lib") && !ignoringServices.toSet().contains(it) }
 

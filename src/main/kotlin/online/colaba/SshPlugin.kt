@@ -1,6 +1,6 @@
 package online.colaba
 
-import online.colaba.DockerCompose.Companion.dockerMainGroupName
+import online.colaba.DockerComposeUp.Companion.dockerMainGroupName
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.getValue
@@ -18,10 +18,12 @@ sshJars { }
 sshFront { }
 sshPostgres{ }
 
-registerCmdTask(); registerDockerComposeTask(); registerSchemaTask()
+registerCmdTask(); registerDckrTask(); registerDockerComposeTask(); registerDockerComposeUpTask(); registerSchemaTask()
 cmd { }
 schema{ }
+dckr{ }
 compose{ }
+composeUp{ }
 
 
 val (backendJARs, wholeFolder) = subprojects
@@ -35,10 +37,7 @@ tasks {
 
     register("ssh-docker", Ssh::class){ docker = true; description = "Copy [docker] needed files to remote server" }
     register("ssh-gradle", Ssh::class){ gradle = true; description = "Copy [gradle] needed files to remote server" }
-
-    val offVolumes by registering (Cmd::class) { command = "docker-compose down -v";   description = "Delete the volume between runs"}
-    val composeDetach by registering (Cmd::class) { command = "docker-compose up -d";   description = "docker-compose up -d"}
-    register("ssh-static-force", Ssh::class){ dependsOn(offVolumes); staticOverride = true; finalizedBy(composeDetach); description = "Force copy [static] with override to remote server"}
+    register("ssh-static-force", Ssh::class){ staticOverride = true; finalizedBy(compose); description = "Force copy [static] with override to remote server"}
 
     register("scp", Ssh::class) {
         description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
@@ -62,20 +61,23 @@ tasks {
 
     register("clear-frontend", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
 
-    // DOCKER helpers
-    subprojects.forEach { register("compose-${it.name}", DockerCompose::class){ service = it.name; description = "Docker compose up for [${it.name}] container" } }
+    // DOCKER
+    subprojects.forEach { register("compose-${it.name}", DockerComposeUp::class){ service = it.name; description = "Docker compose up for [${it.name}] container" } }
 
-    val ps      by registering (Cmd::class){ command = "docker ps"; description = "Print all containers to console output"; group = dockerMainGroupName(project.name) }
-    val stopAll by registering (Cmd::class) { composeForEachSubproject(project, "stop"); description = "Docker stop all containers"; group = dockerMainGroupName(project.name) }
-    val rm      by registering (Cmd::class) { dependsOn(stopAll); composeForEachSubproject(project, "rm -f"); description = "Docker remove all containers"; group = dockerMainGroupName(project.name) }
-    val prune   by registering (Cmd::class) { command = "docker system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name); finalizedBy(ps) }
-    val rmVolumes by registering (Cmd::class) { rmVolumes(project.name);  description = "Removing all unused volumes"; group = dockerMainGroupName(project.name);
-        dependsOn(offVolumes)
-        finalizedBy(ps)
+    val ps      by registering (Dckr::class) { exec = "ps"; description = "Print all containers to console output"; group = dockerMainGroupName(project.name) }
+
+    val down by registering (DockerCompose::class) { exec = "down -fvs";   description = "tops containers and removes containers, networks, volumes, and images created by up"}
+
+    val prune   by registering (Dckr::class) { exec = "system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name); finalizedBy(ps) }
+    val networkPrune by registering (Dckr::class) { exec ="network prune -f"; description = "Remove unused docker networks"; group = dockerMainGroupName(project.name) }
+    //TODO
+    val volumePr by registering (Dckr::class)    { rmVolumes(); description = "Remove unused docker volumes 2"; group = dockerMainGroupName(project.name) }
+    val volumePrune by registering (Dckr::class) { dependsOn(down); finalizedBy(volumePr); description = "Docker down & Volume prune"; group = dockerMainGroupName(project.name) }
+    val rmStaticVlm by registering (Dckr::class) { dependsOn(volumePrune); exec ="volume rm -f ${project.name}_static"; finalizedBy(networkPrune); group = dockerMainGroupName(project.name); }
+
+    register("rm-all", DockerCompose::class) { exec ="rm -fvs"; description = "Docker remove all containers & volumes & networks"; group = dockerMainGroupName(project.name);
+        finalizedBy(rmStaticVlm)
     }
 
-    register("rm-all", Cmd::class) { description = "Docker remove all containers"; group = dockerMainGroupName(project.name);
-        dependsOn(rm)
-        finalizedBy(rmVolumes)
-    }
+
 } } }
