@@ -129,20 +129,24 @@ open class Ssh : Cmd() {
     if (docker) launch { copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore") }
 
     if (elastic && project.localExists(ELASTIC)) {
-        println("🔩 Start copying elastic... ")
+        println("\n💿 Start [$ELASTIC]... ")
         val cert = "$ELASTIC/$ELASTIC_CERT_NAME"
         if (project.localExists(cert)) {
+            println("🔩 Start copying elastic certificated...")
             copy(ELASTIC_CERT_NAME, ELASTIC)
-            execute("chmod 777 -R ./${project.name}/$ELASTIC/$ELASTIC-data")
+            execute("chmod +x ./${project.name}/$cert")
         }
         copy("elasticsearch.yml", ELASTIC)
 
-        val elasticDataFolder = "$ELASTIC/$ELASTIC_DOCKER_DATA"
-        val elasticDockerVolumeFolder = "${project.name}/$elasticDataFolder"
-        if (!remoteExists(elasticDataFolder)) {
-            println("🤖 [$elasticDockerVolumeFolder] not exist")
-            remoteMkDir(elasticDockerVolumeFolder)
-    }}
+        val volumeFolder = "$ELASTIC/$ELASTIC_DOCKER_VULUME"
+        val volumeFolderFull = "${project.name}/$volumeFolder"
+        if (!remoteExists(volumeFolder)) {
+            println("🤖 [$ELASTIC_DOCKER_VULUME] not exist in [$ELASTIC]. 🤖🤖🤖 So I'll create new one.")
+            remoteMkDir(volumeFolderFull)
+        }
+        execute("chmod 777 -R ./$volumeFolderFull")
+        println("💿 OK: [$ELASTIC] is done\n")
+    }
 
     if (logstash && project.localExists(ELASTIC)) listOf("docker-compose.logstash.yml", "logstash.conf", "logstash.yml").forEach { copy("$ELASTIC/$it", ELASTIC) }
     if (kibana && project.localExists(ELASTIC)) launch { listOf("kibana.yml", "docker-compose.kibana.yml").forEach {  copy("$ELASTIC/$it", ELASTIC) } }

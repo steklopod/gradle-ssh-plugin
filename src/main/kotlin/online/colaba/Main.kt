@@ -3,14 +3,14 @@ package online.colaba
 import org.gradle.api.Project
 import java.io.File
 
-const val STATIC    = "static"
-const val NGINX     = "nginx"
+const val STATIC = "static"
+const val NGINX  = "nginx"
 //Elastic:
-const val ELASTIC             = "elastic"
-const val ELASTIC_CERT_NAME   = "elastic-stack-ca.p12"
-const val ELASTIC_DOCKER_DATA = "elastic-data"
+const val ELASTIC               = "elastic"
+const val ELASTIC_CERT_NAME     = "elastic-stack-ca.p12"
+const val ELASTIC_DOCKER_VULUME = "elastic-data"
 
-const val postgresConfigFile = "postgresql.conf"
+const val postgresConfigFile   = "postgresql.conf"
 const val postgresConfigFolder = "docker-entrypoint-initdb.d"
 
 val userHomePath: String        = System.getProperty("user.home")
