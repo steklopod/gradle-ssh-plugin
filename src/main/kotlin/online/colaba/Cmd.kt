@@ -10,7 +10,7 @@ import org.gradle.kotlin.dsl.register
 
 open class Cmd : Exec() {
     init {
-        group = "execute"
+        group = "help"
         description = "Execute a command line process on local PC [linux/windows]"
     }
 

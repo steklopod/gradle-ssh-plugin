@@ -9,11 +9,8 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 
 open class Dckr : Cmd() {
-    companion object {
-        fun dockerMainGroupName(projectName: String) = "docker-main-$projectName"
-    }
     init {
-        group = dockerMainGroupName(project.name)
+        group = "docker-main-${project.name}"
         description = "Docker task"
     }
     @get:Input @Optional var exec : String? = null

@@ -9,23 +9,18 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 
 open class DockerCompose : Cmd() {
-    companion object {
-        fun dockerMainGroupName(projectName: String) = "docker-main-$projectName"
-    }
     init {
-        group = dockerMainGroupName(project.name)
+        group = "docker-main-${project.name}"
         description = "Docker-compose task"
     }
     @get:Input var exec : String = "up"
 
-    @TaskAction
-    override fun exec() {
+    @TaskAction override fun exec() {
         super.command = "docker-compose $exec"
         super.exec()
     }
 }
 
 fun Project.registerDockerComposeTask() = tasks.register<DockerCompose>("compose")
-
 val Project.compose: TaskProvider<DockerCompose>
     get() = tasks.named<DockerCompose>("compose")

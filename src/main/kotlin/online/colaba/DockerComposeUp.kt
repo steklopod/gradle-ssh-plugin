@@ -13,7 +13,7 @@ open class DockerComposeUp : Cmd() {
         fun dockerMainGroupName(projectName: String) = "docker-main-$projectName"
     }
     init {
-        group = dockerMainGroupName(project.name)
+        group = "docker-main-${project.name}"
         description = "Docker-compose UP task"
     }
 

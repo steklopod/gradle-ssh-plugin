@@ -1,6 +1,5 @@
 package online.colaba
 
-import online.colaba.DockerComposeUp.Companion.dockerMainGroupName
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.getValue
@@ -63,20 +62,21 @@ tasks {
     // DOCKER
     subprojects.forEach { register("compose-${it.name}", DockerComposeUp::class){ service = it.name; description = "Docker compose up for [${it.name}] container" } }
 
-    val ps      by registering (Dckr::class) { exec = "ps"; description = "Print all containers to console output"; group = dockerMainGroupName(project.name) }
+    val ps      by registering (Dckr::class) { exec = "ps"; description = "Print all containers to console output" }
 
     val down by registering (DockerCompose::class) { exec = "down -fvs";   description = "tops containers and removes containers, networks, volumes, and images created by up"}
 
-    val prune   by registering (Dckr::class) { exec = "system prune -fa"; description = "Remove unused docker data"; group = dockerMainGroupName(project.name); finalizedBy(ps) }
-    val networkPrune by registering (Dckr::class) { exec ="network prune -f"; description = "Remove unused docker networks"; group = dockerMainGroupName(project.name) }
-    //TODO
-    val volumePr by registering (Dckr::class)    { rmVolumes(); description = "Remove unused docker volumes 2"; group = dockerMainGroupName(project.name) }
-    val volumePrune by registering (Dckr::class) { dependsOn(down); finalizedBy(volumePr); description = "Docker down & Volume prune"; group = dockerMainGroupName(project.name) }
-    val rmStaticVlm by registering (Dckr::class) { dependsOn(volumePrune); exec ="volume rm -f ${project.name}_static"; finalizedBy(networkPrune); group = dockerMainGroupName(project.name); }
+    val prune   by registering (Dckr::class) { exec = "system prune -fa"; description = "Remove unused docker data"; finalizedBy(ps) }
+    val networkPrune by registering (Dckr::class) { exec ="network prune -f"; description = "Remove unused docker networks" }
 
-    register("rm-all", DockerCompose::class) { exec ="rm -fvs"; description = "Docker remove all containers & volumes & networks"; group = dockerMainGroupName(project.name);
+    val rmPostgresVolume by registering (Dckr::class) { exec = "volume rm -f ${project.name}_postgres-data"; description = "Remove volume postgres"}
+    val rmElasticVolume by registering (Dckr::class) { exec = "volume rm -f ${project.name}_elastic-data"; description = "Remove volume elastic"}
+    val volumesRm by registering (Dckr::class) { dependsOn(rmElasticVolume); finalizedBy(rmPostgresVolume); exec = "volume rm -f ${project.name}_backups"; description = "Remove volume backups"}
+    val volumePrune by registering (Dckr::class) { dependsOn(down); finalizedBy(volumesRm); description = "Docker down & Volume prune"}
+    val rmStaticVlm by registering (Dckr::class) { dependsOn(volumePrune); exec ="volume rm -f ${project.name}_static"; finalizedBy(networkPrune)}
+
+    register("rm-all", DockerCompose::class) { exec ="rm -fvs"; description = "Docker remove all containers & volumes & networks"
         finalizedBy(rmStaticVlm)
     }
-
 
 } } }
