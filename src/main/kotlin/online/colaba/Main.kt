@@ -19,7 +19,13 @@ val windowsPrefix: List<String> = if (isWindows) listOf("cmd", "/c") else listOf
 
 fun jarLibFolder(folder: String = "backend") = "$folder/build/libs"
 
-fun String.normalizeForWindows(): String = replace("\\", "/").replace("//", "/").replace("//", "/")
+fun String.normalizeForWindows(projName: String? = null): String {
+    val replace = replace("\\", "/").replace("//", "/").replace("//", "/")
+    return projName?.let {
+        replace.replace("$projName/$projName", projName)
+    } ?: replace
+}
+
 fun Project.localExists(directory: String): Boolean {
     val pathname = "${rootDir}/$name/$directory".normalizeForWindows().replace("$name/$name", name)
     return File(pathname).exists()

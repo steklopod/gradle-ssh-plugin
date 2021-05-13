@@ -189,11 +189,11 @@ open class Ssh : Cmd() {
 
      private fun SessionHandler.copyWithOverride(directory: String = ""): Boolean {
         val toRemote = "${project.name}/$directory"
-        val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
+        val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows(project.name)
         val localFileExists = File(fromLocalPath).exists()
         if (localFileExists) {
             removeRemote(toRemote)
-            val toRemoteParent = File(toRemote).parent.normalizeForWindows()
+            val toRemoteParent = File(toRemote).parent.normalizeForWindows(project.name)
             val into = remoteMkDir(toRemoteParent)
             put(File(fromLocalPath), into)
             println("🗃️ Deploy local folder [$directory] ⬅️\n\t into remote 🔜 {$toRemoteParent}/[$directory] is done\n")
@@ -226,8 +226,8 @@ open class Ssh : Cmd() {
     }
 
      private fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
-         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
-         val into = "${project.name}/$remote".normalizeForWindows()
+         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows(project.name))
+         val into = "${project.name}/$remote".normalizeForWindows(project.name)
          val name = file.name
          if (from.exists()) {
             put(from, remoteMkDir(into))
