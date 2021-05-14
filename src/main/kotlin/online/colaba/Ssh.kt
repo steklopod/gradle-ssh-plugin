@@ -86,10 +86,10 @@ open class Ssh : Cmd() {
         if (withBuildSrc) "buildSrc".run { "$this/build".removeLocal(); copyWithOverrideAsync(this) }
     }
 
-    if(staticOverride) copyWithOverrideAsync(STATIC)
+    if (staticOverride) copyWithOverrideAsync(STATIC)
     if (static) !copyIfNotRemote(STATIC)
 
-    if (nginx) copyWithOverrideAsync(NGINX)
+    if (nginx) copyWithOverride(NGINX)
 
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder: [$this] ⬅️  📣\n")
@@ -189,15 +189,15 @@ open class Ssh : Cmd() {
 
      private fun SessionHandler.copyWithOverride(directory: String = ""): Boolean {
         val toRemote = "${project.name}/$directory"
-        val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows(project.name)
+        val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
         val localFileExists = File(fromLocalPath).exists()
         if (localFileExists) {
             removeRemote(toRemote)
-            val toRemoteParent = File(toRemote).parent.normalizeForWindows(project.name)
+            val toRemoteParent = File(toRemote).parent.normalizeForWindows()
             val into = remoteMkDir(toRemoteParent)
             put(File(fromLocalPath), into)
             println("🗃️ Deploy local folder [$directory] ⬅️\n\t into remote 🔜 {$toRemoteParent}/[$directory] is done\n")
-        } else println("📦 LOCAL folder ☝️[$directory] ⬅️ NOT EXISTS, so it not will be copied to server.")
+        } else println("📦📌📌📌 LOCAL folder ☝️[$directory] ⬅️ NOT EXISTS, so it not will be copied to server.")
         return localFileExists
     }
 
@@ -226,8 +226,8 @@ open class Ssh : Cmd() {
     }
 
      private fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
-         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows(project.name))
-         val into = "${project.name}/$remote".normalizeForWindows(project.name)
+         val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
+         val into = "${project.name}/$remote".normalizeForWindows()
          val name = file.name
          if (from.exists()) {
             put(from, remoteMkDir(into))
