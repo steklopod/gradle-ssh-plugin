@@ -1,10 +1,10 @@
 plugins {
     `kotlin-dsl`
     id("org.sonarqube") version "3.2.0"
-    id("com.gradle.plugin-publish") version "0.14.0"
-    id("com.github.ben-manes.versions") version "0.38.0"
+    id("com.gradle.plugin-publish") version "0.15.0"
+    id("com.github.ben-manes.versions") version "0.39.0"
 }
-val pluginsVersion = "1.8.65"
+val pluginsVersion = "1.8.66"
 description = "Easy SCP deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
@@ -29,7 +29,7 @@ pluginBundle {
 
 dependencies {
     implementation("org.hidetake:groovy-ssh:2.10.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 }
 
 tasks { compileKotlin { kotlinOptions { jvmTarget = "15"; useIR = true } } }

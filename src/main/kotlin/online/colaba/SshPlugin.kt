@@ -15,13 +15,13 @@ registerSshTask(); registerJarsTask(); registerFrontTask(); registerPostgresTask
 ssh { }
 sshJars { }
 sshFront { }
-sshPostgres{ }
+sshPostgres { }
 
 registerCmdTask(); registerDckrTask(); registerDockerComposeTask(); registerDockerComposeUpTask();
 cmd { }
-dckr{ }
-compose{ }
-composeUp{ }
+dckr { }
+compose { }
+composeUp { }
 
 
 val (backendJARs, wholeFolder) = subprojects
@@ -60,7 +60,9 @@ tasks {
     register("clear-frontend", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
 
     // DOCKER
-    subprojects.forEach { register("compose-${it.name}", DockerComposeUp::class){ service = it.name; description = "Docker compose up for [${it.name}] container" } }
+    subprojects.forEach {
+        register("compose-${it.name}", DockerComposeUp::class){ service = it.name; description = "Docker compose up for [${it.name}] container" }
+    }
 
     val ps      by registering (Dckr::class) { exec = "ps"; description = "Print all containers to console output" }
 
