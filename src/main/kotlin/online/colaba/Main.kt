@@ -7,15 +7,16 @@ const val STATIC = "static"
 const val NGINX  = "nginx"
 //Elastic:
 const val ELASTIC               = "elastic"
+const val BROKER                = "broker"
 const val ELASTIC_CERT_NAME     = "elastic-stack-ca.p12"
 const val ELASTIC_DOCKER_VULUME = "elastic-data"
 
 const val postgresConfigFile   = "postgresql.conf"
 const val postgresConfigFolder = "docker-entrypoint-initdb.d"
 
-val userHomePath: String        = System.getProperty("user.home")
-val isWindows: Boolean          = System.getProperty("os.name").toLowerCase().contains("windows")
-val windowsPrefix: List<String> = if (isWindows) listOf("cmd", "/c") else listOf()
+val userHomePath: String      = System.getProperty("user.home")
+val isWindows: Boolean        = System.getProperty("os.name").toLowerCase().contains("windows")
+val shellPrefix: List<String> = if (isWindows) listOf("cmd", "/c") else listOf()
 
 fun jarLibFolder(folder: String = "backend") = "$folder/build/libs"
 

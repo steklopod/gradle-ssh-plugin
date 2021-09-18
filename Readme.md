@@ -16,7 +16,7 @@ In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.8.66"
+    id("online.colaba.ssh") version "1.8.8"
 }
 group = "online.colaba"
 

@@ -17,8 +17,8 @@ open class Cmd : Exec() {
     @get:Input var command = "echo ${project.name}"
 
     @TaskAction override fun exec() {
-        commandLine = windowsPrefix + command.splitBySpace()
         println("> Executing command: $commandLine\n")
+        commandLine = shellPrefix + command.splitBySpace()
         super.exec()
     }
 

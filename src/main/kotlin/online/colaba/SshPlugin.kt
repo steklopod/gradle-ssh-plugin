@@ -23,7 +23,6 @@ dckr { }
 compose { }
 composeUp { }
 
-
 val (backendJARs, wholeFolder) = subprojects
     .filter { !name.endsWith("lib") && !name.contains("postgres")  && !name.contains("front")}
     .partition { it.localExists("src/main") || it.localExists("build/libs") }
@@ -48,6 +47,7 @@ tasks {
         gradle = true
         static = true
         elastic = true
+        broker = true
 
         kibana = false
         admin = false

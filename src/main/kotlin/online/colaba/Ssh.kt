@@ -47,6 +47,7 @@ open class Ssh : Cmd() {
     @get:Input var admin            : Boolean = false
     @get:Input var envFiles         : Boolean = false
     @get:Input var logstash         : Boolean = false
+    @get:Input var broker           : Boolean = false
     @get:Input var config           : Boolean = false
     @get:Input var withBuildSrc     : Boolean = false
     @get:Input var checkKnownHosts  : Boolean = false
@@ -150,6 +151,10 @@ open class Ssh : Cmd() {
 
     if (logstash && project.localExists(ELASTIC)) listOf("docker-compose.logstash.yml", "logstash.conf", "logstash.yml").forEach { copy("$ELASTIC/$it", ELASTIC) }
     if (kibana && project.localExists(ELASTIC)) launch { listOf("kibana.yml", "docker-compose.kibana.yml").forEach {  copy("$ELASTIC/$it", ELASTIC) } }
+    if (broker && project.localExists(BROKER)) launch { "$BROKER/data".removeLocal(); "$BROKER/logs".removeLocal()
+        println("ð Copy BROKER project")
+        copy(BROKER)
+    }
 
     if (envFiles) launch { copyInEach( ".env") }
 
