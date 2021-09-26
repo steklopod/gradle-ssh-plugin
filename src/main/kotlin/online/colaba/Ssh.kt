@@ -139,10 +139,10 @@ open class Ssh : Cmd() {
         }
         copy("elasticsearch.yml", ELASTIC)
 
-        val volumeFolder = "$ELASTIC/$ELASTIC_DOCKER_VULUME"
+        val volumeFolder = "$ELASTIC/$ELASTIC_DOCKER_VOLUME"
         val volumeFolderFull = "${project.name}/$volumeFolder"
         if (!remoteExists(volumeFolder)) {
-            println("🤖 [$ELASTIC_DOCKER_VULUME] not exist in [$ELASTIC]. 🤖🤖🤖 So I'll create new one.")
+            println("🤖 [$ELASTIC_DOCKER_VOLUME] not exist in [$ELASTIC]. 🤖🤖🤖 So I'll create new one.")
             remoteMkDir(volumeFolderFull)
         }
         execute("chmod 777 -R ./$volumeFolderFull")
