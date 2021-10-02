@@ -24,7 +24,7 @@ compose { }
 composeUp { }
 
 val (backendJARs, wholeFolder) = subprojects
-    .filter { !name.endsWith("lib") && !name.contains("postgres")  && !name.contains("front")}
+    .filter { !name.endsWith("lib") && !name.contains("postgres") && !name.contains("front")}
     .partition { it.localExists("src/main") || it.localExists("build/libs") }
 
 

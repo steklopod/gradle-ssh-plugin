@@ -17,6 +17,8 @@ import org.hidetake.groovy.ssh.core.RunHandler
 import org.hidetake.groovy.ssh.core.Service
 import org.hidetake.groovy.ssh.session.SessionHandler
 import java.io.File
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import kotlin.system.measureTimeMillis
 
 const val sshGroup = "ssh"
 
@@ -53,26 +55,27 @@ open class Ssh : Cmd() {
     @get:Input var checkKnownHosts  : Boolean = false
     @get:Input @Optional var server : SshServer? = null
 
-    @TaskAction fun run() {
-    println("🔜 Remote folder: 🧿${project.name}🧿")
+@TaskAction fun run() {
+    println("🔜 REMOTE FOLDER: 🧿${project.name}🧿")
     host = host ?: project.computeHostFromGroup()
-    println("HOST: $host ")
-    println("USER: $user ")
+    println("HOST: $host , USER: $user")
+
     Ssh.newService().runSessions { session(remote()) { runBlocking {
 
-    val isInitRun = !remoteExists("")
     var frontendFolder: String? = null
-
+    val isInitRun = !remoteExists("")
     if (isInitRun) println("\n🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉\n") else println("\n🍄🍄🍄 REDEPLOY STARTED 🍄🍄🍄\n")
 
-    fun copyInEach(vararg files: String) = files.forEach { file ->
+    fun copyInEach(vararg files: String) = measureTimeMillis { files.forEach { file ->
         copy(file)
-        if (jars.isEmpty()) findJARs(); jars.forEach { copy(file, it) }
+        if (jars.isEmpty()) findJARs(); jars.stream().parallel().forEach { copy(file, it) }
         postgres ?: postgresName()?.run { copy(file, this) }
         frontendFolder ?: frontendName()?.run { copy(file, this) }
         copy(file, NGINX)
         if (elastic) copy(file, ELASTIC)
-    }
+    }}.apply {
+        statistic["IN EACH project"] = this
+        println("\n\t  ⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - copy IN EACH project \n") }
 
     suspend fun copyGradle() = coroutineScope {
         fun ifNotGroovyThenKotlin(buildFile: String): String = (if (File(buildFile).exists()) buildFile else "$buildFile.kts").apply{
@@ -90,7 +93,7 @@ open class Ssh : Cmd() {
     if (staticOverride) copyWithOverrideAsync(STATIC)
     if (static) !copyIfNotRemote(STATIC)
 
-    if (nginx) copyWithOverride(NGINX)
+    if (nginx) copyWithOverrideAsync(NGINX)
 
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder: [$this] ⬅️  📣\n")
@@ -121,15 +124,18 @@ open class Ssh : Cmd() {
             println("\n🔆 BACKUPS folder [$folderBackups] now is on remote server 🔆 \n")
     } }
 
-    if (backend) {
+    if (backend) measureTimeMillis {
         findJARs()
+        println("\uD83C\uDF4C Start deploying JARs...")
         jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
-    }
+    }.apply {
+        statistic["JARS ($jars)"] = this; println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - \uD83C\uDF4C JARS \n") }
+
     if (gradle) launch { copyGradle() }
 
     if (docker) launch { copyInEach("docker-compose.yml", "Dockerfile", ".dockerignore") }
 
-    if (elastic && project.localExists(ELASTIC)) {
+    if (elastic && project.localExists(ELASTIC)) { measureTimeMillis {
         println("\n💿 Start [$ELASTIC]... ")
         val cert = "$ELASTIC/$ELASTIC_CERT_NAME"
         if (project.localExists(cert)) {
@@ -147,10 +153,14 @@ open class Ssh : Cmd() {
         }
         execute("chmod 777 -R ./$volumeFolderFull")
         println("💿 OK: [$ELASTIC] is done\n")
+    }.apply {
+        statistic["ELASTIC"] = this
+        println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - \uD83D\uDCBF ELASTIC") }
     }
 
     if (logstash && project.localExists(ELASTIC)) listOf("docker-compose.logstash.yml", "logstash.conf", "logstash.yml").forEach { copy("$ELASTIC/$it", ELASTIC) }
     if (kibana && project.localExists(ELASTIC)) launch { listOf("kibana.yml", "docker-compose.kibana.yml").forEach {  copy("$ELASTIC/$it", ELASTIC) } }
+
     if (broker && project.localExists(BROKER)) launch { "$BROKER/data".removeLocal(); "$BROKER/logs".removeLocal()
         println("ð Copy BROKER project")
         copy(BROKER)
@@ -160,15 +170,20 @@ open class Ssh : Cmd() {
 
     directory?.let { copyWithOverrideAsync(it) }
 
+    }
     println("\n🔮 Executing command on remote server [ $host ]:")
-    println("🔜🔜🔜 $run")
+    println("\t🔜🔜🔜 $run")
     println("\n🔮🔮🔮🔮🔮🔮🔮")
     println("🔮🔮🔮 RESULT: " + execute(run))
     println("🔮🔮🔮🔮🔮🔮🔮")
+    } }
+
+    printStatistic()
+
     println("\n🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
     println("🩸🩸🔫🔫🔫 C O L A B A 🔫🔫🔫🩸🩸")
-    println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸")
-} } } }
+    println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸\n")
+}
 
     private fun findInSubprojects(file: String) = project.subprojects.firstOrNull { it.localExists(file) }?.name
 
@@ -209,12 +224,18 @@ open class Ssh : Cmd() {
      private suspend fun SessionHandler.copyWithOverrideAsync(directory: String) =
         coroutineScope { launch { copyWithOverride(directory) } }
 
-     private fun SessionHandler.put(from: Any, into: String) = put(hashMapOf("from" to from, "into" to into))
+    private fun SessionHandler.put(from: Any, into: String) = measureTimeMillis {
+         put(hashMapOf("from" to from, "into" to into))
+     }.run {
+        val key = from.toString().substringAfter(project.name)
+        println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) copy [ $key ]")
+        statistic[key] = this
+     }
 
-     private fun SessionHandler.remoteExists(remoteFolder: String): Boolean {
+    private fun SessionHandler.remoteExists(remoteFolder: String): Boolean {
         val exists = execute("test -d ${project.name}/$remoteFolder && echo true || echo false")?.toBoolean() ?: false
-        if (exists) println("\n🧱 Directory [${project.name}/$remoteFolder]🔜 is EXISTS on remote server")
-        else println("\n📦 Directory [${project.name}/$remoteFolder]🔜 is NOT EXISTS on remote server")
+        if (exists) println("\n\uD83C\uDF1A Directory [${project.name}/$remoteFolder]🔜 EXISTS on remote server")
+        else println("\n📦 Directory [${project.name}/$remoteFolder]🔜 does NOT EXIST on remote server")
         return exists
     }
 
@@ -250,7 +271,20 @@ open class Ssh : Cmd() {
      }
      private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
      private fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) = session(*remotes, delegateClosureOf(action))
+
+
+    private val statistic: MutableMap<String, Long> = mutableMapOf()
+
+    private fun printStatistic() {
+        println("\n\t 10 longest operations:")
+        val top10 = statistic.toList().sortedByDescending { (_, value) -> value }.take(10).toMap()
+        var i = 1
+        top10.forEach {
+            println("\t ${i++}. ⏱️ ${MILLISECONDS.toMinutes(it.value)} min, or ${MILLISECONDS.toSeconds(it.value)} sec, or ${it.value} ms - ${it.key}")
+        }
+    }
 }
+
 
 fun Project.registerSshTask() = tasks.register<online.colaba.Ssh>(sshGroup)
 val Project.ssh: TaskProvider<online.colaba.Ssh>
