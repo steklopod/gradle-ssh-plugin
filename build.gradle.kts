@@ -32,6 +32,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 }
 
-tasks { compileKotlin { kotlinOptions { jvmTarget = "16" } } }
+tasks { compileKotlin { kotlinOptions { jvmTarget = "17" } } }
 
 defaultTasks("clean", "assemble", "publishPlugins")
