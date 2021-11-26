@@ -35,14 +35,14 @@ open class Ssh : Cmd() {
 
     @get:Input var run : String = "cd ${project.name} && echo \$PWD"
 
-    @get:Input var jars             : List<String> = listOf()
     @get:Input var gradle           : Boolean = false
     @get:Input var docker           : Boolean = false
     @get:Input var backend          : Boolean = false
+    @get:Input var jars             : List<String> = listOf()
 
     @get:Input var frontend         : Boolean = false
-    @get:Input var clearFrontend    : Boolean = false
-    @get:Input var frontendOnlyDist : Boolean = false
+    @get:Input var frontendClear    : Boolean = false
+    @get:Input var frontendWhole    : Boolean = false
     @get:Input @Optional var frontendDist : String = ".output"
 
     @get:Input var nginx            : Boolean = false
@@ -66,7 +66,6 @@ open class Ssh : Cmd() {
 
     Ssh.newService().runSessions { session(remote()) { runBlocking {
 
-    var frontendFolder: String? = null
     val isInitRun = !remoteExists("")
     if (isInitRun) println("\n🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉\n") else println("\n🍄🍄🍄 REDEPLOY STARTED 🍄🍄🍄\n")
 
@@ -74,7 +73,7 @@ open class Ssh : Cmd() {
         copy(file)
         if (jars.isEmpty()) findJARs(); jars.stream().parallel().forEach { copy(file, it) }
         postgres ?: postgresName()?.run { copy(file, this) }
-        frontendFolder ?: frontendName()?.run { copy(file, this) }
+        frontendName()?.run { copy(file, this) }
         copy(file, NGINX)
         if (elastic) copy(file, ELASTIC)
     }}.apply {
@@ -99,14 +98,13 @@ open class Ssh : Cmd() {
 
     if (nginx) copyWithOverrideAsync(NGINX)
 
-    if (clearFrontend) { frontendName()?.run {
+    if (frontendClear) { frontendName()?.run {
         println("[nuxt] ✂️: removing local frontend temporary files from [$this] ⬅️:")
         clearFrontendTempFiles(this)
     } }
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder: [$this] ⬅️  📣\n")
-        frontendFolder = this
-        val distributionDirectory = if (frontendOnlyDist || project.localExists("$this/$frontendDist")) "$this/$frontendDist" else this
+        val distributionDirectory = if (!frontendWhole) "$this/$frontendDist" else this
         println("🌈 Frontend distribution directory: [ $distributionDirectory ]")
         copyWithOverrideAsync(distributionDirectory)
     } }
@@ -192,7 +190,9 @@ open class Ssh : Cmd() {
     println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸\n")
 }
 
-    private fun findInSubprojects(file: String) = project.subprojects.firstOrNull { it.localExists(file) }?.name
+    private fun findInSubprojects(file: String) = project.subprojects
+        .sortedByDescending { it.name.contains("front") }
+        .firstOrNull { it.localExists(file) }?.name
 
     private fun findJARs() {
         if (jars.isEmpty()) jars =
@@ -202,8 +202,8 @@ open class Ssh : Cmd() {
     }
 
     private fun frontendName(): String? {
-        val frontendFolder = findInSubprojects("package.json") ?: project.subprojects.map { it.name }
-            .firstOrNull { it.startsWith("front") }
+        val frontendFolder = findInSubprojects("package.json")
+            ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith("front") || it.endsWith("frontend") }
         if (frontendFolder == null) System.err.println("Frontend folder not found in current project")
         return frontendFolder
     }
@@ -303,7 +303,6 @@ fun Project.registerFrontTask() = tasks.register<online.colaba.Ssh>("sshFront")
 val Project.sshFront: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshFront"){
         frontend = true
-        clearFrontend = true
         description = "Template for SSH frontend folder deploy."
     }
 
