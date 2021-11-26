@@ -39,8 +39,12 @@ open class Ssh : Cmd() {
     @get:Input var gradle           : Boolean = false
     @get:Input var docker           : Boolean = false
     @get:Input var backend          : Boolean = false
+
     @get:Input var frontend         : Boolean = false
-    @get:Input var clearNuxt        : Boolean = false
+    @get:Input var clearFrontend    : Boolean = false
+    @get:Input var frontendOnlyDist : Boolean = false
+    @get:Input @Optional var frontendDist : String = ".output"
+
     @get:Input var nginx            : Boolean = false
     @get:Input var static           : Boolean = false
     @get:Input var staticOverride   : Boolean = false
@@ -53,7 +57,7 @@ open class Ssh : Cmd() {
     @get:Input var config           : Boolean = false
     @get:Input var withBuildSrc     : Boolean = false
     @get:Input var checkKnownHosts  : Boolean = false
-    @get:Input @Optional var server : SshServer? = null
+    @get:Input @Optional var server       : SshServer? = null
 
 @TaskAction fun run() {
     println("🔜 REMOTE FOLDER: 🧿${project.name}🧿")
@@ -95,15 +99,18 @@ open class Ssh : Cmd() {
 
     if (nginx) copyWithOverrideAsync(NGINX)
 
+    if (clearFrontend) { frontendName()?.run {
+        println("[nuxt] ✂️: removing local frontend temporary files from [$this] ⬅️:")
+        clearFrontendTempFiles(this)
+    } }
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder: [$this] ⬅️  📣\n")
         frontendFolder = this
-        copyWithOverrideAsync(this)
+        val distributionDirectory = if (frontendOnlyDist || project.localExists("$this/$frontendDist")) "$this/$frontendDist" else this
+        println("🌈 Frontend distribution directory: [ $distributionDirectory ]")
+        copyWithOverrideAsync(distributionDirectory)
     } }
-    if (clearNuxt) { frontendName()?.run {
-        println("[nuxt] ✂️: removing local frontend temporary files from [$frontendFolder] ⬅️:")
-        deleteNodeModulesAndNuxtFolders(this)
-    } }
+
     postgres?.run {
         val folder = if (project.localExists(this)) this else postgresName()
         if (folder == null) {
@@ -264,7 +271,7 @@ open class Ssh : Cmd() {
      }
      private fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)
 
-     private fun deleteNodeModulesAndNuxtFolders(frontendLocalFolder: String) = setOf(".nuxt", ".idea", "node_modules", ".DS_Store").forEach { "$frontendLocalFolder/$it".removeLocal() }
+     private fun clearFrontendTempFiles(frontendLocalFolder: String) = setOf(".output",".nuxt", ".idea", "node_modules", ".DS_Store").forEach { "$frontendLocalFolder/$it".removeLocal() }
 
      private fun remote(): Remote {
          return (server ?: SshServer(hostSsh = host!!, userSsh = user, rootFolder = project.rootDir.toString())).remote(checkKnownHosts)
@@ -296,7 +303,7 @@ fun Project.registerFrontTask() = tasks.register<online.colaba.Ssh>("sshFront")
 val Project.sshFront: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshFront"){
         frontend = true
-        clearNuxt = true
+        clearFrontend = true
         description = "Template for SSH frontend folder deploy."
     }
 

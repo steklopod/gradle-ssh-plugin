@@ -40,7 +40,6 @@ tasks {
         description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
         postgres = "postgres"
         frontend = true
-        clearNuxt = true
         backend = true
         nginx = true
         docker = true
@@ -49,6 +48,7 @@ tasks {
         elastic = true
         broker = true
 
+        clearFrontend = false
         kibana = false
         admin = false
         config = false
@@ -57,7 +57,7 @@ tasks {
         run = "cd ${project.name} && echo \$PWD"
     }
 
-    register("clear-frontend", Ssh::class){ clearNuxt = true;  description = "Remove local [node_modules] & [.nuxt]" }
+    register("clear-frontend", Ssh::class){ clearFrontend = true;  description = "Remove local [node_modules] & [.nuxt]" }
 
     // DOCKER
     subprojects.forEach {
