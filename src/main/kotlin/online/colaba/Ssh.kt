@@ -43,7 +43,10 @@ open class Ssh : Cmd() {
     @get:Input var frontend         : Boolean = false
     @get:Input var frontendClear    : Boolean = false
     @get:Input var frontendWhole    : Boolean = false
-    @get:Input @Optional var frontendDist : String = ".output"
+    @get:Input var frontendDistCompressed     : Boolean = false
+    @get:Input var frontendDistCompressedType : String = ".tar.xz"
+    @get:Input var frontendDist               : String = ".output"
+    @get:Input @Optional var frontendFolder   : String? = null
 
     @get:Input var nginx            : Boolean = false
     @get:Input var static           : Boolean = false
@@ -104,9 +107,7 @@ open class Ssh : Cmd() {
     } }
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder: [$this] ⬅️  📣\n")
-        val distributionDirectory = if (!frontendWhole) "$this/$frontendDist" else this
-        println("🌈 Frontend distribution directory: [ $distributionDirectory ]")
-        copyWithOverrideAsync(distributionDirectory)
+        copyWithOverrideAsync(frontendDistribution())
     } }
 
     postgres?.run {
@@ -202,10 +203,22 @@ open class Ssh : Cmd() {
     }
 
     private fun frontendName(): String? {
+        if (frontendFolder != null) return frontendFolder
         val frontendFolder = findInSubprojects("package.json")
             ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith("front") || it.endsWith("frontend") }
         if (frontendFolder == null) System.err.println("Frontend folder not found in current project")
         return frontendFolder
+    }
+    private fun String.frontendDistribution(): String {
+        val distributionDirectory = if (!frontendWhole) {
+            if (frontendDistCompressed) {
+                val archiveFolder = "$this/$frontendDist$frontendDistCompressedType"
+                println("🗜 Archive [ $archiveFolder ]")
+                archiveFolder
+            } else "$this/$frontendDist"
+        } else this
+        println("🌈 Frontend distribution directory: [ $distributionDirectory ]")
+        return distributionDirectory
     }
 
     private fun postgresName(): String? = findInSubprojects(postgresConfigFile) ?: findInSubprojects("docker-entrypoint-initdb.d")
@@ -303,6 +316,7 @@ fun Project.registerFrontTask() = tasks.register<online.colaba.Ssh>("sshFront")
 val Project.sshFront: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshFront"){
         frontend = true
+        frontendDistCompressed = true
         description = "Template for SSH frontend folder deploy."
     }
 

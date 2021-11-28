@@ -47,6 +47,7 @@ tasks {
         static = true
         elastic = true
         broker = true
+        frontendDistCompressed = true
 
         frontendWhole = false
         frontendClear = false
