@@ -11,8 +11,10 @@ import org.gradle.kotlin.dsl.registering
 class SshPlugin : Plugin<Project> { override fun apply(project: Project): Unit = project.run {
 description = "SSH needed deploy-tasks. Docker-friendly"
 
-registerSshTask(); registerJarsTask(); registerFrontTask(); registerPostgresTask()
+
+registerSshTask(); registerScpTask(); registerJarsTask(); registerFrontTask(); registerPostgresTask()
 ssh { }
+scp { }
 sshJars { }
 sshFront { }
 sshPostgres { }
@@ -35,29 +37,6 @@ tasks {
     register("ssh-docker", Ssh::class){ docker = true; description = "Copy [docker] needed files to remote server" }
     register("ssh-gradle", Ssh::class){ gradle = true; description = "Copy [gradle] needed files to remote server" }
     register("ssh-static-force", Ssh::class){ staticOverride = true; finalizedBy(compose); description = "Force copy [static] with override to remote server"}
-
-    register("scp", Ssh::class) {
-        description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
-        postgres = "postgres"
-        frontend = true
-        backend = true
-        nginx = true
-        docker = true
-        gradle = true
-        static = true
-        elastic = true
-        broker = true
-        frontendDistCompressed = true
-
-        frontendWhole = false
-        frontendClear = false
-        kibana = false
-        admin = false
-        config = false
-        withBuildSrc = false
-
-        run = "cd ${project.name} && echo \$PWD"
-    }
 
     register("clear-frontend", Ssh::class){ frontendClear = true;  description = "Remove local [node_modules] & [.nuxt]" }
 

@@ -306,6 +306,31 @@ open class Ssh : Cmd() {
 }
 
 
+fun Project.registerScpTask() = tasks.register<online.colaba.Ssh>(sshGroup)
+val Project.scp: TaskProvider<online.colaba.Ssh>
+    get() = tasks.named<online.colaba.Ssh>(sshGroup){
+        description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
+        postgres = "postgres"
+        frontend = true
+        backend = true
+        nginx = true
+        docker = true
+        gradle = true
+        static = true
+        elastic = true
+        broker = true
+        frontendDistCompressed = true
+
+        frontendWhole = false
+        frontendClear = false
+        kibana = false
+        admin = false
+        config = false
+        withBuildSrc = false
+
+        run = "cd ${project.name} && echo \$PWD"
+    }
+
 fun Project.registerSshTask() = tasks.register<online.colaba.Ssh>(sshGroup)
 val Project.ssh: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>(sshGroup){
