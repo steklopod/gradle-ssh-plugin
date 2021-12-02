@@ -11,7 +11,7 @@ import org.gradle.kotlin.dsl.register
 open class Dckr : Cmd() {
     init {
         group = "docker-main-${project.name}"
-        description = "Docker task"
+        description = "🐋 Docker task"
     }
     @get:Input @Optional var exec : String? = null
 

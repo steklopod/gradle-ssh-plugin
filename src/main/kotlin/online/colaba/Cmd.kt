@@ -11,7 +11,7 @@ import org.gradle.kotlin.dsl.register
 open class Cmd : Exec() {
     init {
         group = "help"
-        description = "Execute a command line process on local PC [linux/windows]"
+        description = "🐙 Execute a command line process on local PC [linux/windows]"
     }
 
     @get:Input var command = "echo ${project.name}"
@@ -19,7 +19,7 @@ open class Cmd : Exec() {
     @TaskAction
     override fun exec() {
         commandLine = cmdPrefix + command.splitBySpace()
-        println("> Executing command: $commandLine\n")
+        println("🐙 Executing command: $commandLine")
         super.exec()
     }
 

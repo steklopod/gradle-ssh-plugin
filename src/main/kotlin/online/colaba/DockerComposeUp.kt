@@ -9,12 +9,9 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 
 open class DockerComposeUp : Cmd() {
-    companion object {
-        fun dockerMainGroupName(projectName: String) = "docker-main-$projectName"
-    }
     init {
         group = "docker-main-${project.name}"
-        description = "Docker-compose UP task"
+        description = "🐳 Docker-compose UP task"
     }
 
     @get:Input @Optional var composeFile: String? = null
@@ -22,24 +19,25 @@ open class DockerComposeUp : Cmd() {
 
     @get:Input var exec    : String = "up "
     @get:Input var recreate: Boolean = true
-    @get:Input var isDev   : Boolean = false
-    @get:Input var noDeps  : Boolean = true
+    @get:Input var noDeps  : Boolean = false
 
     @TaskAction
     override fun exec() {
+        var fullCommand = exec
+
         var recreateFlags = "--detach --build --force-recreate"
+
         if (noDeps) recreateFlags += " --no-deps"
 
-        val devFile = "docker-compose.dev.yml"
+        composeFile?.run { fullCommand = "-f $this up " }
 
-        if (isDev) composeFile = devFile
+        if (recreate) fullCommand += recreateFlags
 
-        composeFile?.run { exec = "-f $this up " }
+        service?.let { fullCommand += " $it" }
 
-        if (recreate) exec += recreateFlags
+        val runCommand = "docker-compose $fullCommand".trim()
+        println("🐳 $runCommand")
 
-        service?.let { exec += " $it" }
-        val runCommand = "docker-compose $exec".trim()
         super.command = runCommand
         super.exec()
     }

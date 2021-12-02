@@ -25,7 +25,7 @@ const val sshGroup = "ssh"
 open class Ssh : Cmd() {
     init {
         group = sshGroup
-        description = "Deploy by FTP your distribution with SSH commands"
+        description = "🐸 Deploy by FTP your distribution with SSH commands"
     }
     @get:Input var user                : String = "root"
     @get:Input @Optional var host      : String? = null
@@ -306,9 +306,9 @@ open class Ssh : Cmd() {
 }
 
 
-fun Project.registerScpTask() = tasks.register<online.colaba.Ssh>(sshGroup)
+fun Project.registerScpTask() = tasks.register<online.colaba.Ssh>("scp")
 val Project.scp: TaskProvider<online.colaba.Ssh>
-    get() = tasks.named<online.colaba.Ssh>(sshGroup){
+    get() = tasks.named<online.colaba.Ssh>("scp"){
         description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
         postgres = "postgres"
         frontend = true

@@ -11,7 +11,7 @@ import org.gradle.kotlin.dsl.register
 open class DockerCompose : Cmd() {
     init {
         group = "docker-main-${project.name}"
-        description = "Docker-compose task"
+        description = "🐬 Docker-compose task"
     }
     @get:Input var exec : String = "up"
 
