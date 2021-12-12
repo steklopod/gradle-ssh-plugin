@@ -19,7 +19,7 @@ open class DockerComposeUp : Cmd() {
 
     @get:Input var exec    : String = "up "
     @get:Input var recreate: Boolean = true
-    @get:Input var noDeps  : Boolean = false
+    @get:Input var noDeps  : Boolean = true
 
     @TaskAction
     override fun exec() {

@@ -4,7 +4,7 @@ plugins {
     id("com.gradle.plugin-publish") version "0.18.0"
     id("com.github.ben-manes.versions") version "0.39.0"
 }
-val pluginsVersion = "1.8.99"
+val pluginsVersion = "1.8.994"
 description = "Easy SCP deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
@@ -30,8 +30,15 @@ pluginBundle {
 dependencies {
     implementation("org.hidetake:groovy-ssh:2.10.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+
+    testImplementation(platform("org.junit:junit-bom:5.8.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
 }
 
-tasks { compileKotlin { kotlinOptions { jvmTarget = "17" } } }
+tasks {
+    compileKotlin { kotlinOptions { jvmTarget = "17" } }
+    test { useJUnitPlatform()}
+}
 
 defaultTasks("clean", "assemble", "publishPlugins")

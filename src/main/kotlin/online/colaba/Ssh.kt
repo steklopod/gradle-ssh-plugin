@@ -40,27 +40,26 @@ open class Ssh : Cmd() {
     @get:Input var backend          : Boolean = false
     @get:Input var jars             : List<String> = listOf()
 
-    @get:Input var frontend         : Boolean = false
-    @get:Input var frontendClear    : Boolean = false
-    @get:Input var frontendWhole    : Boolean = false
-    @get:Input var frontendDistCompressed     : Boolean = false
+    @get:Input var frontend                   : Boolean = false
+    @get:Input var frontendClear              : Boolean = false
+    @get:Input var frontendWhole              : Boolean = false
     @get:Input var frontendDistCompressedType : String = ".tar.xz"
     @get:Input var frontendDist               : String = ".output"
     @get:Input @Optional var frontendFolder   : String? = null
 
-    @get:Input var nginx            : Boolean = false
-    @get:Input var static           : Boolean = false
-    @get:Input var staticOverride   : Boolean = false
-    @get:Input var elastic          : Boolean = false
-    @get:Input var kibana           : Boolean = false
-    @get:Input var admin            : Boolean = false
-    @get:Input var envFiles         : Boolean = false
-    @get:Input var logstash         : Boolean = false
-    @get:Input var broker           : Boolean = false
-    @get:Input var config           : Boolean = false
-    @get:Input var withBuildSrc     : Boolean = false
-    @get:Input var checkKnownHosts  : Boolean = false
-    @get:Input @Optional var server       : SshServer? = null
+    @get:Input var nginx           : Boolean = false
+    @get:Input var static          : Boolean = false
+    @get:Input var staticOverride  : Boolean = false
+    @get:Input var elastic         : Boolean = false
+    @get:Input var kibana          : Boolean = false
+    @get:Input var admin           : Boolean = false
+    @get:Input var envFiles        : Boolean = false
+    @get:Input var logstash        : Boolean = false
+    @get:Input var broker          : Boolean = false
+    @get:Input var config          : Boolean = false
+    @get:Input var withBuildSrc    : Boolean = false
+    @get:Input var checkKnownHosts : Boolean = false
+    @get:Input @Optional var server : SshServer? = null
 
 @TaskAction fun run() {
     println("🔜 REMOTE FOLDER: 🧿${project.name}🧿")
@@ -106,7 +105,7 @@ open class Ssh : Cmd() {
         clearFrontendTempFiles(this)
     } }
     if (frontend) { frontendName()?.run {
-        println("\n📣 Found local frontend folder: [$this] ⬅️  📣\n")
+        println("\n📣 Found local frontend folder in subprojects: [$this] ⬅️  📣\n")
         copyWithOverrideAsync(frontendDistribution())
     } }
 
@@ -204,20 +203,25 @@ open class Ssh : Cmd() {
 
     private fun frontendName(): String? {
         if (frontendFolder != null) return frontendFolder
-        val frontendFolder = findInSubprojects("package.json")
+        var frontendFolder = findInSubprojects("package.json")
             ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith("front") || it.endsWith("frontend") }
-        if (frontendFolder == null) System.err.println("Frontend folder not found in current project")
+        if (frontendFolder == null) {
+            val frontFoundFolder: String? = arrayOf("frontend", "front").find { project.localExists(it) }
+            if (frontFoundFolder == null) System.err.println("Frontend folder not found in current project")
+            else frontendFolder = frontFoundFolder
+        }
         return frontendFolder
     }
     private fun String.frontendDistribution(): String {
-        val distributionDirectory = if (!frontendWhole) {
-            if (frontendDistCompressed) {
-                val archiveFolder = "$this/$frontendDist$frontendDistCompressedType"
-                println("🗜 Archive [ $archiveFolder ]")
-                archiveFolder
-            } else "$this/$frontendDist"
-        } else this
-        println("🌈 Frontend distribution directory: [ $distributionDirectory ]")
+        val archiveFolder = "$this/$frontendDist$frontendDistCompressedType"
+        val distributionDirectory = if (frontendWhole) {
+            println("🦖 Frontend whole root folder will be deployed")
+            this
+        } else if (project.localExists(archiveFolder)) {
+            println("🗜 Archived frontend distribution found : [ $archiveFolder ]")
+            archiveFolder
+        } else "$this/$frontendDist"
+        println("🌈 FRONTEND DISTRIBUTION : [ $distributionDirectory ]")
         return distributionDirectory
     }
 
@@ -230,7 +234,7 @@ open class Ssh : Cmd() {
      private fun SessionHandler.copyWithOverride(directory: String = ""): Boolean {
         val toRemote = "${project.name}/$directory"
         val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
-        val localFileExists = File(fromLocalPath).exists()
+        val localFileExists = File("${project.rootDir.absolutePath}/$directory").exists()
         if (localFileExists) {
             removeRemote(toRemote)
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
@@ -319,7 +323,6 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         static = true
         elastic = true
         broker = true
-        frontendDistCompressed = true
 
         frontendWhole = false
         frontendClear = false
@@ -341,7 +344,6 @@ fun Project.registerFrontTask() = tasks.register<online.colaba.Ssh>("sshFront")
 val Project.sshFront: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshFront"){
         frontend = true
-        frontendDistCompressed = true
         description = "Template for SSH frontend folder deploy."
     }
 
