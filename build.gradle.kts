@@ -4,7 +4,7 @@ plugins {
     id("com.gradle.plugin-publish") version "0.18.0"
     id("com.github.ben-manes.versions") version "0.39.0"
 }
-val pluginsVersion = "1.8.994"
+val pluginsVersion = "1.8.999"
 description = "Easy SCP deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
@@ -29,7 +29,7 @@ pluginBundle {
 
 dependencies {
     implementation("org.hidetake:groovy-ssh:2.10.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC3")
 
     testImplementation(platform("org.junit:junit-bom:5.8.2"))
     testImplementation("org.junit.jupiter:junit-jupiter-engine")

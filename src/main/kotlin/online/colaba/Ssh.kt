@@ -215,12 +215,15 @@ open class Ssh : Cmd() {
     private fun String.frontendDistribution(): String {
         val archiveFolder = "$this/$frontendDist$frontendDistCompressedType"
         val distributionDirectory = if (frontendWhole) {
-            println("🦖 Frontend whole root folder will be deployed")
+            println("🦖 Frontend whole root folder will be deployed: [ $this ]")
             this
         } else if (project.localExists(archiveFolder)) {
             println("🗜 Archived frontend distribution found : [ $archiveFolder ]")
             archiveFolder
-        } else "$this/$frontendDist"
+        } else {
+            println("🗜🦭 Frontend archive folder NOT found [ $archiveFolder ]")
+            "$this/$frontendDist"
+        }
         println("🌈 FRONTEND DISTRIBUTION : [ $distributionDirectory ]")
         return distributionDirectory
     }
@@ -288,7 +291,7 @@ open class Ssh : Cmd() {
      }
      private fun SessionHandler.copy(file: String, remote: String = "") = copy(File(file), remote)
 
-     private fun clearFrontendTempFiles(frontendLocalFolder: String) = setOf(".output",".nuxt", ".idea", "node_modules", ".DS_Store").forEach { "$frontendLocalFolder/$it".removeLocal() }
+     private fun clearFrontendTempFiles(frontendLocalFolder: String) = setOf(".output", ".nuxt", ".idea", "node_modules", ".DS_Store", "package-lock.json").forEach { "$frontendLocalFolder/$it".removeLocal() }
 
      private fun remote(): Remote {
          return (server ?: SshServer(hostSsh = host!!, userSsh = user, rootFolder = project.rootDir.toString())).remote(checkKnownHosts)

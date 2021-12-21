@@ -23,7 +23,7 @@ fun jarLibFolder(folder: String = "backend") = "$folder/build/libs"
 fun String.normalizeForWindows(): String = replace("\\", "/").replace("//", "/").replace("//", "/")
 
 fun Project.localExists(directory: String): Boolean {
-    val absolutePath = "${rootDir.absolutePath}/$name/$directory".normalizeForWindows().replace("$name/$name", name)
+    val absolutePath = "${rootProject.projectDir.absolutePath}/$name/$directory".normalizeForWindows().replace("$name/$name", name)
     return File(absolutePath).exists()
 }
 
