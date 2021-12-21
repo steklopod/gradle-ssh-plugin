@@ -43,6 +43,7 @@ open class Ssh : Cmd() {
     @get:Input var frontend                   : Boolean = false
     @get:Input var frontendClear              : Boolean = false
     @get:Input var frontendWhole              : Boolean = false
+    @get:Input var frontendDistCompressed     : Boolean = false
     @get:Input var frontendDistCompressedType : String = ".tar.xz"
     @get:Input var frontendDist               : String = ".output"
     @get:Input @Optional var frontendFolder   : String? = null
@@ -217,7 +218,7 @@ open class Ssh : Cmd() {
         val distributionDirectory = if (frontendWhole) {
             println("🦖 Frontend whole root folder will be deployed: [ $this ]")
             this
-        } else if (project.localExists(archiveFolder)) {
+        } else if (frontendDistCompressed || project.localExists(archiveFolder)) {
             println("🗜 Archived frontend distribution found : [ $archiveFolder ]")
             archiveFolder
         } else {
@@ -319,6 +320,7 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
         postgres = "postgres"
         frontend = true
+        frontendDistCompressed = true
         backend = true
         nginx = true
         docker = true
@@ -347,6 +349,7 @@ fun Project.registerFrontTask() = tasks.register<online.colaba.Ssh>("sshFront")
 val Project.sshFront: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshFront"){
         frontend = true
+        frontendDistCompressed = true
         description = "Template for SSH frontend folder deploy."
     }
 
