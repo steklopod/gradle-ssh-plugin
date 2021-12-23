@@ -107,7 +107,40 @@ open class Ssh : Cmd() {
     } }
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder in subprojects: [$this] ⬅️  📣\n")
-        copyWithOverrideAsync(frontendDistribution())
+        val archiveFolderInRoot = "$frontendDist$frontendDistCompressedType"
+        val archiveFolder = "$this/$archiveFolderInRoot"
+        val distributionDirectory: String = if (frontendWhole) {
+            println("🦖 Frontend whole root folder will be deployed: [ $this ]")
+            copyWithOverride(this)
+            this
+        } else {
+            if (project.localExists(archiveFolderInRoot)) {
+                println("🗜🦖 Archived WHOLE frontend distribution found: [ $archiveFolder ]")
+                copyWithOverride(archiveFolderInRoot)
+                removeRemote(this)
+                execute("tar -xf ${project.name}/$archiveFolderInRoot --directory ./${project.name}")
+                archiveFolderInRoot
+            } else if (frontendDistCompressed || project.localExists(archiveFolder)) {
+                println("🗜 Archived frontend distribution found or `frontendDistCompressed=true`: [ $archiveFolder ]")
+                copyWithOverride(archiveFolder)
+                removeRemote("${project.name}/$this/$frontendDist")
+                execute("tar -xf ${project.name}/$archiveFolder --directory ./${project.name}/$this")
+                archiveFolder
+            } else {
+                val frontendOutput = "$this/$frontendDist"
+                println("🗜🦭 Frontend zip-archive folder NOT found [ $archiveFolder ].")
+                if (project.localExists(frontendOutput)) {
+                    println("🗜🦭🔧 Frontend distribution folder found [ $frontendOutput ].")
+                    copyWithOverride(frontendOutput)
+                    frontendOutput
+                } else {
+                    println("🦖🦖 Frontend whole root folder will be deployed: [ $this ]")
+                    copyWithOverride(this)
+                    this
+                }
+            }
+        }
+        println("🌈 FRONTEND DISTRIBUTION : [ $distributionDirectory ]")
     } }
 
     postgres?.run {
@@ -213,21 +246,7 @@ open class Ssh : Cmd() {
         }
         return frontendFolder
     }
-    private fun String.frontendDistribution(): String {
-        val archiveFolder = "$this/$frontendDist$frontendDistCompressedType"
-        val distributionDirectory = if (frontendWhole) {
-            println("🦖 Frontend whole root folder will be deployed: [ $this ]")
-            this
-        } else if (frontendDistCompressed || project.localExists(archiveFolder)) {
-            println("🗜 Archived frontend distribution found : [ $archiveFolder ]")
-            archiveFolder
-        } else {
-            println("🗜🦭 Frontend archive folder NOT found [ $archiveFolder ]")
-            "$this/$frontendDist"
-        }
-        println("🌈 FRONTEND DISTRIBUTION : [ $distributionDirectory ]")
-        return distributionDirectory
-    }
+
 
     private fun postgresName(): String? = findInSubprojects(postgresConfigFile) ?: findInSubprojects("docker-entrypoint-initdb.d")
         ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith(postgresConfigFolder) }

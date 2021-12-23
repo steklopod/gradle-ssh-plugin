@@ -58,8 +58,12 @@ tasks {
     val volumePrune by registering (Dckr::class) { dependsOn(down); finalizedBy(volumesRm); description = "Docker down & Volume prune"}
     val rmStaticVlm by registering (Dckr::class) { dependsOn(volumePrune); exec ="volume rm -f ${project.name}_static"; finalizedBy(networkPrune)}
 
-    register("rm-all", DockerCompose::class) { exec ="rm -fvs"; description = "Docker remove all containers & volumes & networks"
-        finalizedBy(rmStaticVlm)
+    val stopAll by registering (DockerCompose::class) { exec ="down -v"; description = "Stop all docker containers" }
+    register("pruneAll", DockerCompose::class) {
+        dependsOn(stopAll)
+        exec ="rm -f"
+        description = "Docker remove all containers & volumes & networks & images"
+        finalizedBy(prune)
     }
 
 } } }
