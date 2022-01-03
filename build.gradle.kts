@@ -1,10 +1,10 @@
 plugins {
     `kotlin-dsl`
     id("org.sonarqube") version "3.3"
-    id("com.gradle.plugin-publish") version "0.18.0"
-    id("com.github.ben-manes.versions") version "0.39.0"
+    id("com.gradle.plugin-publish") version "0.19.0"
+    id("com.github.ben-manes.versions") version "0.40.0"
 }
-val pluginsVersion = "1.8.1006"
+val pluginsVersion = "1.8.11"
 description = "Easy SCP deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"

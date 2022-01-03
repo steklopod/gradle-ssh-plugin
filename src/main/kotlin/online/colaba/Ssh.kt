@@ -63,11 +63,17 @@ open class Ssh : Cmd() {
     @get:Input @Optional var server : SshServer? = null
 
 @TaskAction fun run() {
+    if (frontendClear) { frontendName()?.run {
+            println("[frontend] ✂️: removing local frontend temporary files from [$this] ⬅️:")
+            clearFrontendTempFiles(this) }
+        return
+    }
+
     println("🔜 REMOTE FOLDER: 🧿${project.name}🧿")
     host = host ?: project.computeHostFromGroup()
     println("HOST: $host , USER: $user")
 
-    Ssh.newService().runSessions { session(remote()) { runBlocking {
+  Ssh.newService().runSessions { session(remote()) { runBlocking {
 
     val isInitRun = !remoteExists("")
     if (isInitRun) println("\n🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉\n") else println("\n🍄🍄🍄 REDEPLOY STARTED 🍄🍄🍄\n")
@@ -101,10 +107,7 @@ open class Ssh : Cmd() {
 
     if (nginx) copyWithOverrideAsync(NGINX)
 
-    if (frontendClear) { frontendName()?.run {
-        println("[nuxt] ✂️: removing local frontend temporary files from [$this] ⬅️:")
-        clearFrontendTempFiles(this)
-    } }
+
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder in subprojects: [$this] ⬅️  📣\n")
         val archiveFolderInRoot = "$frontendDist$frontendDistCompressedType"
@@ -117,7 +120,7 @@ open class Ssh : Cmd() {
             if (project.localExists(archiveFolderInRoot)) {
                 println("🗜🦖 Archived WHOLE frontend distribution found: [ $archiveFolder ]")
                 copyWithOverride(archiveFolderInRoot)
-                removeRemote(this)
+                // removeRemote(this) // TODO: ?
                 execute("tar -xf ${project.name}/$archiveFolderInRoot --directory ./${project.name}")
                 archiveFolderInRoot
             } else if (frontendDistCompressed || project.localExists(archiveFolder)) {
