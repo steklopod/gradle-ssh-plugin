@@ -1,10 +1,10 @@
 plugins {
     `kotlin-dsl`
     id("org.sonarqube") version "3.3"
-    id("com.gradle.plugin-publish") version "0.19.0"
-    id("com.github.ben-manes.versions") version "0.40.0"
+    id("com.gradle.plugin-publish") version "0.20.0"
+    id("com.github.ben-manes.versions") version "0.41.0"
 }
-val pluginsVersion = "1.8.11"
+val pluginsVersion = "1.8.13"
 description = "Easy SCP deploy gradle needed tasks"
 version = pluginsVersion
 group = "online.colaba"
@@ -38,7 +38,7 @@ dependencies {
 
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> { kotlinOptions { jvmTarget = "17"} }
-    test { useJUnitPlatform()}
+    test { useJUnitPlatform() }
 }
 
 defaultTasks("clean", "assemble", "publishPlugins")
