@@ -2,10 +2,10 @@ plugins {
     `kotlin-dsl`
     id("org.sonarqube") version "3.3"
     id("com.gradle.plugin-publish") version "0.20.0"
-    id("com.github.ben-manes.versions") version "0.41.0"
+    id("com.github.ben-manes.versions") version "0.42.0"
 }
-val pluginsVersion = "1.8.13"
-description = "Easy SCP deploy gradle needed tasks"
+val pluginsVersion = "1.8.17"
+description = "🚎 Deploy your multi-module gradle project distribution by ssh. \uD83D\uDE90 Easy SCP deploy gradle needed tasks.. 🚐 Easy SCP deploy gradle needed tasks."
 version = pluginsVersion
 group = "online.colaba"
 
@@ -14,7 +14,7 @@ repositories{ mavenLocal(); mavenCentral() }
 val sshPlugin = "sshPlugin"
 gradlePlugin { plugins { create(sshPlugin) {
     id = "$group.ssh"; implementationClass = "$group.SshPlugin"
-    description = "Ssh needed tasks for FTP deploy (SCP): all you need for easy deployment. (+Docker helpers tasks)"
+    description = "🚐 Deploy your multi-module gradle project distribution by SSH (+ 🐳 Docker helpers tasks)"
 } } }
 pluginBundle {
     website = "https://github.com/steklopod/gradle-ssh-plugin"

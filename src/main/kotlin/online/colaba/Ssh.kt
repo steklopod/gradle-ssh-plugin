@@ -35,10 +35,10 @@ open class Ssh : Cmd() {
 
     @get:Input var run : String = "cd ${project.name} && echo \$PWD"
 
-    @get:Input var gradle           : Boolean = false
-    @get:Input var docker           : Boolean = false
-    @get:Input var backend          : Boolean = false
-    @get:Input var jars             : List<String> = listOf()
+    @get:Input var gradle : Boolean = false
+    @get:Input var docker : Boolean = false
+    @get:Input var backend: Boolean = false
+    @get:Input var jars   : List<String> = listOf()
 
     @get:Input var frontend                   : Boolean = false
     @get:Input var frontendClear              : Boolean = false
@@ -180,21 +180,27 @@ open class Ssh : Cmd() {
 
     if (elastic && project.localExists(ELASTIC)) { measureTimeMillis {
         println("\n💿 Start [$ELASTIC]... ")
+        copy("elasticsearch.yml", ELASTIC)
+        // certificates
         val cert = "$ELASTIC/$ELASTIC_CERT_NAME"
         if (project.localExists(cert)) {
             println("🔩 Start copying elastic certificated...")
             copy(ELASTIC_CERT_NAME, ELASTIC)
             execute("chmod +x ./${project.name}/$cert")
         }
-        copy("elasticsearch.yml", ELASTIC)
-
+        val certFolder = "$ELASTIC/$ELASTIC_CERTS_FOLDER"
+        if (project.localExists(certFolder)) {
+            println("🔩 Start copying elastic certificates whole folder")
+            copy(ELASTIC_CERTS_FOLDER, ELASTIC)
+        }
+        // elastic-data folder: create and chmod
         val volumeFolder = "$ELASTIC/$ELASTIC_DOCKER_VOLUME"
         val volumeFolderFull = "${project.name}/$volumeFolder"
         if (!remoteExists(volumeFolder)) {
-            println("🤖 [$ELASTIC_DOCKER_VOLUME] not exist in [$ELASTIC]. 🤖🤖🤖 So I'll create new one.")
+            println("🤖 [$ELASTIC_DOCKER_VOLUME] not exist in [$ELASTIC]. 🤖🤖🤖 I've just created empty.")
             remoteMkDir(volumeFolderFull)
+            execute("chmod 777 -R ./$volumeFolderFull")
         }
-        execute("chmod 777 -R ./$volumeFolderFull")
         println("💿 OK: [$ELASTIC] is done\n")
     }.apply {
         statistic["ELASTIC"] = this
@@ -221,7 +227,7 @@ open class Ssh : Cmd() {
     println("🔮🔮🔮🔮🔮🔮🔮")
     } }
 
-    printStatistic()
+    printDurationStatistic()
 
     println("\n🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
     println("🩸🩸🔫🔫🔫 C O L A B A 🔫🔫🔫🩸🩸")
@@ -330,21 +336,22 @@ open class Ssh : Cmd() {
 
     private val statistic: MutableMap<String, Long> = mutableMapOf()
 
-    private fun printStatistic() {
-        println("\n\t 10 longest operations:")
-        val top10 = statistic.toList().sortedByDescending { (_, value) -> value }.take(10).toMap()
+    private fun printDurationStatistic() {
+        val top10LongestOperations = statistic.toList().sortedByDescending { (_, value) -> value }.take(10).toMap()
+        println("\n\t ⏰ ${top10LongestOperations.size} longest operations (only longer than 1 sec will be printed):")
         var i = 1
-        top10.forEach {
-            println("\t ${i++}. ⏱️ ${MILLISECONDS.toMinutes(it.value)} min, or ${MILLISECONDS.toSeconds(it.value)} sec, or ${it.value} ms - ${it.key}")
-        }
-    }
+        top10LongestOperations.forEach {
+            val durationSec = MILLISECONDS.toSeconds(it.value)
+            if (durationSec > 1) println("\t ${i++}. ⏱️ ${MILLISECONDS.toMinutes(it.value)} min, or $durationSec sec ( ${it.value} ms - ${it.key} )")
+    } }
+
 }
 
 
 fun Project.registerScpTask() = tasks.register<online.colaba.Ssh>("scp")
 val Project.scp: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("scp"){
-        description = "Copy for all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
+        description = "🚛 🚐 🚒 🚎 Deploy all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
         postgres = "postgres"
         frontend = true
         frontendDistCompressed = true
@@ -369,7 +376,7 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
 fun Project.registerSshTask() = tasks.register<online.colaba.Ssh>(sshGroup)
 val Project.ssh: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>(sshGroup){
-        description = "Template for SSH deploy. All props are set to `false`"
+        description = "🛴 Template for SSH deploy. All props are set to `false`"
     }
 
 fun Project.registerFrontTask() = tasks.register<online.colaba.Ssh>("sshFront")
@@ -377,19 +384,19 @@ val Project.sshFront: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshFront"){
         frontend = true
         frontendDistCompressed = true
-        description = "Template for SSH frontend folder deploy."
+        description = "🏎 FRONTEND deploy."
     }
 
 fun Project.registerJarsTask() = tasks.register<online.colaba.Ssh>("sshJars")
 val Project.sshJars: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshJars"){
         backend = true
-        description = "Template for SSH backends jars folder deploy."
+        description = "🚜 BACKENDs jars deploy"
     }
 
 fun Project.registerPostgresTask() = tasks.register<online.colaba.Ssh>("sshPostgres")
 val Project.sshPostgres: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshPostgres"){
         postgres = "postgres"
-        description = "Template for SSH backends jars folder deploy."
+        description = "🚙 Deploy POSTGRES"
     }
