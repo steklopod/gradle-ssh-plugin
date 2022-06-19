@@ -72,6 +72,7 @@ open class Ssh : Cmd() {
     println("🔜 REMOTE FOLDER: 🧿${project.name}🧿")
     host = host ?: project.computeHostFromGroup()
     println("HOST: $host , USER: $user")
+    validateHost(host!!)
 
   Ssh.newService().runSessions { session(remote()) { runBlocking {
 
@@ -153,7 +154,7 @@ open class Ssh : Cmd() {
             println(">>> local [postgres] folder not found"); return@run
         }
         postgres = folder
-        println("🌀 Found local POSTGRES folder: [$folder] 🌀")
+        println("\n🌀 Found local POSTGRES folder: [$folder] 🌀")
         if (remoteExists(folder)) {
             copy(postgresConfigFolder, folder)
             copy(postgresConfigFolder, folder)
