@@ -4,10 +4,10 @@ plugins {
 //    id("org.sonarqube") version "3.4.0.2513"
 //    id("com.github.ben-manes.versions") version "0.42.0"
 }
-val pluginsVersion = "1.8.182"
+val pluginsVersion = "1.8.19"
 version = pluginsVersion
 group = "online.colaba"
-description = "🚎 Deploy your multi-module gradle project distribution by ssh. \uD83D\uDE90 Easy SCP deploy gradle needed tasks.. 🚐 Easy SCP deploy gradle needed tasks."
+description = "🚎 Deploy your multi-module gradle project distribution by ssh. 🚐 Easy SCP deploy gradle needed tasks."
 
 repositories{ mavenLocal(); mavenCentral() }
 
@@ -16,13 +16,11 @@ gradlePlugin { plugins { create(sshPlugin) {
     id = "$group.ssh"; implementationClass = "$group.SshPlugin"
     description = "🚐 Deploy your multi-module gradle project distribution by SSH (+ 🐳 Docker helpers tasks)"
     displayName = "SSH task for easy deploy to remote server"
-//    version = pluginsVersion
 } } }
 pluginBundle {
     website = "https://github.com/steklopod/gradle-ssh-plugin"
     vcsUrl = "https://github.com/steklopod/gradle-ssh-plugin.git"
-    tags = listOf("ssh", "deploy", "CI/CD", "sftp", "ftp", "docker", "docker-compose")
-//    version = pluginsVersion
+    tags = listOf("ssh", "scp", "deploy", "CI/CD", "sftp", "ftp", "docker", "docker-compose")
  }
 
 dependencies {

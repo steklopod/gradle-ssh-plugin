@@ -106,7 +106,10 @@ open class Ssh : Cmd() {
     if (staticOverride) copyWithOverrideAsync(STATIC)
     if (static) !copyIfNotRemote(STATIC)
 
-    if (nginx) copyWithOverrideAsync(NGINX)
+    if (nginx) {
+        copyWithOverride(NGINX)
+        execute("chmod +x ./${project.name}/$NGINX/init-letsencrypt.sh")
+    }
 
 
     if (frontend) { frontendName()?.run {
