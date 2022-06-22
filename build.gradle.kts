@@ -32,9 +32,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api")
 }
 
-tasks {
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> { kotlinOptions { jvmTarget = "17"} }
-    test { useJUnitPlatform() }
-}
+tasks { test { useJUnitPlatform() } }
 
 defaultTasks("clean", "assemble", "publishPlugins")
