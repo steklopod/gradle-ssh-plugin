@@ -48,6 +48,7 @@ open class Ssh : Cmd() {
     @get:Input var frontendDist               : String = ".output"
     @get:Input @Optional var frontendFolder   : String? = null
 
+    @get:Input var crowdsec        : Boolean = false
     @get:Input var nginx           : Boolean = false
     @get:Input var static          : Boolean = false
     @get:Input var staticOverride  : Boolean = false
@@ -106,11 +107,12 @@ open class Ssh : Cmd() {
     if (staticOverride) copyWithOverrideAsync(STATIC)
     if (static) !copyIfNotRemote(STATIC)
 
+    if (crowdsec) copyWithOverrideAsync("crowdsec")
+
     if (nginx) {
         copyWithOverride(NGINX)
         execute("chmod +x ./${project.name}/$NGINX/init-letsencrypt.sh")
     }
-
 
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder in subprojects: [$this] ⬅️  📣\n")
@@ -366,6 +368,7 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         static = true
         elastic = true
         broker = true
+        crowdsec = true
 
         frontendWhole = false
         frontendClear = false
