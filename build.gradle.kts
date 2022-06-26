@@ -4,10 +4,10 @@ plugins {
 //    id("org.sonarqube") version "3.4.0.2513"
 //    id("com.github.ben-manes.versions") version "0.42.0"
 }
-val pluginsVersion = "1.8.20"
+val pluginsVersion = "1.8.21"
 version = pluginsVersion
 group = "online.colaba"
-description = "🚎 Deploy your multi-module gradle project distribution by ssh. 🚐 Easy SCP deploy gradle needed tasks."
+description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
 
 repositories{ mavenLocal(); mavenCentral() }
 

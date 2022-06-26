@@ -20,18 +20,20 @@ open class DockerComposeUp : Cmd() {
     @get:Input var exec    : String = "up "
     @get:Input var recreate: Boolean = true
     @get:Input var noDeps  : Boolean = true
+    @get:Input var forceRecreate  : Boolean = true
 
     @TaskAction
     override fun exec() {
         var fullCommand = exec
 
-        var recreateFlags = "--detach --build --force-recreate"
+        var rebuildFlag = "--build"
 
-        if (noDeps) recreateFlags += " --no-deps"
+        if (noDeps) rebuildFlag += " --no-deps"
+        if (forceRecreate) rebuildFlag += " --force-recreate"
 
-        composeFile?.run { fullCommand = "-f $this up " }
+        composeFile?.run { fullCommand = "-f $this up --detach " }
 
-        if (recreate) fullCommand += recreateFlags
+        if (recreate) fullCommand += rebuildFlag
 
         service?.let { fullCommand += " $it" }
 

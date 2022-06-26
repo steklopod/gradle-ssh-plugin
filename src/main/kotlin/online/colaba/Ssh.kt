@@ -116,14 +116,14 @@ open class Ssh : Cmd() {
 
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder in subprojects: [$this] ⬅️  📣\n")
-        val archiveFolderInRoot = "$frontendDist$frontendDistCompressedType"
-        val archiveFolder = "$this/$archiveFolderInRoot"
         val distributionDirectory: String = if (frontendWhole) {
-            println("🦖 Frontend whole root folder will be deployed: [ $this ]")
+            println("🦖🦖🦖 Frontend whole root folder will be deployed: [ $this ]")
             clearFrontendTempFiles(this)
             copyWithOverride(this)
             this
         } else {
+            val archiveFolderInRoot = "$frontendDist$frontendDistCompressedType"
+            val archiveFolder = "$this/$archiveFolderInRoot"
             if (project.localExists(archiveFolderInRoot)) {
                 println("🗜🦖 Archived WHOLE frontend distribution found: [ $archiveFolder ]")
                 copyWithOverride(archiveFolderInRoot)
@@ -359,8 +359,6 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("scp"){
         description = "🚛 🚐 🚒 🚎 Deploy all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
         postgres = "postgres"
-        frontend = true
-        frontendDistCompressed = true
         backend = true
         nginx = true
         docker = true
@@ -370,8 +368,10 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         broker = true
         crowdsec = true
 
-        frontendWhole = false
-        frontendClear = false
+        frontend = true
+        frontendWhole = true
+        frontendClear = true
+        frontendDistCompressed = false
         kibana = false
         admin = false
         config = false
@@ -390,7 +390,9 @@ fun Project.registerFrontTask() = tasks.register<online.colaba.Ssh>("sshFront")
 val Project.sshFront: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshFront"){
         frontend = true
-        frontendDistCompressed = true
+        frontendWhole = true
+        frontendClear = true
+        frontendDistCompressed = false
         description = "🏎 FRONTEND deploy."
     }
 
