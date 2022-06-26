@@ -44,6 +44,7 @@ open class Ssh : Cmd() {
     @get:Input var frontendClear              : Boolean = false
     @get:Input var frontendWhole              : Boolean = false
     @get:Input var frontendDistCompressed     : Boolean = false
+    @get:Input var frontendClearOnly          : Boolean = false
     @get:Input var frontendDistCompressedType : String = ".tar.xz"
     @get:Input var frontendDist               : String = ".output"
     @get:Input @Optional var frontendFolder   : String? = null
@@ -64,7 +65,7 @@ open class Ssh : Cmd() {
     @get:Input @Optional var server : SshServer? = null
 
 @TaskAction fun run() {
-    if (frontendClear) { frontendName()?.run {
+    if (frontendClearOnly) { frontendName()?.run {
             println("[frontend] ✂️: removing local frontend temporary files from [$this] ⬅️:")
             clearFrontendTempFiles(this) }
         return

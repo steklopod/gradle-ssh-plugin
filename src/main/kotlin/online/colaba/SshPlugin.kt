@@ -39,7 +39,7 @@ tasks {
     register<Ssh>("ssh-static-force"){ staticOverride = true; finalizedBy(compose); description = "🌄 Force copy [static] with override to remote server"}
     register<Ssh>("ssh-elasticsearch"){ elastic = true; description = "🔎 Deploy by scp whole [elastic] folder"  }
 
-    register<Ssh>("clear-frontend"){ frontendClear = true;  group = "help"; description = "🗑 Remove local [node_modules] & [.nuxt , .output], pacakage-lock.json" }
+    register<Ssh>("clear-frontend"){ frontendClearOnly = true;  group = "help"; description = "🗑 Remove local [node_modules] & [.nuxt , .output], pacakage-lock.json" }
     register<Ssh>("ssh-frontend-whole"){ frontend = true; frontendWhole = true; description = "📱 Deploy by scp WHOLE [frontend] folder" }
 
     // DOCKER COMPOSE
