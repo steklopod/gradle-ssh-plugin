@@ -2,7 +2,8 @@
 ![Backend CI](https://github.com/steklopod/gradle-ssh-plugin/workflows/Backend%20CI/badge.svg) [![Build Status](https://travis-ci.com/steklopod/gradle-ssh-plugin.svg?branch=master)](https://travis-ci.com/steklopod/gradle-ssh-plugin) 
 
 ### Copy from local to remote server. 
-* From **zero-config** to full customization
+Deliver your distribution to target server.
+* From **zero-config** to full customization.
 
 ### 🎯 Quick start
 
@@ -10,7 +11,7 @@ In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "latest"
+    id("online.colaba.ssh") version "1.8.23"
 }
 group = "online.colaba"
 
@@ -19,12 +20,12 @@ That's all!
 
 This task will copy folders & files from local machine to remote host **~/${project.name}/...** folder 
 
-> You can set host, or it will computed from `project.group` (example above)
+> You can set host, or it will be computed from `project.group` (example above)
 
 ```kotlin
 tasks {
     scp { 
-        host = "colaba.online"
+        host = "my-domain.com"
     }
 }
 ```
@@ -60,7 +61,7 @@ There must be **id_rsa** private key in root of your project.
 cd .ssh
 ssh-keygen -m PEM -t rsa -b 2048
 ssh-add id_rsa
-ssh-copy-id -i id_rsa.pub root@my.server
+ssh-copy-id -i id_rsa.pub root@my-server.com
 ```
 ___
 ### 🌀 Available gradle tasks from `ssh` plugin:
@@ -71,8 +72,11 @@ By default you have preconfigured tasks:
 * `ssh-gradle` - copy **gradle** needed files to remote server in every subproject
 * `ssh-docker` - copy **docker** files to remote server
 * `ssh-jars` - copy **${subproject}/nuild/libs/___.jar** file to remote server  in every subproject
+* and others: `ssh-ngix`, `ssh-briker`, `ssh-elasticsearch`, `ssh-docker`... 
 
-#### Example of tasks which will become available for your project:
+Run `gradle tasks` to see the full list in groups `ssh`, `docker-main-${project.name}`.
+
+#### Example of tasks which will be available for your project:
 * There will be as many tasks as gradle subprojects.
 
 1. `ssh-backend` - copy **backend** distribution `*.jar`-file to remote server
