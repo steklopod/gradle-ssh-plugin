@@ -113,34 +113,11 @@ open class Ssh : Cmd() {
 
     if (crowdsec) copyWithOverrideAsync("crowdsec")
 
-     if (broker && project.localExists(BROKER)) launch {
-         if (remoteExists(BROKER)) {
-             println("⚽ Copying $BROKER nested files...")
-             File("${project.rootDir.absolutePath}/$BROKER").walk()
-                 .filter { !it.isDirectory && it.name != ".gitignore" && it.extension != "md" }
-                 .map { it.path.substringAfter("$BROKER/") }
-                 .filter { !it.contains("data") && !it.contains("logs") }
-                 .forEach { copy(it, BROKER) }
-         } else {
-             println("⚽ Copying WHOLE [$BROKER] folder...")
-             copy(BROKER)
-         }
-     }
+     if (broker) launch { copyAllFilesFromFolder(BROKER) }
 
-    if (nginx) {
-        if (remoteExists(NGINX)) {
-            println("⚡ Copying $NGINX nested files...")
-            val folder = File("${project.rootDir.absolutePath}/$NGINX")
-            folder.walk()
-                .filter { !it.isDirectory && it.name != ".gitignore" && it.extension != "md" }
-                .map { it.path.substringAfter("$NGINX/") }
-                .filter { !it.contains("logs") || it.endsWith(".pem") }
-                .forEach { copy(it, NGINX) }
-        } else {
-            println("⚡⚡⚡ Copying WHOLE [$NGINX] folder:")
-            copyWithOverride(NGINX)
-            execute("chmod +x ./${project.name}/$NGINX/init-letsencrypt.sh")
-        }
+    if (nginx) launch {
+        copyAllFilesFromFolder(NGINX)
+        execute("chmod +x ./${project.name}/$NGINX/init-letsencrypt.sh")
     }
 
     if (frontend) { frontendName()?.run {
@@ -211,12 +188,16 @@ open class Ssh : Cmd() {
 
     if (gradle) launch { copyGradle() }
 
-    if (docker) launch { copyInEach(
-        "docker-compose.yml", "docker-compose.yaml",
-        "compose.yml", "compose.yaml",
-        "nginx/compose.init.yaml", // <-- hardcode
-        "Dockerfile", ".dockerignore"
-    ) }
+     if (docker) launch {
+         copy("compose.infra.yaml")
+         copy("compose.init.yaml")
+         copy("compose.prod.yaml")
+         copyInEach(
+             "docker-compose.yml", "docker-compose.yaml",
+             "compose.yml", "compose.yaml",
+             "Dockerfile", ".dockerignore"
+         )
+     }
 
     if (elastic && project.localExists(ELASTIC)) { measureTimeMillis {
         println("\n💿 Start [$ELASTIC]... ")
@@ -268,6 +249,21 @@ open class Ssh : Cmd() {
     println("🩸🩸🔫🔫🔫 C O L A B A 🔫🔫🔫🩸🩸")
     println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸\n")
 }
+
+    private fun SessionHandler.copyAllFilesFromFolder(fromFolder: String) {
+        if (remoteExists(fromFolder)) {
+            println("⚡ Copying $fromFolder nested files...")
+            val folder = File("${project.rootDir.absolutePath}/$fromFolder")
+            folder.walk()
+                .filter { !it.isDirectory && it.name != ".gitignore" && it.extension != "md" }
+                .map { it.path.substringAfter("$fromFolder/") }
+                .filter { !it.contains("logs") || it.endsWith(".pem") }
+                .forEach { copy(it, fromFolder) }
+        } else {
+            println("⚡⚡⚡ Copying WHOLE [$fromFolder] folder...")
+            copyWithOverride(fromFolder)
+        }
+    }
 
     private fun findInSubprojects(file: String) = project.subprojects
         .sortedByDescending { it.name.contains("front") }
