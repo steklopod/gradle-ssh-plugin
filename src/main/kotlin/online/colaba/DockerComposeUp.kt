@@ -31,13 +31,13 @@ open class DockerComposeUp : Cmd() {
         if (noDeps) rebuildFlag += " --no-deps"
         if (forceRecreate) rebuildFlag += " --force-recreate"
 
-        composeFile?.run { fullCommand = "-f $this up --detach " }
+        composeFile?.run { fullCommand = "-f $this up" }
 
         if (recreate) fullCommand += rebuildFlag
 
         service?.let { fullCommand += " $it" }
 
-        val runCommand = "docker-compose $fullCommand".trim()
+        val runCommand = "docker-compose $fullCommand --detach".trim()
         println("🐳 $runCommand")
 
         super.command = runCommand
