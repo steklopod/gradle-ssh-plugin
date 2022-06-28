@@ -34,7 +34,7 @@ tasks {
     backendJARs.map{it.name}.forEach { register<Ssh>("ssh-${it}") { directory = jarLibFolder(it); description = "🦉 Copy backend [${jarLibFolder(it)}] jar to remote server" } }
 
     wholeFolder.map{it.name}
-        .filter{ !it.contains("static") && it != BROKER && it != NGINX && it != ELASTIC }
+        .filter{ !it.contains("static") && !it.contains("monitor") && it != BROKER && it != NGINX && it != ELASTIC }
         .forEach { register<Ssh>("ssh-$it") { directory = it; description = "🦖 Copy WHOLE FOLDER [$it] to remote server" } }
 
     register<Ssh>("ssh-docker"){ docker = true; description = "🐳 Copy [docker] needed files to remote server" }
@@ -43,6 +43,7 @@ tasks {
     register<Ssh>("ssh-$ELASTIC"){ elastic = true; description = "🔎 Deploy by scp whole [$ELASTIC] folder"  }
     register<Ssh>("ssh-$BROKER"){ broker = true; description = "🔎 Deploy by scp whole [$BROKER] folder"  }
     register<Ssh>("ssh-$NGINX"){ nginx = true; description = "🔎 Deploy by scp whole [$NGINX] folder"  }
+    register<Ssh>("ssh-monitoring"){ monitoring = true; description = "🔎 Deploy by scp whole [MONITORING] folder"  }
 
     register<Ssh>("clear-frontend"){ frontendClearOnly = true;  group = "help"; description = "🗑 Remove local [node_modules] & [.nuxt , .output], pacakage-lock.json" }
     register<Ssh>("ssh-frontend-whole"){ frontend = true; frontendWhole = true; description = "📱 Deploy by scp WHOLE [frontend] folder" }

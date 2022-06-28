@@ -52,6 +52,7 @@ open class Ssh : Cmd() {
 
     @get:Input var crowdsec        : Boolean = false
     @get:Input var nginx           : Boolean = false
+    @get:Input var monitoring      : Boolean = false
     @get:Input var static          : Boolean = false
     @get:Input var staticOverride  : Boolean = false
     @get:Input var elastic         : Boolean = false
@@ -112,6 +113,7 @@ open class Ssh : Cmd() {
     if (static) !copyIfNotRemote(STATIC)
 
     if (crowdsec) copyWithOverrideAsync("crowdsec")
+    if (monitoring) copyWithOverrideAsync("monitoring")
 
      if (broker) launch { copyAllFilesFromFolder(BROKER) }
 
@@ -357,7 +359,6 @@ open class Ssh : Cmd() {
             from = file.substringAfterLast("/")
             "$remote/$file".substringBeforeLast(from)
         } else remote
-        println("\t! { $from --> $targetFolder }")
         return copy(File(from), targetFolder)
     }
 
@@ -406,6 +407,7 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         static = true
         elastic = true
         broker = true
+        monitoring = true
 
         frontend = true
         frontendWhole = true
