@@ -112,15 +112,12 @@ open class Ssh : Cmd() {
     if (staticOverride) copyWithOverrideAsync(STATIC)
     if (static) !copyIfNotRemote(STATIC)
 
-    if (crowdsec) copyWithOverrideAsync("crowdsec")
-    if (monitoring) copyWithOverrideAsync("monitoring")
+    if (crowdsec) copyAllFilesFromFolder("crowdsec")
+    if (monitoring) copyAllFilesFromFolder("monitoring")
 
-     if (broker) launch { copyAllFilesFromFolder(BROKER) }
+     if (broker) copyAllFilesFromFolder(BROKER)
 
-    if (nginx) launch {
-        copyAllFilesFromFolder(NGINX)
-        execute("chmod +x ./${project.name}/$NGINX/init-letsencrypt.sh")
-    }
+    if (nginx) copyAllFilesFromFolder(NGINX)
 
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder in subprojects: [$this] ⬅️  📣\n")
@@ -252,14 +249,14 @@ open class Ssh : Cmd() {
     println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸\n")
 }
 
-    private fun SessionHandler.copyAllFilesFromFolder(fromFolder: String) {
+    private suspend fun SessionHandler.copyAllFilesFromFolder(fromFolder: String) = coroutineScope {
         if (remoteExists(fromFolder)) {
-            println("⚡ Copying $fromFolder nested files...")
+            println("\uD83D\uDDC4️⚡\uD83D\uDDC4️ Copying [${fromFolder.toUpperCase()}] nested files...")
             val folder = File("${project.rootDir.absolutePath}/$fromFolder")
             folder.walk()
                 .filter { !it.isDirectory && it.name != ".gitignore" && it.extension != "md" }
-                .map { it.path.substringAfter("$fromFolder/") }
-                .filter { !it.contains("logs") || it.endsWith(".pem") }
+                .map { it.path.substringAfter("$folder/") }
+                .filter { !it.endsWith(".md") }
                 .forEach { copy(it, fromFolder) }
         } else {
             println("⚡⚡⚡ Copying WHOLE [$fromFolder] folder...")
@@ -347,7 +344,7 @@ open class Ssh : Cmd() {
          val name = file.name
          if (from.exists()) {
             put(from, remoteMkDir(into))
-            println("💾️ FILE from local [ $remote/$name ] ⬅️\n\t to remote 🔜 {$into}/[$name]")
+            println("💾️ FILE from local [ $from ] ⬅️\n\t to remote 🔜 {$into}/[$name]")
             return true
         } else println(" 🪠 Skip not found (local) ⬅️: $remote/$name ")
         return false
@@ -355,7 +352,7 @@ open class Ssh : Cmd() {
 
     private fun SessionHandler.copy(file: String, remote: String = ""): Boolean {
         var from = file
-        val targetFolder = if (file.count { it == '/' } > 1 && !remote.contains("/")) {
+        val targetFolder = if (file.count { it == '/' } > 0 && !remote.contains("/")) {
             from = file.substringAfterLast("/")
             "$remote/$file".substringBeforeLast(from)
         } else remote
