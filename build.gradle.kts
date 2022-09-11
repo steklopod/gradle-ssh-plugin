@@ -1,10 +1,11 @@
 plugins {
-    `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "1.0.0-rc-3"
-//    id("org.sonarqube") version "3.4.0.2513"
-//    id("com.github.ben-manes.versions") version "0.42.0"
+//    `kotlin-dsl`
+    id("org.gradle.kotlin.kotlin-dsl") version "3.1.0"
+    id("com.gradle.plugin-publish") version "1.0.0"
+    id("org.sonarqube") version "3.4.0.2513"
+    id("com.github.ben-manes.versions") version "0.42.0"
 }
-val pluginsVersion = "1.8.1013"
+val pluginsVersion = "1.8.1014"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
@@ -27,7 +28,7 @@ dependencies {
     implementation("org.hidetake:groovy-ssh:2.10.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
-    testImplementation(platform("org.junit:junit-bom:5.9.0-RC1"))
+    testImplementation(platform("org.junit:junit-bom:5.9.0"))
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
 }
