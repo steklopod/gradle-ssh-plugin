@@ -80,6 +80,7 @@ open class Ssh : Cmd() {
     println("HOST: $host , USER: $user")
     validateHost(host!!)
 
+
  Ssh.newService().runSessions { session(remote()) { runBlocking {
 
     val isInitRun = !remoteExists("")
@@ -88,9 +89,9 @@ open class Ssh : Cmd() {
     fun copyInEach(vararg files: String) = measureTimeMillis { files.forEach { file ->
         copy(file)
         if (jars.isEmpty()) findJARs(); jars.stream().parallel().forEach { copy(file, it) }
-        postgres ?: postgresName()?.run { copy(file, this) }
-        frontendName()?.run { copy(file, this) }
-        copy(file, NGINX)
+        if (frontend) frontendName()?.run { copy(file, this) }
+        if (nginx) copy(file, NGINX)
+        /* todo: if(db) */ postgres ?: postgresName()?.run { copy(file, this) }
         if (elastic) copy(file, ELASTIC)
     }}.apply {
         statistic["IN EACH project"] = this
@@ -99,14 +100,14 @@ open class Ssh : Cmd() {
     suspend fun copyGradle() = coroutineScope {
         fun ifNotGroovyThenKotlin(buildFile: String): String = (if (File(buildFile).exists()) buildFile else "$buildFile.kts").apply{
             copyInEach(this) }
-        copy("gradle")
-        copy("gradlew")
-        copy("gradlew.bat")
-        copy("gradle.properties")
-        ifNotGroovyThenKotlin("build.gradle")
-        ifNotGroovyThenKotlin("settings.gradle")
-        execute("chmod +x ${project.name}/gradlew")
-        if (withBuildSrc) "buildSrc".run { "$this/build".removeLocal(); copyWithOverrideAsync(this) }
+            copy("gradle")
+            copy("gradlew")
+            copy("gradlew.bat")
+            copy("gradle.properties")
+            ifNotGroovyThenKotlin("build.gradle")
+            ifNotGroovyThenKotlin("settings.gradle")
+            execute("chmod +x ${project.name}/gradlew")
+            if (withBuildSrc) "buildSrc".run { "$this/build".removeLocal(); copyWithOverrideAsync(this) }
     }
 
     if (staticOverride) copyWithOverrideAsync(STATIC)
@@ -115,7 +116,7 @@ open class Ssh : Cmd() {
     if (crowdsec) copyAllFilesFromFolder("crowdsec")
     if (monitoring) copyAllFilesFromFolder("monitoring")
 
-     if (broker) copyAllFilesFromFolder(BROKER)
+    if (broker) copyAllFilesFromFolder(BROKER)
 
     if (nginx) copyAllFilesFromFolder(NGINX)
 
