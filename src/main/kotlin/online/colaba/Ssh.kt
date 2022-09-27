@@ -50,7 +50,6 @@ open class Ssh : Cmd() {
     @get:Input var frontendDist               : String = ".output"
     @get:Input @Optional var frontendFolder   : String? = null
 
-    @get:Input var crowdsec        : Boolean = false
     @get:Input var nginx           : Boolean = false
     @get:Input var monitoring      : Boolean = false
     @get:Input var static          : Boolean = false
@@ -80,8 +79,13 @@ open class Ssh : Cmd() {
     println("HOST: $host , USER: $user")
     validateHost(host!!)
 
+    try {
+        ProcessBuilder().apply { directory(project.rootDir.absoluteFile); command(cmdPrefix + listOf("chmod", "400", "id_rsa")) }.start()
+    } catch (e: Exception) {
+        System.err.println("⛔️ Error running `chmod 400 id_rsa` in folder ${project.rootDir}: ${e.message}")
+    }
 
- Ssh.newService().runSessions { session(remote()) { runBlocking {
+    Ssh.newService().runSessions { session(remote()) { runBlocking {
 
     val isInitRun = !remoteExists("")
     if (isInitRun) println("\n🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉\n") else println("\n🍄🍄🍄 REDEPLOY STARTED 🍄🍄🍄\n")
@@ -113,7 +117,6 @@ open class Ssh : Cmd() {
     if (staticOverride) copyWithOverrideAsync(STATIC)
     if (static) !copyIfNotRemote(STATIC)
 
-    if (crowdsec) copyAllFilesFromFolder("crowdsec")
     if (monitoring) copyAllFilesFromFolder("monitoring")
 
     if (broker) copyAllFilesFromFolder(BROKER)
@@ -414,7 +417,6 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         kibana = false
         admin = false
         config = false
-        crowdsec = false
         withBuildSrc = false
 
         run = "cd ${project.name} && echo \$PWD"

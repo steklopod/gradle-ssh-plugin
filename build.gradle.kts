@@ -5,12 +5,12 @@ plugins {
     id("org.sonarqube") version "3.4.0.2513"
     id("com.github.ben-manes.versions") version "0.42.0"
 }
-val pluginsVersion = "1.9.0-Beta01"
+val pluginsVersion = "1.9.0-Beta05"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
 
-repositories{ mavenLocal(); mavenCentral() }
+repositories{ mavenCentral() }
 
 val sshPlugin = "sshPlugin"
 gradlePlugin { plugins { create(sshPlugin) {
@@ -28,9 +28,15 @@ dependencies {
     implementation("org.hidetake:groovy-ssh:2.10.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
-    testImplementation(platform("org.junit:junit-bom:5.9.0"))
+    testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
 }
 
 defaultTasks("clean", "assemble", "publishPlugins")
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
