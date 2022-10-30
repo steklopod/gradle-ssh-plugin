@@ -1,16 +1,16 @@
 plugins {
-//    `kotlin-dsl`
-    id("org.gradle.kotlin.kotlin-dsl") version "3.1.0"
+    `kotlin-dsl`
+//    id("org.gradle.kotlin.kotlin-dsl") version "3.1.0"
     id("com.gradle.plugin-publish") version "1.0.0"
-    id("org.sonarqube") version "3.4.0.2513"
-    id("com.github.ben-manes.versions") version "0.42.0"
+    id("org.sonarqube") version "3.5.0.2730"
+    id("com.github.ben-manes.versions") version "0.43.0"
 }
-val pluginsVersion = "1.9.0-Beta05"
+val pluginsVersion = "1.9.0-Beta05.03"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
 
-repositories{ mavenCentral() }
+repositories { mavenCentral() }
 
 val sshPlugin = "sshPlugin"
 gradlePlugin { plugins { create(sshPlugin) {
