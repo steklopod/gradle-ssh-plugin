@@ -1,11 +1,11 @@
 plugins {
     `kotlin-dsl`
-//    id("org.gradle.kotlin.kotlin-dsl") version "3.1.0"
-    id("com.gradle.plugin-publish") version "1.0.0"
+//    id("org.gradle.kotlin.kotlin-dsl") version "4.0.0-alpha02"
+    id("com.gradle.plugin-publish") version "1.1.0"
     id("org.sonarqube") version "3.5.0.2730"
-    id("com.github.ben-manes.versions") version "0.43.0"
+    id("com.github.ben-manes.versions") version "0.44.0"
 }
-val pluginsVersion = "1.9.0-Beta05.04"
+val pluginsVersion = "1.9.0-Beta05.05"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
@@ -36,7 +36,7 @@ dependencies {
 defaultTasks("clean", "assemble", "publishPlugins")
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
