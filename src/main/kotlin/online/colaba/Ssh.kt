@@ -97,6 +97,7 @@ open class Ssh : Cmd() {
         if (nginx) copy(file, NGINX)
         /* todo: if(db) */ postgres ?: postgresName()?.run { copy(file, this) }
         if (elastic) copy(file, ELASTIC)
+        // TODO: monitoring, elastic/nested
     }}.apply {
         statistic["IN EACH project"] = this
         println("\n\t  ⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - copy IN EACH project \n") }
@@ -205,17 +206,17 @@ open class Ssh : Cmd() {
     if (elastic && project.localExists(ELASTIC)) { measureTimeMillis {
         println("\n💿 Start [$ELASTIC]... ")
         copy("elasticsearch.yml", ELASTIC)
+        copy("agent", ELASTIC)
+        copy("filebeat", ELASTIC)
+        copy("kibana", ELASTIC)
+        copy("logstash", ELASTIC)
         // certificates
-        val cert = "$ELASTIC/$ELASTIC_CERT_NAME"
-        if (project.localExists(cert)) {
-            println("🔩 Start copying elastic certificated...")
-            copy(ELASTIC_CERT_NAME, ELASTIC)
-            execute("chmod +x ./${project.name}/$cert")
-        }
         val certFolder = "$ELASTIC/$ELASTIC_CERTS_FOLDER"
         if (project.localExists(certFolder)) {
             println("🔩 Start copying elastic certificates whole folder")
             copy(ELASTIC_CERTS_FOLDER, ELASTIC)
+            execute("chmod +x ./${project.name}/$certFolder/ca.crt")
+            execute("chmod +x ./${project.name}/$certFolder/ca.key")
         }
         // elastic-data folder: create and chmod
         val volumeFolder = "$ELASTIC/$ELASTIC_DOCKER_VOLUME"
@@ -231,8 +232,11 @@ open class Ssh : Cmd() {
         println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - \uD83D\uDCBF ELASTIC") }
     }
 
-    if (logstash && project.localExists(ELASTIC)) listOf("logstash.yml","logstash.conf", "docker-compose.logstash.yml", "compose.logstash.yaml").forEach { copy("$ELASTIC/$it", ELASTIC) }
-    if (kibana && project.localExists(ELASTIC)) launch { listOf("kibana.yml", "docker-compose.kibana.yml", "compose.kibana.yaml").forEach { copy("$ELASTIC/$it", ELASTIC) } }
+    if (logstash) {
+        copy("logstash", ELASTIC)
+        copy("filebeat", ELASTIC)
+    }
+    if (kibana) copy("kibana", ELASTIC)
 
     if (envFiles) launch { copyInEach( ".env") }
 
