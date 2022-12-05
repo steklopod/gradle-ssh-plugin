@@ -5,7 +5,7 @@ plugins {
     id("org.sonarqube") version "3.5.0.2730"
     id("com.github.ben-manes.versions") version "0.44.0"
 }
-val pluginsVersion = "1.9.0-Beta06"
+val pluginsVersion = "1.9.0-RC1"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
@@ -35,8 +35,5 @@ dependencies {
 
 defaultTasks("clean", "assemble", "publishPlugins")
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
+//java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 
