@@ -96,16 +96,19 @@ open class Ssh : Cmd() {
         if (jars.isEmpty()) findJARs(); jars.stream().parallel().forEach { copy(file, it) }
         if (frontend) frontendName()?.run { copy(file, this) }
         if (nginx) copy(file, NGINX)
-        /* todo: if(db) */ postgres ?: postgresName()?.run { copy(file, this) }
         if (elastic) copy(file, ELASTIC)
-        // TODO: monitoring, elastic/nested
+        postgres ?: postgresName()?.run { copy(file, this) }
+       /* TODO:
+            - monitoring,
+            - elastic/nested
+       */
     }}.apply {
         statistic["IN EACH project"] = this
         println("\n\t  ⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - copy IN EACH project \n") }
 
-    suspend fun copyGradle() = coroutineScope {
-        fun ifNotGroovyThenKotlin(buildFile: String): String = (if (File(buildFile).exists()) buildFile else "$buildFile.kts").apply{
-            copyInEach(this) }
+    suspend fun copyGradle() = coroutineScope { measureTimeMillis {
+        fun ifNotGroovyThenKotlin(buildFile: String): String = (if (File(buildFile).exists()) buildFile else "$buildFile.kts")
+                .apply{ copyInEach(this) }
             copy("gradle")
             copy("gradlew")
             copy("gradlew.bat")
@@ -114,8 +117,14 @@ open class Ssh : Cmd() {
             ifNotGroovyThenKotlin("settings.gradle")
             execute("chmod +x ${project.name}/gradlew")
             if (withBuildSrc) "buildSrc".run { "$this/build".removeLocal(); copyWithOverrideAsync(this) }
+        }.apply {
+            statistic["GRADLE"] = this
+            println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - \uD83D\uDCBF GRADLE") }
     }
 
+    ////////////////////////////////
+    //////// START OF WORK ////////
+    //////////////////////////////
     if (staticOverride) copyWithOverrideAsync(STATIC)
     if (static) !copyIfNotRemote(STATIC)
 
@@ -191,17 +200,13 @@ open class Ssh : Cmd() {
     }.apply {
         statistic["JARS ($jars)"] = this; println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - \uD83C\uDF4C JARS \n") }
 
-    if (gradle) launch { copyGradle() }
+
+     if (gradle) launch { copyGradle() }
 
      if (docker) launch {
-         copy("compose.infra.yaml")
-         copy("compose.init.yaml")
-         copy("compose.prod.yaml")
-         copyInEach(
-             "docker-compose.yml", "docker-compose.yaml",
-             "compose.yml", "compose.yaml",
-             "Dockerfile", ".dockerignore"
-         )
+         listOf("docker-compose.infra.yml", "compose.infra.yml").any { copy(it) }
+         listOf("docker-compose.prod.yml", "compose.prod.yml").any { copy(it) }
+         copyInEach("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "Dockerfile", ".dockerignore")
      }
 
     if (elastic && project.localExists(ELASTIC)) { measureTimeMillis {
@@ -311,10 +316,10 @@ open class Ssh : Cmd() {
             removeRemote(toRemote)
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
             val into = remoteMkDir(toRemoteParent)
-            println("🗃️ Deploy folder [$directory] just has started. Wait a little bit ⏱️...")
+            println("\n🚚 Deploy process of [$directory] 🚠 just has STARTED. Wait a little bit ⏱️⏱️⏱️...\n")
             put(File(fromLocalPath), into)
-            println("🗃️ Deploy local folder [$directory] ⬅️\n\t into remote 🔜 {$toRemoteParent}/[$directory] is done\n")
-        } else println("📦📌📌📌 LOCAL folder ☝️[$directory] ⬅️ NOT EXISTS, so it not will be copied to server.")
+            println("🚚✅️ Deploy of [$directory] ⬅️ into remote  {$toRemoteParent} is done\n")
+        } else println("\n📦📌 LOCAL folder ☝️[$directory] ⬅️ NOT EXISTS, so it not will be copied to remote server.\n")
         return localFileExists
     }
 
@@ -354,9 +359,9 @@ open class Ssh : Cmd() {
          val name = file.name
          if (from.exists()) {
             put(from, remoteMkDir(into))
-            println("💾️ FILE from local [ $from ] ⬅️\n\t to remote 🔜 {$into}/[$name]")
+            println("💾️ FILE from local ├ $from →️ \n\t →️ to remote: {$into}╏$name╏")
             return true
-        } else println(" 🪠 Skip not found (local) ⬅️: $remote/$name ")
+        } else println("\t\t\t\t\t ... ✓ Skip not found file: ❏ $remote/$name ")
         return false
      }
 
@@ -399,7 +404,6 @@ open class Ssh : Cmd() {
             val durationSec = MILLISECONDS.toSeconds(it.value)
             if (durationSec > 1) println("\t ${i++}. ⏱️ ${MILLISECONDS.toMinutes(it.value)} min, or $durationSec sec ( ${it.value} ms - ${it.key} )")
     } }
-
 }
 
 
@@ -449,6 +453,8 @@ fun Project.registerJarsTask() = tasks.register<online.colaba.Ssh>("sshJars")
 val Project.sshJars: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshJars"){
         backend = true
+        docker = true;
+        gradle = true;
         description = "🚜 BACKENDs jars deploy"
     }
 
