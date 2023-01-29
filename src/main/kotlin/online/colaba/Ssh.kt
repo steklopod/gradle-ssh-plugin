@@ -45,7 +45,6 @@ open class Ssh : Cmd() {
     @get:Input var frontendClear              : Boolean = false
     @get:Input var frontendClearLock          : Boolean = false
     @get:Input var frontendClearOnly          : Boolean = false
-    @get:Input var frontendDistCompressed     : Boolean = false
     @get:Input var frontendDistCompressedType : String = ".tar.xz"
     @get:Input var frontendDist               : String = ".output"
     @get:Input @Optional var frontendFolder   : String? = null
@@ -145,27 +144,27 @@ open class Ssh : Cmd() {
         } else {
             val archiveFolderInRoot = "$frontendDist$frontendDistCompressedType"
             val archiveFolder = "$this/$archiveFolderInRoot"
-            if (project.localExists(archiveFolderInRoot)) {
-                println("🗜🦖 Archived WHOLE frontend distribution found: [ $archiveFolder ]")
+            if (project.localExists(archiveFolder)) {
+                println("\n\n👍🏻 Compressed FRONTEND distribution found: \n 📺🚀[ $archiveFolder ]\n")
+                copyWithOverride(archiveFolder)
+                // removeRemote("${project.name}/$this/$frontendDist")
+                // execute("tar -xf ${project.name}/$archiveFolder --directory ./${project.name}/$this")
+                archiveFolder
+            } else if (project.localExists(archiveFolderInRoot)) {
+                kotlin.io.println("\n\n🗜🦖 Compressed WHOLE frontend distribution found: [ $archiveFolder ]")
                 copyWithOverride(archiveFolderInRoot)
                 // removeRemote(this) // TODO: ?
                 execute("tar -xf ${project.name}/$archiveFolderInRoot --directory ./${project.name}")
                 archiveFolderInRoot
-            } else if (frontendDistCompressed || project.localExists(archiveFolder)) {
-                println("🗜 Archived frontend distribution found or `frontendDistCompressed=true`: [ $archiveFolder ]")
-                copyWithOverride(archiveFolder)
-                removeRemote("${project.name}/$this/$frontendDist")
-                execute("tar -xf ${project.name}/$archiveFolder --directory ./${project.name}/$this")
-                archiveFolder
             } else {
                 val frontendOutput = "$this/$frontendDist"
-                println("🗜🦭 Frontend zip-archive folder NOT found [ $archiveFolder ].")
+                println("\n\n🗜🦭 Frontend zip-archive folder NOT found [ $archiveFolder ].")
                 if (project.localExists(frontendOutput)) {
                     println("🗜🦭🔧 Frontend distribution folder found [ $frontendOutput ].")
                     copyWithOverride(frontendOutput)
                     frontendOutput
                 } else {
-                    println("🦖🦖 Frontend whole root folder will be deployed: [ $this ]")
+                    println("\n\n 🦖🦖 Frontend whole root folder will be deployed: [ $this ]")
                     copyWithOverride(this)
                     this
                 }
@@ -206,6 +205,8 @@ open class Ssh : Cmd() {
      if (docker) launch {
          listOf("docker-compose.infra.yml", "compose.infra.yml").any { copy(it) }
          listOf("docker-compose.prod.yml", "compose.prod.yml").any { copy(it) }
+         listOf("elastic/docker-compose.yml", "elastic/compose.yml").any { copy(it) }
+         listOf("nginx/docker-compose.yml", "nginx/compose.yml").any { copy(it) }
          copyInEach("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "Dockerfile", ".dockerignore")
      }
 
@@ -316,7 +317,7 @@ open class Ssh : Cmd() {
             removeRemote(toRemote)
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
             val into = remoteMkDir(toRemoteParent)
-            println("\n🚚 Deploy process of [$directory] 🚠 just has STARTED. Wait a little bit ⏱️⏱️⏱️...\n")
+            println("\n🚚 Deploy of [$directory] 🚠 just has STARTED. Wait a little ⏱️⏱️⏱️...\n")
             put(File(fromLocalPath), into)
             println("🚚✅️ Deploy of [$directory] ⬅️ into remote  {$toRemoteParent} is done\n")
         } else println("\n📦📌 LOCAL folder ☝️[$directory] ⬅️ NOT EXISTS, so it not will be copied to remote server.\n")
@@ -424,7 +425,6 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         frontend = true
         frontendWhole = true
         frontendClear = true
-        frontendDistCompressed = false
         kibana = false
         admin = false
         config = false
@@ -445,7 +445,6 @@ val Project.sshFront: TaskProvider<online.colaba.Ssh>
         frontend = true
         frontendWhole = true
         frontendClear = true
-        frontendDistCompressed = false
         description = "🏎 FRONTEND deploy."
     }
 

@@ -1,10 +1,9 @@
 plugins {
     `kotlin-dsl`
     id("com.gradle.plugin-publish") version "1.1.0"
-//    id("org.sonarqube") version "3.5.0.2730"
-//    id("com.github.ben-manes.versions") version "0.44.0"
+    id("com.github.ben-manes.versions") version "0.44.0"
 }
-val pluginsVersion = "1.9.0-RC2"
+val pluginsVersion = "1.9.0-RC7"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
@@ -18,6 +17,7 @@ gradlePlugin {
             id = "$group.ssh"; implementationClass = "$group.SshPlugin"
             description = "🚐 SCP: deploy your multi-module gradle project distribution by SSH (+ 🐳 Docker helpers tasks)"
             displayName = "SCP tasks for easy deploy to remote server via ssh"
+
             tags.set(listOf("ssh", "scp", "deploy", "CI/CD", "sftp", "ftp", "docker", "docker-compose"))
             website.set("https://github.com/steklopod/gradle-ssh-plugin")
             vcsUrl.set("https://github.com/steklopod/gradle-ssh-plugin.git")
@@ -27,7 +27,7 @@ dependencies {
     implementation("org.hidetake:groovy-ssh:2.10.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
+    testImplementation(platform("org.junit:junit-bom:5.9.2"))
     testImplementation("org.junit.jupiter", "junit-jupiter-engine")
     testImplementation("org.junit.jupiter", "junit-jupiter-api")
 }
