@@ -3,7 +3,7 @@ plugins {
     id("com.gradle.plugin-publish") version "1.1.0"
     id("com.github.ben-manes.versions") version "0.44.0"
 }
-val pluginsVersion = "1.9.0-RC7"
+val pluginsVersion = "1.9.0-RC8"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."

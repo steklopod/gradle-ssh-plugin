@@ -37,8 +37,8 @@ tasks {
         .filter{ !it.contains("static") && !it.contains("monitor") && it != BROKER && it != NGINX && it != ELASTIC }
         .forEach { register<Ssh>("ssh-$it") { directory = it; description = "🦖 Copy WHOLE FOLDER [$it] to remote server" } }
 
-    register<Ssh>("ssh-docker"){ docker = true; description = "🐳 Copy [docker] needed files to remote server including subprojects" }
-    register<Ssh>("ssh-gradle"){ gradle = true; description = "🐘 Copy [gradle] needed files to remote server including subprojects" }
+    register<Ssh>("ssh-docker"){ docker = true; allProjects = true; description = "🐳 Copy [docker] needed files to remote server including subprojects" }
+    register<Ssh>("ssh-gradle"){ gradle = true; allProjects = true; description = "🐘 Copy [gradle] needed files to remote server including subprojects" }
     register<Ssh>("ssh-static-force"){ staticOverride = true; finalizedBy(compose); description = "🌄 Force copy [static] with override to remote server"}
     register<Ssh>("ssh-$ELASTIC"){ elastic = true; description = "🔎 Deploy by scp whole [$ELASTIC] folder"  }
     register<Ssh>("ssh-$BROKER"){ broker = true; description = "🔎 Deploy by scp whole [$BROKER] folder"  }

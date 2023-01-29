@@ -40,6 +40,8 @@ open class Ssh : Cmd() {
     @get:Input var backend: Boolean = false
     @get:Input var jars   : List<String> = listOf()
 
+    @get:Input var allProjects                : Boolean = false
+
     @get:Input var frontend                   : Boolean = false
     @get:Input var frontendWhole              : Boolean = false
     @get:Input var frontendClear              : Boolean = false
@@ -92,14 +94,13 @@ open class Ssh : Cmd() {
 
     fun copyInEach(vararg files: String) = measureTimeMillis { files.forEach { file ->
         copy(file)
-        if (jars.isEmpty()) findJARs(); jars.stream().parallel().forEach { copy(file, it) }
-        if (frontend) frontendName()?.run { copy(file, this) }
-        if (nginx) copy(file, NGINX)
-        if (elastic) copy(file, ELASTIC)
+        if (jars.isEmpty() || allProjects) findJARs(); jars.stream().parallel().forEach { copy(file, it) }
+        if (frontend || allProjects) frontendName()?.run { copy(file, this) }
+        if (nginx || allProjects) copy(file, NGINX)
+        if (elastic || allProjects) copy(file, ELASTIC)
         postgres ?: postgresName()?.run { copy(file, this) }
        /* TODO:
             - monitoring,
-            - elastic/nested
        */
     }}.apply {
         statistic["IN EACH project"] = this
@@ -121,9 +122,9 @@ open class Ssh : Cmd() {
             println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - \uD83D\uDCBF GRADLE") }
     }
 
-    ////////////////////////////////
-    //////// START OF WORK ////////
-    //////////////////////////////
+    /////////////////////////
+    //////// START  ////////
+    ///////////////////////
     if (staticOverride) copyWithOverrideAsync(STATIC)
     if (static) !copyIfNotRemote(STATIC)
 
@@ -145,6 +146,7 @@ open class Ssh : Cmd() {
             val archiveFolderInRoot = "$frontendDist$frontendDistCompressedType"
             val archiveFolder = "$this/$archiveFolderInRoot"
             if (project.localExists(archiveFolder)) {
+                frontendWhole = false
                 println("\n\n👍🏻 Compressed FRONTEND distribution found: \n 📺🚀[ $archiveFolder ]\n")
                 copyWithOverride(archiveFolder)
                 // removeRemote("${project.name}/$this/$frontendDist")
@@ -171,6 +173,14 @@ open class Ssh : Cmd() {
             }
         }
         println("🌈 FRONTEND DISTRIBUTION : [ $distributionDirectory ]")
+
+        println("🐳 Start copying Docker files for frontend:")
+        listOf("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "Dockerfile", ".dockerignore")
+            .filter { project.localExists("$this/$it") }
+            .forEach {
+                println("🐳 Docker file in frontend will be copied: $it")
+                copy(it, this)
+            }
     } }
 
     postgres?.run {
@@ -266,7 +276,7 @@ open class Ssh : Cmd() {
 
     private suspend fun SessionHandler.copyAllFilesFromFolder(fromFolder: String) = coroutineScope {
         if (remoteExists(fromFolder)) {
-            println("\uD83D\uDDC4️⚡\uD83D\uDDC4️ Copying [${fromFolder.toUpperCase()}] nested files...")
+            println("🔘🔃 Copying [${fromFolder.toUpperCase()}] nested files...")
             val folder = File("${project.rootDir.absolutePath}/$fromFolder")
             folder.walk()
                 .filter { !it.isDirectory && it.name != ".gitignore" && it.extension != "md" }
