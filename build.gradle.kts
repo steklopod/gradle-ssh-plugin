@@ -1,9 +1,9 @@
 plugins {
     `kotlin-dsl`
     id("com.gradle.plugin-publish") version "1.1.0"
-    id("com.github.ben-manes.versions") version "0.44.0"
+    id("com.github.ben-manes.versions") version "0.46.0"
 }
-val pluginsVersion = "1.9.0-RC8"
+val pluginsVersion = "1.9.0-RC9"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
@@ -24,7 +24,7 @@ gradlePlugin {
 } } }
 
 dependencies {
-    implementation("org.hidetake:groovy-ssh:2.10.1")
+    implementation("org.hidetake:groovy-ssh:2.11.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
     testImplementation(platform("org.junit:junit-bom:5.9.2"))
