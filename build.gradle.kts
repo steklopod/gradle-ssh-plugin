@@ -1,9 +1,9 @@
 plugins {
     `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "1.1.0"
+    id("com.gradle.plugin-publish") version "1.2.0"
     id("com.github.ben-manes.versions") version "0.46.0"
 }
-val pluginsVersion = "1.9.0"
+val pluginsVersion = "1.9.1"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
@@ -34,6 +34,6 @@ dependencies {
 
 defaultTasks("clean", "assemble", "publishPlugins")
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "19" } }
-java { sourceCompatibility = JavaVersion.VERSION_19; targetCompatibility = JavaVersion.VERSION_19 }
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "17" } }
+java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 
