@@ -3,10 +3,10 @@ plugins {
     id("com.gradle.plugin-publish") version "1.2.0"
     id("com.github.ben-manes.versions") version "0.46.0"
 }
-val pluginsVersion = "1.9.1"
+val pluginsVersion = "1.9.2"
 version = pluginsVersion
 group = "online.colaba"
-description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy gradle needed tasks."
+description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy tasks."
 
 repositories { mavenCentral() }
 
@@ -25,9 +25,9 @@ gradlePlugin {
 
 dependencies {
     implementation("org.hidetake:groovy-ssh:2.11.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 
-    testImplementation(platform("org.junit:junit-bom:5.9.2"))
+    testImplementation(platform("org.junit:junit-bom:5.10.0-M1"))
     testImplementation("org.junit.jupiter", "junit-jupiter-engine")
     testImplementation("org.junit.jupiter", "junit-jupiter-api")
 }
