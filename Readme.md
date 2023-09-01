@@ -1,8 +1,9 @@
-## 🛡 [`SSH`](https://plugins.gradle.org/plugin/online.colaba.ssh) - gradle plugin for easy deploy by ftp 
+## 🛡 [`SSH`](https://plugins.gradle.org/plugin/online.colaba.ssh) - gradle plugin for easy deployment
 ![Backend CI](https://github.com/steklopod/gradle-ssh-plugin/workflows/Backend%20CI/badge.svg) [![Build Status](https://travis-ci.com/steklopod/gradle-ssh-plugin.svg?branch=master)](https://travis-ci.com/steklopod/gradle-ssh-plugin) 
 
 ### Copy from local to remote server. 
-Deliver your distribution to target server.
+Deliver your distribution to remoter server. 
+
 * From **zero-config** to full customization.
 
 ### 🎯 Quick start
@@ -11,7 +12,7 @@ In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "1.9.2"
+    id("online.colaba.ssh") version "1.9.4"
 }
 group = "online.colaba"
 
@@ -76,7 +77,7 @@ By default you have preconfigured tasks:
 
 Run `gradle tasks` to see the full list in groups `ssh`, `docker-main-${project.name}`.
 
-#### Example of tasks which will be available for your project:
+#### Example of tasks, which will be available for your project:
 * There will be as many tasks as gradle subprojects.
 
 1. `ssh-backend` - copy **backend** distribution `*.jar`-file to remote server
