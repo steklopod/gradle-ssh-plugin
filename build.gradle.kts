@@ -1,9 +1,9 @@
 plugins {
     `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "1.2.0"
-    id("com.github.ben-manes.versions") version "0.47.0"
+    id("com.gradle.plugin-publish") version "1.2.1"
+    id("com.github.ben-manes.versions") version "0.50.0"
 }
-val pluginsVersion = "1.9.4"
+val pluginsVersion = "1.9.5"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy tasks."
@@ -25,15 +25,15 @@ gradlePlugin {
 
 dependencies {
     implementation("org.hidetake:groovy-ssh:2.11.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0-RC")
 
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
     testImplementation("org.junit.jupiter", "junit-jupiter-engine")
     testImplementation("org.junit.jupiter", "junit-jupiter-api")
 }
 
 defaultTasks("clean", "assemble", "publishPlugins")
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "17" } }
-java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-// kotlin { jvmToolchain(17) }
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "11" } }
+kotlin { jvmToolchain(11) }
+
