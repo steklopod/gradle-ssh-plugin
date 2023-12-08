@@ -3,7 +3,7 @@ plugins {
     id("com.gradle.plugin-publish") version "1.2.1"
     id("com.github.ben-manes.versions") version "0.50.0"
 }
-val pluginsVersion = "1.9.5"
+val pluginsVersion = "1.9.6"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy tasks."
@@ -34,6 +34,6 @@ dependencies {
 
 defaultTasks("clean", "assemble", "publishPlugins")
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "11" } }
-kotlin { jvmToolchain(11) }
+kotlin { jvmToolchain(21) }
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(21)) } }
 
