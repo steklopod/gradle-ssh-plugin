@@ -1,9 +1,9 @@
 plugins {
     `kotlin-dsl`
     id("com.gradle.plugin-publish") version "1.2.1"
-    id("com.github.ben-manes.versions") version "0.50.0"
+    id("com.github.ben-manes.versions") version "0.51.0"
 }
-val pluginsVersion = "1.9.6"
+val pluginsVersion = "1.9.7"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy tasks."
@@ -25,9 +25,9 @@ gradlePlugin {
 
 dependencies {
     implementation("org.hidetake:groovy-ssh:2.11.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0-RC")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
 
-    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation(platform("org.junit:junit-bom:5.11.0-M2"))
     testImplementation("org.junit.jupiter", "junit-jupiter-engine")
     testImplementation("org.junit.jupiter", "junit-jupiter-api")
 }
