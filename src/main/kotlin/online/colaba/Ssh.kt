@@ -136,37 +136,40 @@ open class Ssh : Cmd() {
 
     if (frontend) { frontendName()?.run {
         println("\n📣 Found local frontend folder in subprojects: [$this] ⬅️  📣\n")
+
+        val archiveFolderInRoot = "$frontendDist$frontendDistCompressedType"
+        val archiveFolder = "$this/$archiveFolderInRoot"
+
         if (frontendClearLock) clearFrontendLockFile(this)
         if (frontendClear) clearFrontendTempFiles(this)
+
         val distributionDirectory: String = if (frontendWhole) {
             println("🦖🦖🦖 Frontend whole root folder will be deployed: [ $this ]")
             copyWithOverride(this)
             this
         } else {
-            val archiveFolderInRoot = "$frontendDist$frontendDistCompressedType"
-            val archiveFolder = "$this/$archiveFolderInRoot"
+            println("🦖 FRONTEND: only distribution of $this will be copied...")
             if (project.localExists(archiveFolder)) {
-                frontendWhole = false
                 println("\n\n👍🏻 Compressed FRONTEND distribution found: \n 📺🚀[ $archiveFolder ]\n")
                 copyWithOverride(archiveFolder)
                 // removeRemote("${project.name}/$this/$frontendDist")
                 // execute("tar -xf ${project.name}/$archiveFolder --directory ./${project.name}/$this")
                 archiveFolder
             } else if (project.localExists(archiveFolderInRoot)) {
-                kotlin.io.println("\n\n🗜🦖 Compressed WHOLE frontend distribution found: [ $archiveFolder ]")
+                println("\n\n🗜🦖 Compressed WHOLE frontend distribution found: [ $archiveFolder ]")
                 copyWithOverride(archiveFolderInRoot)
-                // removeRemote(this) // TODO: ?
                 execute("tar -xf ${project.name}/$archiveFolderInRoot --directory ./${project.name}")
                 archiveFolderInRoot
             } else {
                 val frontendOutput = "$this/$frontendDist"
-                println("\n\n🗜🦭 Frontend zip-archive folder NOT found [ $archiveFolder ].")
+                System.err.println("\n\n🗜🦭 Frontend zip-archive folder NOT found [ $archiveFolder ]. Searching in other places like [$frontendOutput]...")
+
                 if (project.localExists(frontendOutput)) {
                     println("🗜🦭🔧 Frontend distribution folder found [ $frontendOutput ].")
                     copyWithOverride(frontendOutput)
                     frontendOutput
                 } else {
-                    println("\n\n 🦖🦖 Frontend whole root folder will be deployed: [ $this ]")
+                    System.err.println("\n\n 🦖🚸🦖 Frontend whole root folder will be deployed: [ $this ] because no distribution is found")
                     copyWithOverride(this)
                     this
                 }
@@ -439,7 +442,7 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         monitoring = true
 
         frontend = true
-        frontendWhole = true
+//        frontendWhole = true // ⬅️⬅️⬅️
 //        frontendClear = true
         kibana = false
         admin = false
@@ -459,7 +462,7 @@ fun Project.registerFrontTask() = tasks.register<online.colaba.Ssh>("sshFront")
 val Project.sshFront: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshFront"){
         frontend = true
-        frontendWhole = true
+//        frontendWhole = true // ⬅️⬅️⬅️
 //        frontendClear = true
         description = "🏎 FRONTEND deploy."
     }
