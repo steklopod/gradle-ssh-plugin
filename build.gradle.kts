@@ -1,9 +1,9 @@
 plugins {
     `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "1.2.1"
+    id("com.gradle.plugin-publish") version "1.3.0"
     id("com.github.ben-manes.versions") version "0.51.0"
 }
-val pluginsVersion = "1.9.8"
+val pluginsVersion = "1.9.9"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy tasks."
@@ -35,5 +35,6 @@ dependencies {
 defaultTasks("clean", "assemble", "publishPlugins")
 
 kotlin { jvmToolchain(21) }
-java { toolchain { languageVersion.set(JavaLanguageVersion.of(21)) } }
+java { sourceCompatibility = JavaVersion.VERSION_21; targetCompatibility = JavaVersion.VERSION_21 }
+
 
