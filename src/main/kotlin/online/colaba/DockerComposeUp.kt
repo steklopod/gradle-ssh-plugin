@@ -11,7 +11,7 @@ import org.gradle.kotlin.dsl.register
 open class DockerComposeUp : Cmd() {
     init {
         group = "docker-main-${project.name}"
-        description = "🐳 Docker-compose UP task"
+        description = "🐳 Docker compose UP task"
     }
 
     @get:Input @Optional var composeFile: String? = null
@@ -25,7 +25,6 @@ open class DockerComposeUp : Cmd() {
     @TaskAction
     override fun exec() {
         var fullCommand = exec
-
         var rebuildFlag = "--build"
 
         if (noDeps) rebuildFlag += " --no-deps"
@@ -36,12 +35,42 @@ open class DockerComposeUp : Cmd() {
         if (recreate) fullCommand += rebuildFlag
 
         service?.let { fullCommand += " $it" }
+        if (service == null) {
+            fullCommand += " --parallel-pull"
+        }
 
-        val runCommand = "docker-compose $fullCommand --detach".trim()
-        println("🐳 $runCommand")
+        val runCommand = "docker compose $fullCommand --detach".trim()
 
-        super.command = runCommand
-        super.exec()
+
+        val startTime = System.currentTimeMillis()
+        println("┌─────────────────────────────────────────┐")
+        println("│  🐳 Docker Compose Deployment Started  │")
+        println("└─────────────────────────────────────────┘")
+        println("📋 Command: $runCommand")
+        println("⚙️  Bake: ${if (System.getProperty("COMPOSE_BAKE") == "true") "✅ Enabled" else "❌ Disabled"}")
+        println("🎯 Service: ${service ?: "All services"}")
+        println("📁 Compose file: ${composeFile ?: "docker-compose.yml"}")
+        println()
+
+        try {
+            super.command = runCommand
+            super.exec()
+
+            val duration = System.currentTimeMillis() - startTime
+            println()
+            println("┌─────────────────────────────────────────┐")
+            println("│   ✅ Deployment Completed Successfully  │")
+            println("└─────────────────────────────────────────┘")
+            println("⏱️  Duration: ${duration/1000}s")
+            println("🚀 Services should be starting up...")
+        } catch (e: Exception) {
+            println()
+            println("┌─────────────────────────────────────────┐")
+            println("│      ❌ Deployment Failed!              │")
+            println("└─────────────────────────────────────────┘")
+            println("💥 Error: ${e.message}")
+            throw e
+        }
     }
 }
 

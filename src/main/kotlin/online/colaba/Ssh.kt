@@ -17,6 +17,7 @@ import org.hidetake.groovy.ssh.core.RunHandler
 import org.hidetake.groovy.ssh.core.Service
 import org.hidetake.groovy.ssh.session.SessionHandler
 import java.io.File
+import java.util.Locale.getDefault
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.system.measureTimeMillis
 
@@ -35,10 +36,12 @@ open class Ssh : Cmd() {
 
     @get:Input var run : String = "cd ${project.name} && echo \$PWD"
 
-    @get:Input var gradle : Boolean = false
     @get:Input var docker : Boolean = false
-    @get:Input var backend: Boolean = false
-    @get:Input var jars   : List<String> = listOf()
+
+    @get:Input var gradle  : Boolean = false
+    @get:Input var backend : Boolean = false
+    @get:Input var newrelic: Boolean = false
+    @get:Input var jars    : List<String> = listOf()
 
     @get:Input var allProjects                : Boolean = false
 
@@ -59,7 +62,6 @@ open class Ssh : Cmd() {
     @get:Input var kibana          : Boolean = false
     @get:Input var admin           : Boolean = false
     @get:Input var envFiles        : Boolean = false
-    @get:Input var logstash        : Boolean = false
     @get:Input var broker          : Boolean = false
     @get:Input var config          : Boolean = false
     @get:Input var withBuildSrc    : Boolean = false
@@ -208,7 +210,11 @@ open class Ssh : Cmd() {
     if (backend) measureTimeMillis {
         findJARs()
         println("\uD83C\uDF4C Start deploying JARs...")
-        jars.parallelStream().forEach { copyWithOverride(jarLibFolder(it)) }
+        jars.parallelStream().forEach {
+            copyWithOverride(jarLibFolder(it))
+            if (newrelic) copyWithOverride("$it/newrelic")
+        }
+
     }.apply {
         statistic["JARS ($jars)"] = this; println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - \uD83C\uDF4C JARS \n") }
 
@@ -265,6 +271,17 @@ open class Ssh : Cmd() {
 
     directory?.let { copyWithOverrideAsync(it) }
 
+
+    if (newrelic) measureTimeMillis {
+        findJARs()
+        println("🚀 Start deploying New Relic only...")
+        jars.forEach { copyWithOverride("$it/newrelic") }
+    }.apply {
+        statistic["NEW RELIC"] = this
+        println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. - 🚀 NEW RELIC\n")
+    }
+
+//////////////////////////////////// END
     }
     println("\n🔮 Executing command on remote server [ $host ]:")
     println("\t🔜🔜🔜 $run")
@@ -282,7 +299,7 @@ open class Ssh : Cmd() {
 
     private suspend fun SessionHandler.copyAllFilesFromFolder(fromFolder: String) = coroutineScope {
         if (remoteExists(fromFolder)) {
-            println("🔘🔃 Copying [${fromFolder.toUpperCase()}] nested files...")
+            println("🔘🔃 Copying [${fromFolder.uppercase(getDefault())}] nested files...")
             val folder = File("${project.rootDir.absolutePath}/$fromFolder")
             folder.walk()
                 .filter { !it.isDirectory && it.name != ".gitignore" && it.extension != "md" }
@@ -433,6 +450,7 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         description = "🚛 🚐 🚒 🚎 Deploy all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
         postgres = "postgres"
         backend = true
+        newrelic = true
         nginx = true
         docker = true
         gradle = true
@@ -471,8 +489,9 @@ fun Project.registerJarsTask() = tasks.register<online.colaba.Ssh>("sshJars")
 val Project.sshJars: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshJars"){
         backend = true
-        docker = true;
-        gradle = true;
+        newrelic = true
+        docker = true
+        gradle = true
         description = "🚜 BACKENDs jars deploy"
     }
 

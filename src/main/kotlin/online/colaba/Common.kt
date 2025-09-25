@@ -2,6 +2,8 @@ package online.colaba
 
 import org.gradle.api.Project
 import java.io.File
+import java.util.Locale
+import java.util.Locale.getDefault
 
 const val STATIC = "static"
 const val NGINX  = "nginx"
@@ -15,7 +17,7 @@ const val postgresConfigFile   = "postgresql.conf"
 const val postgresConfigFolder = "docker-entrypoint-initdb.d"
 
 val userHomePath: String   = System.getProperty("user.home")
-val isWindows: Boolean     = System.getProperty("os.name").toLowerCase().contains("windows")
+val isWindows: Boolean     = System.getProperty("os.name").lowercase(getDefault()).contains("windows")
 val cmdPrefix: List<String> = if (isWindows) listOf("cmd", "/c") else listOf()
 
 fun jarLibFolder(folder: String = "backend") = "$folder/build/libs"
