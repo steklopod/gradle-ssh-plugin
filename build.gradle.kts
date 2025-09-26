@@ -27,9 +27,10 @@ dependencies {
     implementation("org.hidetake:groovy-ssh:2.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
-    testImplementation(platform("org.junit:junit-bom:6.0.0-RC3"))
-    testImplementation("org.junit.jupiter", "junit-jupiter-engine")
-    testImplementation("org.junit.jupiter", "junit-jupiter-api")
+    val junitVersion = "6.0.0-RC3"
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:$junitVersion")
 }
 
 defaultTasks("clean", "assemble", "publishPlugins")
@@ -37,4 +38,4 @@ defaultTasks("clean", "assemble", "publishPlugins")
 kotlin { jvmToolchain(24) }
 java { sourceCompatibility = JavaVersion.VERSION_24; targetCompatibility = JavaVersion.VERSION_24 }
 
-
+tasks.test { useJUnitPlatform() }
