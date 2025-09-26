@@ -12,7 +12,7 @@ In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "2.0.1"
+    id("online.colaba.ssh") version "2.0.2"
 }
 group = "online.colaba"
 
@@ -146,7 +146,7 @@ With `ssh` plugin you have additional bonus **task** to help you with deploying 
 * `cmd` - execute a command line process [linux/windows].
 
 ```kotlin
-tasks{
-      cmd { command = "echo ${project.name} 🧒" }
+tasks {
+      cmd { command = "echo ${project.name}" }
 }
 ```
