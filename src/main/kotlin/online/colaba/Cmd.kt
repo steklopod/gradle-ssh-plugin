@@ -24,16 +24,24 @@ open class Cmd : DefaultTask() {
 
         val process = ProcessBuilder(commandList)
             .directory(project.projectDir)
-            .inheritIO()
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .redirectError(ProcessBuilder.Redirect.PIPE)
             .start()
 
+        val stdout = process.inputStream.bufferedReader().readText()
+        val stderr = process.errorStream.bufferedReader().readText()
         val exitCode = process.waitFor()
+
+        // Print captured output
+        if (stdout.isNotEmpty()) println(stdout)
+        if (stderr.isNotEmpty()) System.err.println(stderr)
+
         if (exitCode != 0) {
             throw RuntimeException("Command failed with exit code: $exitCode")
         }
     }
 
-    private fun String.splitBySpace(): List<String>  = replace("  ", " ").split(" ")
+    private fun String.splitBySpace(): List<String> = replace("  ", " ").split(" ")
 }
 
 fun Project.registerCmdTask() = tasks.register<Cmd>("cmd")

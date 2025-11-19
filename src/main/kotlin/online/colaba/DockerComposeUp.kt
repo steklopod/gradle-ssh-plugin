@@ -49,7 +49,6 @@ open class DockerComposeUp : Cmd() {
         println("📋 Command: $runCommand")
         println("🎯 Service: ${service ?: "All services"}")
         println("📁 Compose file: ${composeFile ?: "docker-compose.yml"}")
-        if (System.getProperty("COMPOSE_BAKE") == "true") println("⚙️ Bake: ✅ Enabled")
         println()
 
         try {
@@ -59,7 +58,7 @@ open class DockerComposeUp : Cmd() {
             val duration = System.currentTimeMillis() - startTime
             println()
             println("┌─────────────────────────────────────────┐")
-            println("│   ✅ Deployment Completed Successfully  │")
+            println("│   🎉 Deployment Completed Successfully  │")
             println("└─────────────────────────────────────────┘")
             println("⏱️ Duration: ${duration/1000}s")
             println("🚀 Services should be starting up...")
@@ -70,30 +69,38 @@ open class DockerComposeUp : Cmd() {
             println("└─────────────────────────────────────────┘")
             println("💥 Error: ${e.message}")
 
-            // Пытаемся показать логи контейнера если он существует
-            service?.let { serviceName ->
-                println()
-                println("🔍 Attempting to fetch logs for service '$serviceName'...")
-                try {
-                    val logsCommand = "docker compose logs --tail=$errorTailCount $serviceName"
-                    val logsProcess = ProcessBuilder(logsCommand.split(" "))
-                        .directory(project.projectDir)
-                        .inheritIO()
-                        .start()
-                    logsProcess.waitFor()
-                } catch (logsException: Exception) {
-                    println("⚠️ Could not fetch logs: ${logsException.message}")
+            println()
+            println("🔍 Fetching recent docker compose logs...")
+            try {
+                val logsCommand = if (service != null) {
+                    "docker compose logs --tail=$errorTailCount $service"
+                } else {
+                    "docker compose logs --tail=$errorTailCount"
                 }
+                val logsProcess = ProcessBuilder((cmdPrefix + logsCommand.split(" ")))
+                    .directory(project.projectDir)
+                    .inheritIO()
+                    .start()
+                logsProcess.waitFor()
+            } catch (logsException: Exception) {
+                println("⚠️ Could not fetch logs: ${logsException.message}")
+            }
 
-                println()
-                println("🔍 Container status:")
-                try {
-                    val psCommand = "docker compose ps $serviceName"
-                    val psProcess = ProcessBuilder(psCommand.split(" ")).directory(project.projectDir).inheritIO().start()
-                    psProcess.waitFor()
-                } catch (psException: Exception) {
-                    println("⚠️ Could not get container status: ${psException.message}")
+            println()
+            println("🔍 Container status:")
+            try {
+                val psCommand = if (service != null) {
+                    "docker compose ps $service"
+                } else {
+                    "docker compose ps"
                 }
+                val psProcess = ProcessBuilder((cmdPrefix + psCommand.split(" ")))
+                    .directory(project.projectDir)
+                    .inheritIO()
+                    .start()
+                psProcess.waitFor()
+            } catch (psException: Exception) {
+                println("⚠️ Could not get container status: ${psException.message}")
             }
             throw e
         }

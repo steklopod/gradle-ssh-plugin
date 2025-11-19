@@ -3,7 +3,7 @@ plugins {
     id("com.gradle.plugin-publish") version "2.0.0"
     id("com.github.ben-manes.versions") version "0.53.0"
 }
-val pluginsVersion = "2.0.3"
+val pluginsVersion = "2.0.4"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy tasks."
@@ -35,7 +35,7 @@ dependencies {
 
 defaultTasks("clean", "assemble", "publishPlugins")
 
-kotlin { jvmToolchain(24) }
-java { sourceCompatibility = JavaVersion.VERSION_24; targetCompatibility = JavaVersion.VERSION_24 }
+kotlin { jvmToolchain(25) }
+java { sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25 }
 
 tasks.test { useJUnitPlatform() }
