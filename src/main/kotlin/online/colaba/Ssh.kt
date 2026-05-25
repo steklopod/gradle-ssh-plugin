@@ -42,7 +42,6 @@ open class Ssh : Cmd() {
 
     @get:Input var gradle  : Boolean = false
     @get:Input var backend : Boolean = false
-    @get:Input var newrelic: Boolean = false
     @get:Input var jars    : List<String> = listOf()
 
     @get:Input var allProjects                : Boolean = false
@@ -214,7 +213,6 @@ open class Ssh : Cmd() {
         println("\uD83C\uDF4C Start deploying JARs...")
         jars.parallelStream().forEach {
             copyWithOverride(jarLibFolder(it))
-            if (newrelic) copyWithOverride("$it/newrelic")
         }
 
     }.apply {
@@ -272,16 +270,6 @@ open class Ssh : Cmd() {
     if (envFiles) launch { copyInEach( ".env") }
 
     directory?.let { copyWithOverrideAsync(it) }
-
-
-    if (newrelic) measureTimeMillis {
-        findJARs()
-        println("🚀 Start deploying New Relic only...")
-        jars.forEach { copyWithOverride("$it/newrelic") }
-    }.apply {
-        statistic["NEW RELIC"] = this
-        println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. - 🚀 NEW RELIC\n")
-    }
 
 //////////////////////////////////// END
     }
@@ -452,7 +440,6 @@ val Project.scp: TaskProvider<online.colaba.Ssh>
         description = "🚛 🚐 🚒 🚎 Deploy all projects to remote server: gradle/docker needed files, backend .jar distribution, frontend/nginx folder)"
         postgres = "postgres"
         backend = true
-        newrelic = true
         nginx = true
         docker = true
         gradle = true
@@ -491,7 +478,6 @@ fun Project.registerJarsTask() = tasks.register<online.colaba.Ssh>("sshJars")
 val Project.sshJars: TaskProvider<online.colaba.Ssh>
     get() = tasks.named<online.colaba.Ssh>("sshJars"){
         backend = true
-        newrelic = true
         docker = true
         gradle = true
         description = "🚜 BACKENDs jars deploy"
