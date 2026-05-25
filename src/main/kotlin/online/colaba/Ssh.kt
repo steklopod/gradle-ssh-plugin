@@ -11,6 +11,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.delegateClosureOf
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
+import org.gradle.work.DisableCachingByDefault
 import org.hidetake.groovy.ssh.Ssh
 import org.hidetake.groovy.ssh.core.Remote
 import org.hidetake.groovy.ssh.core.RunHandler
@@ -23,6 +24,7 @@ import kotlin.system.measureTimeMillis
 
 const val sshGroup = "ssh"
 
+@DisableCachingByDefault(because = "Runs commands on a remote host via SSH; output depends on the remote, not declared inputs.")
 open class Ssh : Cmd() {
     init {
         group = sshGroup

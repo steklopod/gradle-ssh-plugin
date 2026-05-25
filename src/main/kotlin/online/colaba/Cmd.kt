@@ -7,7 +7,9 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
+import org.gradle.work.DisableCachingByDefault
 
+@DisableCachingByDefault(because = "Shells out to local commands; output depends on host environment, not declared inputs.")
 open class Cmd : DefaultTask() {
 
     init {

@@ -7,7 +7,9 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
+import org.gradle.work.DisableCachingByDefault
 
+@DisableCachingByDefault(because = "Wraps `docker` CLI; side effects on the local Docker daemon, no cacheable output.")
 open class Dckr : Cmd() {
     init {
         group = "docker-main-${project.name}"
