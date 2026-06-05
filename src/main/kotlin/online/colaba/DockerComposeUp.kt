@@ -17,6 +17,7 @@ open class DockerComposeUp : Cmd() {
     }
 
     @get:Input @Optional var composeFile: String? = null
+    @get:Input @Optional var envFile    : String? = "secrets.env"
     @get:Input @Optional var service    : String? = null
 
     @get:Input var exec: String = "up "
@@ -24,6 +25,9 @@ open class DockerComposeUp : Cmd() {
     @get:Input var noDeps       : Boolean = true
     @get:Input var recreate     : Boolean = true
     @get:Input var forceRecreate: Boolean = true
+
+    @get:Input var wait        : Boolean = true
+    @get:Input var waitTimeout : Int = 300
 
     @get:Input var errorTailCount : Int = 25
 
@@ -41,7 +45,11 @@ open class DockerComposeUp : Cmd() {
 
         service?.let { fullCommand += " $it" }
 
-        val runCommand = "docker compose $fullCommand --detach".trim()
+        val appliedEnvFile = envFile?.takeIf { project.projectDir.resolve(it).exists() }
+        val envFileFlag = appliedEnvFile?.let { "--env-file $it " } ?: ""
+
+        val waitFlags = if (wait) " --wait --wait-timeout $waitTimeout" else ""
+        val runCommand = "docker compose $envFileFlag$fullCommand --detach$waitFlags".trim()
 
 
         val startTime = System.currentTimeMillis()
@@ -51,6 +59,7 @@ open class DockerComposeUp : Cmd() {
         println("📋 Command: $runCommand")
         println("🎯 Service: ${service ?: "All services"}")
         println("📁 Compose file: ${composeFile ?: "docker-compose.yml"}")
+        println("🔑 Env file: ${appliedEnvFile ?: "none"}")
         println()
 
         try {

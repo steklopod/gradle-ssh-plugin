@@ -12,7 +12,7 @@ In root project `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "2.0.6"
+    id("online.colaba.ssh") version "2.0.8"
 }
 group = "online.colaba"
 

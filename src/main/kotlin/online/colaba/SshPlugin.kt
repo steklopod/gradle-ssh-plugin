@@ -19,11 +19,12 @@ sshJars { }
 sshFront { }
 sshPostgres { }
 
-registerCmdTask(); registerDckrTask(); registerDockerComposeTask(); registerDockerComposeUpTask();
+registerCmdTask(); registerDckrTask(); registerDockerComposeTask(); registerDockerComposeUpTask(); registerDockerRolloutTask();
 cmd { }
 dckr { }
 compose { }
 composeUp { }
+rollout { }
 
 val (backendJARs, wholeFolder) = subprojects
     .filter { !name.endsWith("lib") && !name.contains("postgres") && !name.contains("front")}
@@ -51,6 +52,11 @@ tasks {
     // DOCKER COMPOSE
     subprojects.filter { !name.endsWith("lib") && !name.contains("static") }
                .forEach { register<DockerComposeUp>("compose-${it.name}"){ service = it.name; description = "🐳 Docker compose up for [${it.name}] container" } }
+
+    // ZERO-DOWNTIME ROLLOUT (backend JVM-сервисы: healthcheck + eureka discovery). Требует
+    // docker-rollout CLI-плагин на хосте и отсутствие container_name у сервиса (scale=2).
+    backendJARs.map { it.name }
+               .forEach { register<DockerRollout>("rollout-$it"){ service = it; description = "🐳 Zero-downtime rollout for [$it]" } }
 
     val ps by registering (Dckr::class) { exec = "ps"; description = "🐳 Print all containers to console output" }
 
