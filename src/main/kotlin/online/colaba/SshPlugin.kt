@@ -56,7 +56,13 @@ tasks {
     // ZERO-DOWNTIME ROLLOUT (backend JVM-сервисы: healthcheck + eureka discovery). Требует
     // docker-rollout CLI-плагин на хосте и отсутствие container_name у сервиса (scale=2).
     backendJARs.map { it.name }
-               .forEach { register<DockerRollout>("rollout-$it"){ service = it; description = "🐳 Zero-downtime rollout for [$it]" } }
+               .forEach { svc -> register<DockerRollout>("rollout-$svc"){
+                   service = svc
+                   // graceful shutdown (shutdown: graceful) auto-deregisters from eureka on SIGTERM and
+                   // drains in-flight; waitAfterHealthy gives gateway-LB / nginx time to converge to the
+                   // new instance before the old dies. Together -> zero lost requests (proven under load).
+                   description = "🐳 Zero-downtime rollout for [$svc]"
+               } }
 
     val ps by registering (Dckr::class) { exec = "ps"; description = "🐳 Print all containers to console output" }
 
