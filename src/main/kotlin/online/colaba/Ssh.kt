@@ -64,6 +64,7 @@ open class Ssh : Cmd() {
     @get:Input var admin           : Boolean = false
     @get:Input var envFiles        : Boolean = false
     @get:Input var broker          : Boolean = false
+    @get:Input var vault           : Boolean = false
     @get:Input var config          : Boolean = false
     @get:Input var withBuildSrc    : Boolean = false
     @get:Input var checkKnownHosts : Boolean = false
@@ -97,7 +98,8 @@ open class Ssh : Cmd() {
 
     fun copyInEach(vararg files: String) = measureTimeMillis { files.forEach { file ->
         copy(file)
-        if (jars.isEmpty() || allProjects) findJARs(); jars.stream().parallel().forEach { copy(file, it) }
+        // sequential: one jsch session cannot handle concurrent channel-open (JSchException: channel is not opened)
+        if (jars.isEmpty() || allProjects) findJARs(); jars.forEach { copy(file, it) }
         if (frontend || allProjects) frontendName()?.run { copy(file, this) }
         if (nginx || allProjects) copy(file, NGINX)
         if (elastic || allProjects) copy(file, ELASTIC)
@@ -134,6 +136,14 @@ open class Ssh : Cmd() {
     if (monitoring) copyAllFilesFromFolder("monitoring")
 
     if (broker) copyAllFilesFromFolder(BROKER)
+
+    // vault — config/agent/policies + root docker-compose.infra.yml (where the vault service lives).
+    // Copy the infra compose here too (sequentially) so the vault deploy is self-contained and does not
+    // depend on ssh-docker. Vault unseal keys / seed live off-repo, never shipped (see vault/CLAUDE.md).
+    if (vault) {
+        copyAllFilesFromFolder(VAULT)
+        listOf("docker-compose.infra.yml", "compose.infra.yml").any { copy(it) }
+    }
 
     if (nginx) copyAllFilesFromFolder(NGINX)
 
@@ -211,7 +221,8 @@ open class Ssh : Cmd() {
     if (backend) measureTimeMillis {
         findJARs()
         println("\uD83C\uDF4C Start deploying JARs...")
-        jars.parallelStream().forEach {
+        // sequential over one jsch session (parallel -> JSchException: channel is not opened)
+        jars.forEach {
             copyWithOverride(jarLibFolder(it))
         }
 

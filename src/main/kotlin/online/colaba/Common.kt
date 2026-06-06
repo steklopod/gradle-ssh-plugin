@@ -10,6 +10,7 @@ const val NGINX  = "nginx"
 //Elastic:
 const val ELASTIC               = "elastic"
 const val BROKER                = "broker"
+const val VAULT                 = "vault"
 const val ELASTIC_CERTS_FOLDER     = "certs"
 const val ELASTIC_DOCKER_VOLUME = "elastic-data"
 

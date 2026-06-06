@@ -43,6 +43,7 @@ tasks {
     register<Ssh>("ssh-static-force"){ staticOverride = true; finalizedBy(compose); description = "🌄 Force copy [static] with override to remote server"}
     register<Ssh>("ssh-$ELASTIC"){ elastic = true; description = "🔎 Deploy by scp whole [$ELASTIC] folder"  }
     register<Ssh>("ssh-$BROKER"){ broker = true; description = "🔎 Deploy by scp whole [$BROKER] folder"  }
+    register<Ssh>("ssh-$VAULT"){ vault = true; description = "🔐 Deploy by scp [$VAULT] folder (config/agent/policies)"  }
     register<Ssh>("ssh-$NGINX"){ nginx = true; description = "🔎 Deploy by scp whole [$NGINX] folder"  }
     register<Ssh>("ssh-monitoring"){ monitoring = true; description = "🔎 Deploy by scp whole [MONITORING] folder"  }
 
