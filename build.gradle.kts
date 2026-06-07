@@ -3,7 +3,7 @@ plugins {
     id("com.gradle.plugin-publish") version "2.1.1"
     id("com.github.ben-manes.versions") version "0.54.0"
 }
-val pluginsVersion = "2.1.3"
+val pluginsVersion = "2.1.4"
 version = pluginsVersion
 group = "online.colaba"
 description = "🚎 Deploy your multi-module gradle project by ssh. 🚐 Easy SCP deploy tasks."
@@ -24,7 +24,6 @@ gradlePlugin {
 } } }
 
 dependencies {
-    implementation("org.hidetake:groovy-ssh:2.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 
     val junitVersion = "6.1.0"

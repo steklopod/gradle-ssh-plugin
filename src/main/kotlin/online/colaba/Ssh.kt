@@ -8,15 +8,9 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.kotlin.dsl.delegateClosureOf
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.work.DisableCachingByDefault
-import org.hidetake.groovy.ssh.Ssh
-import org.hidetake.groovy.ssh.core.Remote
-import org.hidetake.groovy.ssh.core.RunHandler
-import org.hidetake.groovy.ssh.core.Service
-import org.hidetake.groovy.ssh.session.SessionHandler
 import java.io.File
 import java.util.Locale.getDefault
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -91,14 +85,14 @@ open class Ssh : Cmd() {
         System.err.println("⛔️ Error running `chmod 400 id_rsa` in folder ${project.rootDir}: ${e.message}")
     }
 
-    Ssh.newService().runSessions { session(remote()) { runBlocking {
+    SshConn(host!!, user, SshServer.idRsaPath(project.rootDir.toString()), checkKnownHosts).use { conn -> with(conn) { runBlocking {
 
     val isInitRun = !remoteExists("")
     if (isInitRun) println("\n🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉\n") else println("\n🍄🍄🍄 REDEPLOY STARTED 🍄🍄🍄\n")
 
     fun copyInEach(vararg files: String) = measureTimeMillis { files.forEach { file ->
         copy(file)
-        // sequential: one jsch session cannot handle concurrent channel-open (JSchException: channel is not opened)
+        // sequential copy (conservative; ControlMaster could parallelize scp later)
         if (jars.isEmpty() || allProjects) findJARs(); jars.forEach { copy(file, it) }
         if (frontend || allProjects) frontendName()?.run { copy(file, this) }
         if (nginx || allProjects) copy(file, NGINX)
@@ -221,7 +215,7 @@ open class Ssh : Cmd() {
     if (backend) measureTimeMillis {
         findJARs()
         println("\uD83C\uDF4C Start deploying JARs...")
-        // sequential over one jsch session (parallel -> JSchException: channel is not opened)
+        // sequential copy over one ssh ControlMaster connection (kept serial for safety)
         jars.forEach {
             copyWithOverride(jarLibFolder(it))
         }
@@ -261,8 +255,9 @@ open class Ssh : Cmd() {
         if (project.localExists(certFolder)) {
             println("🔩 Start copying elastic certificates whole folder")
             copy(ELASTIC_CERTS_FOLDER, ELASTIC)
-            // no chmod: certs are read, not executed; ca.key is Vault-rendered (gitignored) so a chmod here would throw
-        } else println("🫵🏼There is no [ $certFolder ] folder! If you want to copy elastic certs - put `ca.crt` certs in this folder")
+            execute("chmod +x ./${project.name}/$certFolder/ca.crt")
+            execute("chmod +x ./${project.name}/$certFolder/ca.key")
+        } else println("🫵🏼There is no [ $certFolder ] folder! If you want to copy elastic certs - put `ca.crt` + `ca.key` certs in this folder")
         // elastic-data folder: create and chmod
         val volumeFolder = "$ELASTIC/$ELASTIC_DOCKER_VOLUME"
         val volumeFolderFull = "${project.name}/$volumeFolder"
@@ -297,7 +292,7 @@ open class Ssh : Cmd() {
     println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸\n")
 }
 
-    private suspend fun SessionHandler.copyAllFilesFromFolder(fromFolder: String) = coroutineScope {
+    private suspend fun SshConn.copyAllFilesFromFolder(fromFolder: String) = coroutineScope {
         if (remoteExists(fromFolder)) {
             println("🔘🔃 Copying [${fromFolder.uppercase(getDefault())}] nested files...")
             val folder = File("${project.rootDir.absolutePath}/$fromFolder")
@@ -338,10 +333,10 @@ open class Ssh : Cmd() {
     private fun postgresName(): String? = findInSubprojects(postgresConfigFile) ?: findInSubprojects("docker-entrypoint-initdb.d")
         ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith(postgresConfigFolder) }
 
-     private suspend fun SessionHandler.copyIfNotRemote(directory: String = ""): Boolean =
+     private suspend fun SshConn.copyIfNotRemote(directory: String = ""): Boolean =
         remoteExists(directory).apply { if (!this) copyWithOverrideAsync(directory) }
 
-     private fun SessionHandler.copyWithOverride(directory: String = ""): Boolean {
+     private fun SshConn.copyWithOverride(directory: String = ""): Boolean {
         val toRemote = "${project.name}/$directory"
         val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
         val localFileExists = File("${project.rootDir.absolutePath}/$directory").exists()
@@ -356,26 +351,26 @@ open class Ssh : Cmd() {
         return localFileExists
     }
 
-     private suspend fun SessionHandler.copyWithOverrideAsync(directory: String) =
+     private suspend fun SshConn.copyWithOverrideAsync(directory: String) =
         coroutineScope { launch { copyWithOverride(directory) } }
 
-    private fun SessionHandler.put(from: Any, into: String) = measureTimeMillis {
-         put(hashMapOf("from" to from, "into" to into))
+    private fun SshConn.put(from: File, into: String) = measureTimeMillis {
+         upload(from, into)
      }.run {
         val key = from.toString().substringAfter(project.name)
         println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) copy [ $key ]")
         statistic[key] = this
      }
 
-    private fun SessionHandler.remoteExists(remoteFolder: String): Boolean {
+    private fun SshConn.remoteExists(remoteFolder: String): Boolean {
         val exists = execute("test -d ${project.name}/$remoteFolder && echo true || echo false")?.toBoolean() ?: false
         if (exists) println("\n\uD83C\uDF1A Directory [${project.name}/$remoteFolder]🔜 EXISTS on remote server")
         else println("\n📦 Directory [${project.name}/$remoteFolder]🔜 does NOT EXIST on remote server")
         return exists
     }
 
-     private fun SessionHandler.remoteMkDir(into: String) = into.normalizeForWindows().apply { execute("mkdir --parent $this") }
-     private fun SessionHandler.removeRemote(vararg folders: String) = folders.forEach {
+     private fun SshConn.remoteMkDir(into: String) = into.normalizeForWindows().apply { execute("mkdir --parent $this") }
+     private fun SshConn.removeRemote(vararg folders: String) = folders.forEach {
         execute("rm -fr $it"); println("🗑️️ Removed REMOTE folder 🔜 [ $it ] 🗑️️")
     }
     private fun String.removeLocal() {
@@ -386,7 +381,7 @@ open class Ssh : Cmd() {
         } else println("\t...nothing to remove ✂️ locally ⬅️ for: [$this]")
     }
 
-     private fun SessionHandler.copy(file: File, remote: String = ""): Boolean {
+     private fun SshConn.copy(file: File, remote: String = ""): Boolean {
          val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
          val into = "${project.name}/$remote".normalizeForWindows()
          val name = file.name
@@ -398,7 +393,7 @@ open class Ssh : Cmd() {
         return false
      }
 
-    private fun SessionHandler.copy(file: String, remote: String = ""): Boolean {
+    private fun SshConn.copy(file: String, remote: String = ""): Boolean {
         var from = file
         val targetFolder = if (file.count { it == '/' } > 0 && !remote.contains("/")) {
             from = file.substringAfterLast("/")
@@ -422,12 +417,6 @@ open class Ssh : Cmd() {
         println("❗Frontend: Removing LOCAL $pnpmLockFile file ✂️...")
         pnpmLockFile.removeLocal()
     }
-
-     private fun remote(): Remote {
-         return (server ?: SshServer(hostSsh = host!!, userSsh = user, rootFolder = project.rootDir.toString())).remote(checkKnownHosts)
-     }
-     private fun Service.runSessions(action: RunHandler.() -> Unit) = run(delegateClosureOf(action))
-     private fun RunHandler.session(vararg remotes: Remote, action: SessionHandler.() -> Unit) = session(*remotes, delegateClosureOf(action))
 
 
     private val statistic: MutableMap<String, Long> = mutableMapOf()

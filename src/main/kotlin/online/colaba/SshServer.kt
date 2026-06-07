@@ -1,26 +1,9 @@
 package online.colaba
 
-import org.hidetake.groovy.ssh.connection.AllowAnyHosts
-import org.hidetake.groovy.ssh.core.Remote
 import java.io.File
 
 
 data class SshServer(val hostSsh: String, val userSsh: String = defaultUser, val rootFolder: String) {
-
-    fun remote(checkKnownHosts: Boolean): Remote {
-        val config: MutableMap<String, *> = mutableMapOf(
-            "knownHosts" to AllowAnyHosts.instance,
-            "host" to hostSsh,
-            "user" to userSsh,
-            "authentications" to listOf("publickey"),
-            "identity" to idRsaPath(rootFolder)
-        )
-        if (checkKnownHosts) {
-            println("* If you don't want to scan [known_hosts] local file - set `checkKnownHosts = false` in gradle [ssh, scp] tasks.")
-            config.remove("knownHosts")
-        }
-        return Remote(config)
-    }
 
     companion object {
         private const val defaultUser = "root"
