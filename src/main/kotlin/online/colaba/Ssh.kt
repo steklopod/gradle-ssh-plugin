@@ -255,8 +255,9 @@ open class Ssh : Cmd() {
         if (project.localExists(certFolder)) {
             println("🔩 Start copying elastic certificates whole folder")
             copy(ELASTIC_CERTS_FOLDER, ELASTIC)
-            execute("chmod +x ./${project.name}/$certFolder/ca.crt")
-            execute("chmod +x ./${project.name}/$certFolder/ca.key")
+            // certs are read, not executed; ca.key is rendered by Vault Agent (gitignored, absent here) -> no chmod
+//            execute("chmod +x ./${project.name}/$certFolder/ca.crt")
+//            execute("chmod +x ./${project.name}/$certFolder/ca.key")
         } else println("🫵🏼There is no [ $certFolder ] folder! If you want to copy elastic certs - put `ca.crt` + `ca.key` certs in this folder")
         // elastic-data folder: create and chmod
         val volumeFolder = "$ELASTIC/$ELASTIC_DOCKER_VOLUME"
