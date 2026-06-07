@@ -3,6 +3,7 @@ package online.colaba
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
@@ -19,7 +20,7 @@ import kotlin.system.measureTimeMillis
 const val sshGroup = "ssh"
 
 @DisableCachingByDefault(because = "Runs commands on a remote host via SSH; output depends on the remote, not declared inputs.")
-open class Ssh : Cmd() {
+open class Ssh : DefaultTask() {
     init {
         group = sshGroup
         description = "🐸 Deploy by FTP your distribution with SSH commands"
@@ -131,9 +132,8 @@ open class Ssh : Cmd() {
 
     if (broker) copyAllFilesFromFolder(BROKER)
 
-    // vault — config/agent/policies + root docker-compose.infra.yml (where the vault service lives).
-    // Copy the infra compose here too (sequentially) so the vault deploy is self-contained and does not
-    // depend on ssh-docker. Vault unseal keys / seed live off-repo, never shipped (see vault/CLAUDE.md).
+    // vault flag: copy the vault folder (config/agent/policies) + the root infra compose so
+    // the deploy is self-contained. Sensitive material (unseal keys / seed) stays off-repo.
     if (vault) {
         copyAllFilesFromFolder(VAULT)
         listOf("docker-compose.infra.yml", "compose.infra.yml").any { copy(it) }
@@ -223,7 +223,6 @@ open class Ssh : Cmd() {
     }.apply {
         statistic["JARS ($jars)"] = this; println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - \uD83C\uDF4C JARS \n") }
 
-
      if (gradle) launch { copyGradle() }
 
      if (docker) launch {
@@ -279,18 +278,10 @@ open class Ssh : Cmd() {
 
 //////////////////////////////////// END
     }
-    println("\n🔮 Executing command on remote server [ $host ]:")
-    println("\t🔜🔜🔜 $run")
-    println("\n🔮🔮🔮🔮🔮🔮🔮")
-    println("🔮🔮🔮 RESULT: " + execute(run))
-    println("🔮🔮🔮🔮🔮🔮🔮")
     } }
 
     printDurationStatistic()
 
-    println("\n🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
-    println("🩸🩸🔫🔫🔫 C O L A B A 🔫🔫🔫🩸🩸")
-    println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸\n")
 }
 
     private suspend fun SshConn.copyAllFilesFromFolder(fromFolder: String) = coroutineScope {
@@ -311,11 +302,12 @@ open class Ssh : Cmd() {
         .sortedByDescending { it.name.contains("front") }
         .firstOrNull { it.localExists(file) }?.name
 
+    private var jarsLogged = false
     private fun findJARs() {
         if (jars.isEmpty()) jars =
             project.subprojects.filter { it.localExists("src/main") && !it.name.endsWith("lib") }.map { it.name }
         if (jars.isEmpty()) System.err.println("⚰️⚰️⚰️ Can't find java/kotlin backend in subprojects !")
-        else println("\n🍐🥝️🍌 Current BACKENDS: $jars \n")
+        else if (!jarsLogged) { println("\n📦 backends: $jars"); jarsLogged = true }
     }
 
     private fun frontendName(): String? {
@@ -329,7 +321,6 @@ open class Ssh : Cmd() {
         }
         return frontendFolder
     }
-
 
     private fun postgresName(): String? = findInSubprojects(postgresConfigFile) ?: findInSubprojects("docker-entrypoint-initdb.d")
         ?: project.subprojects.map { it.name }.firstOrNull { it.startsWith(postgresConfigFolder) }
@@ -358,9 +349,7 @@ open class Ssh : Cmd() {
     private fun SshConn.put(from: File, into: String) = measureTimeMillis {
          upload(from, into)
      }.run {
-        val key = from.toString().substringAfter(project.name)
-        println("⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) copy [ $key ]")
-        statistic[key] = this
+        statistic[from.toString().substringAfter(project.name)] = this
      }
 
     private fun SshConn.remoteExists(remoteFolder: String): Boolean {
@@ -384,14 +373,11 @@ open class Ssh : Cmd() {
 
      private fun SshConn.copy(file: File, remote: String = ""): Boolean {
          val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
+         if (!from.exists()) return false                  // quiet: callers probe many candidate names
          val into = "${project.name}/$remote".normalizeForWindows()
-         val name = file.name
-         if (from.exists()) {
-            put(from, remoteMkDir(into))
-            println("💾️ FILE from local ├ $from →️ \n\t →️ to remote: {$into}╏$name╏")
-            return true
-        } else println("\t\t\t\t\t ... ✓ Skip not found file: ❏ $remote/$name ")
-        return false
+         put(from, remoteMkDir(into))
+         println("   ✓ ${file.name}  →  ${into.trimEnd('/')}/")
+         return true
      }
 
     private fun SshConn.copy(file: String, remote: String = ""): Boolean {
@@ -419,7 +405,6 @@ open class Ssh : Cmd() {
         pnpmLockFile.removeLocal()
     }
 
-
     private val statistic: MutableMap<String, Long> = mutableMapOf()
 
     private fun printDurationStatistic() {
@@ -431,7 +416,6 @@ open class Ssh : Cmd() {
             if (durationSec > 1) println("\t ${i++}. ⏱️ ${MILLISECONDS.toMinutes(it.value)} min, or $durationSec sec ( ${it.value} ms - ${it.key} )")
     } }
 }
-
 
 fun Project.registerScpTask() = tasks.register<online.colaba.Ssh>("scp")
 val Project.scp: TaskProvider<online.colaba.Ssh>

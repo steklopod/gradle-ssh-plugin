@@ -7,6 +7,7 @@ import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.registering
+import org.gradle.kotlin.dsl.withType
 
 class SshPlugin : Plugin<Project> { override fun apply(project: Project): Unit = project.run {
 description = "🚐 Deploy your multi-module gradle project distribution by ssh. + 🐳 Docker-compose bonus tasks "
@@ -84,5 +85,18 @@ tasks {
         description = "🐳🐳🗑🗑🙈🙈 Docker remove all containers & volumes & networks & images"
         finalizedBy(prune)
     }
+
+    // COLABA banner, printed once per build: registered as a finalizer (deduped across the run), so
+    // several ssh tasks in one invocation share a single banner instead of one each.
+    val colaba by registering {
+        group = sshGroup
+        description = "🩸 COLABA deploy banner (prints once after ssh tasks)"
+        doLast {
+            println("\n🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸🩸🩸")
+            println("🩸🩸🔫🔫🔫 C O L A B A 🔫🔫🔫🩸🩸")
+            println("🩸🩸🩸🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🔫🩸\n")
+        }
+    }
+    withType<Ssh>().configureEach { finalizedBy(colaba) }
 
 } } }
