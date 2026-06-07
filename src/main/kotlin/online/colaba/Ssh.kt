@@ -261,9 +261,8 @@ open class Ssh : Cmd() {
         if (project.localExists(certFolder)) {
             println("🔩 Start copying elastic certificates whole folder")
             copy(ELASTIC_CERTS_FOLDER, ELASTIC)
-            execute("chmod +x ./${project.name}/$certFolder/ca.crt")
-            execute("chmod +x ./${project.name}/$certFolder/ca.key")
-        } else println("🫵🏼There is no [ $certFolder ] folder! If you want to copy elastic certs - put `ca.crt` + `ca.key` certs in this folder")
+            // no chmod: certs are read, not executed; ca.key is Vault-rendered (gitignored) so a chmod here would throw
+        } else println("🫵🏼There is no [ $certFolder ] folder! If you want to copy elastic certs - put `ca.crt` certs in this folder")
         // elastic-data folder: create and chmod
         val volumeFolder = "$ELASTIC/$ELASTIC_DOCKER_VOLUME"
         val volumeFolderFull = "${project.name}/$volumeFolder"
@@ -305,7 +304,6 @@ open class Ssh : Cmd() {
             folder.walk()
                 .filter { !it.isDirectory && it.name != ".gitignore" && it.extension != "md" }
                 .map { it.path.substringAfter("$folder/") }
-                .filter { !it.endsWith(".md") }
                 .forEach { copy(it, fromFolder) }
         } else {
             println("⚡⚡⚡ Copying WHOLE [$fromFolder] folder...")
@@ -353,7 +351,7 @@ open class Ssh : Cmd() {
             val into = remoteMkDir(toRemoteParent)
             println("\n🚚 Deploy of [$directory] 🚠 just has STARTED. Wait a little ⏱️⏱️⏱️...\n")
             put(File(fromLocalPath), into)
-            println("🚚✅️ Deploy of [$directory] ⬅️ into remote  {$toRemoteParent} is done\n")
+            println("🚚✔️ Deploy of [$directory] ⬅️ into remote  {$toRemoteParent} is done\n")
         } else println("\n📦📌 LOCAL folder ☝️[$directory] ⬅️ NOT EXISTS, so it not will be copied to remote server.\n")
         return localFileExists
     }
