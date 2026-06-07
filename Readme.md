@@ -1,152 +1,132 @@
-## 🛡 [`SSH`](https://plugins.gradle.org/plugin/online.colaba.ssh) - gradle plugin for easy deployment
-![Backend CI](https://github.com/steklopod/gradle-ssh-plugin/workflows/Backend%20CI/badge.svg) [![Build Status](https://travis-ci.com/steklopod/gradle-ssh-plugin.svg?branch=master)](https://travis-ci.com/steklopod/gradle-ssh-plugin) 
+## 🛡 [`online.colaba.ssh`](https://plugins.gradle.org/plugin/online.colaba.ssh) — Gradle plugin for easy deployment
 
-### Copy from local to remote server. 
-Deliver your distribution to remoter server. 
+[![Gradle Plugin Portal](https://img.shields.io/gradle-plugin-portal/v/online.colaba.ssh?label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/online.colaba.ssh)
 
-* From **zero-config** to full customization.
+Copy folders & files from your local machine (or CI runner) to a remote server over SSH, and run remote commands — with zero config, or fully customized.
+
+Files land in the remote `~/${project.name}/...` folder.
+
+### ⚙️ How it works
+
+The plugin shells out to the **system OpenSSH** (`ssh` / `scp`) via `ProcessBuilder`. A single `ControlMaster`
+connection is reused for every copy/command in a task run. There is **no bundled SSH library** (no JSch / groovy-ssh),
+so any key the OS `ssh` understands works — **ed25519**, RSA, the OpenSSH key format, etc.
+
+> **Requirements:** `ssh` and `scp` (OpenSSH) on `PATH` of the machine running the tasks
+> (any CI runner and macOS/Linux dev box has them by default).
 
 ### 🎯 Quick start
 
-In root project `build.gradle.kts` file:
+In the root `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "2.1.2"
+    id("online.colaba.ssh") version "2.1.5"
 }
-group = "online.colaba"
-
+group = "online.colaba"   // host is computed from group if not set explicitly
 ```
-That's all!
 
-This task will copy folders & files from local machine to remote host **~/${project.name}/...** folder 
+That's it. Run a copy:
 
-> You can set host, or it will be computed from `project.group` (example above)
-
-```kotlin
-tasks {
-    scp { 
-        host = "my-domain.com"
-    }
-}
-```
-#### Run task:
-```shell script
+```shell
 gradle scp
 ```
-___
-### 🔮 Customization:
 
-1. Register new task in your `build.gradle.kts`:
-```kotlin
-register("customSshTask", Ssh::class) {
-   host = "my-domain.com"
-   user = "root"
-   gradle = true
-   frontend = false
-   docker = true
-   nginx = true
-   directory = "distribution"
-   run = "cd ${project.name} && echo \$PWD"
-}
-```
-2. Run this task:
-```shell script
-gradle customSshTask
-```
-
-#### ☝️ `id_rsa` private key:
-There must be **id_rsa** private key in root of your project.
-* To generate it on local machine (_password will be requested_) and put it to remote server:
-```shell
-cd .ssh
-ssh-keygen -m PEM -t rsa -b 2048
-ssh-add id_rsa
-ssh-copy-id -i id_rsa.pub root@my-server.com
-```
-___
-### 🌀 Available gradle tasks from `ssh` plugin:
-
-By default you have preconfigured tasks:
-* `ssh` - all options are `disabled`  by default (**false**)
-* `scp` - all options are `enabled` by default (**true**)
-* `ssh-gradle` - copy **gradle** needed files to remote server in every subproject
-* `ssh-docker` - copy **docker** files to remote server
-* `ssh-jars` - copy **${subproject}/nuild/libs/___.jar** file to remote server  in every subproject
-* and others: `ssh-ngix`, `ssh-briker`, `ssh-elasticsearch`, `ssh-docker`... 
-
-Run `gradle tasks` to see the full list in groups `ssh`, `docker-main-${project.name}`.
-
-#### Example of tasks, which will be available for your project:
-* There will be as many tasks as gradle subprojects.
-
-1. `ssh-backend` - copy **backend** distribution `*.jar`-file to remote server
-2. `ssh-frontend` - copy **frontend** folder to remote server
-3. `ssh-nginx` - copy **nginx** folder to remote server
-4. ...
-> Name of service for all tasks equals to ${project.name} 
-___
-
-### 🔮 Customization
-You can customize these properties:
-```kotlin
-ssh {
-   host = "hostexample.com"
-   directory = "copy_me_to_remote"
-   nginx = true
-}
-```
-___
-
-
-### 📋 Project's structure example
-* There could be as many backends as you need.
-```shell script
- project
-   |-[backend]
-              | - [src/main/java/build/libs]/*.jar
-              | - Dockerfile
-              | - Dockerfile.dev
-              | - docker-compose.yml
-              | - docker-compose.dev.yml
-              | - ...
-   |-[backend-2]
-              | - [src/main/koltin/build/libs]/*.jar
-              | - ...
-   |-[backend-3]
-              | - [src/main/scala/build/libs]/*.jar
-              | - ...
-   |-[frontend]
-              | - docker-compose.yml
-              | - ...
-   |-[nginx]
-              | - ...
-   |-[postgres]
-              | - [backups]
-              | - ...
-   |-[elastic]
-              | - ...
-   |-[static]
-              | - ...
-   |-[gradle]
-              | - [wrapper]
-   |- gradlew
-   |- gradlew.bat
-   |- docker-compose.yml
-   |- ...
-
-```
-___
-
-##### 🔫  Bonus tasks:
-With `ssh` plugin you have additional bonus **task** to help you with deploying applications with `docker`:
-* `compose` - docker compose up all docker-services(_gradle subprojects_) with recreate and rebuild;
-* `compose-nginx`, `compose-backend`, `compose-frontend`... - docker compose up subproject;
-* `prune` - remove unused docker data;
-* `cmd` - execute a command line process [linux/windows].
+Override the host per task:
 
 ```kotlin
 tasks {
-      cmd { command = "echo ${project.name}" }
+    scp { host = "my-domain.com" }
 }
 ```
+
+### 🔑 SSH key
+
+The plugin looks for a private key named **`id_rsa`** — first in the **project root**, then in `~/.ssh/id_rsa`.
+The file name is `id_rsa` regardless of key type; the contents may be **ed25519** (recommended) or RSA.
+
+```shell
+ssh-keygen -t ed25519 -C "deploy@my-server"          # modern key
+ssh-copy-id -i ~/.ssh/id_ed25519.pub root@my-server  # authorize it on the server
+cp ~/.ssh/id_ed25519 id_rsa                           # the plugin reads ./id_rsa
+```
+
+> 🔒 **Never commit `id_rsa`.** Gitignore it and, in CI, materialize it from a secret before the deploy step
+> (e.g. `printf '%s\n' "${{ secrets.SSH_DEPLOY_KEY }}" > id_rsa && chmod 600 id_rsa`).
+
+Host-key checking is disabled by default; set `checkKnownHosts = true` on a task to enable it.
+
+### 🌀 Tasks
+
+Generated automatically (one per subproject where relevant):
+
+| Task | What it copies / does |
+|------|-----------------------|
+| `ssh` | base task, every option `false` by default |
+| `scp` | base copy task, options enabled by default |
+| `ssh-<subproject>` | the subproject's backend `build/libs/*.jar` (or whole folder) |
+| `ssh-docker` | all compose / `Dockerfile` / `.dockerignore` files (incl. subprojects) |
+| `ssh-gradle` | gradle wrapper + build files into every subproject |
+| `ssh-vault` | `vault/` (config/agent/policies) + root `docker-compose.infra.yml` |
+| `ssh-elastic` | whole `elastic/` folder |
+| `ssh-broker` | whole `broker/` folder |
+| `ssh-nginx` | whole `nginx/` folder |
+| `ssh-monitoring` | whole `monitoring/` folder |
+| `ssh-frontend-whole` | whole `frontend/` folder |
+| `clear-frontend` | (local) remove `node_modules`, `.nuxt`, `.output`, lockfiles |
+
+Docker helpers (run on the remote host):
+
+| Task | What it does |
+|------|--------------|
+| `compose` | `docker compose up` all services (recreate + rebuild) |
+| `compose-<svc>` | `docker compose up` a single service |
+| `rollout-<svc>` | zero-downtime rollout: scale up new instance, await healthcheck, drain old |
+| `ps` | list containers |
+| `prune` | remove unused docker data |
+| `cmd` | run an arbitrary local command (linux/windows) |
+
+Run `gradle tasks` to see the full list under the `ssh` and `docker-main-${project.name}` groups.
+
+### 🔮 Customization
+
+Register your own task:
+
+```kotlin
+register("deployApi", online.colaba.Ssh::class) {
+    host      = "my-domain.com"
+    user      = "root"
+    gradle    = true
+    docker    = true
+    nginx     = true
+    directory = "distribution"
+    run       = "cd ${project.name} && docker compose up -d --build"
+}
+```
+
+Or tweak the defaults:
+
+```kotlin
+ssh {
+    host = "my-domain.com"
+    directory = "copy_me_to_remote"
+    nginx = true
+}
+```
+
+### 📋 Project structure example
+
+```
+project
+ ├─ backend/        ← build/libs/*.jar, Dockerfile, compose.yml
+ ├─ backend-2/      ← any number of backends
+ ├─ frontend/       ← compose.yml, .output
+ ├─ nginx/
+ ├─ postgres/       ← backups/
+ ├─ elastic/
+ ├─ vault/
+ ├─ gradlew, build.gradle.kts, docker-compose.yml
+ └─ id_rsa          ← gitignored private key
+```
+
+The service name for every task equals `${project.name}` of the respective subproject.
