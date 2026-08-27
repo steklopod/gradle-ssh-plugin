@@ -27,17 +27,24 @@ compose { }
 composeUp { }
 rollout { }
 
-val (backendJARs, wholeFolder) = subprojects
-    .filter { !name.endsWith("lib") && !name.contains("postgres") && !name.contains("front")}
+val (backendJARs, _) = subprojects
+    .filter { !it.name.endsWith("lib") && !it.name.contains("postgres") && !it.name.contains("front") }
     .partition { it.localExists("src/main") || it.localExists("build/libs") }
 
 
 tasks {
     backendJARs.map{it.name}.forEach { register<Ssh>("ssh-${it}") { directory = jarLibFolder(it); description = "🦉 Copy backend [${jarLibFolder(it)}] jar to remote server" } }
 
-    wholeFolder.map{it.name}
-        .filter{ !it.contains("static") && !it.contains("monitor") && it != BROKER && it != NGINX && it != ELASTIC }
-        .forEach { register<Ssh>("ssh-$it") { directory = it; description = "🦖 Copy WHOLE FOLDER [$it] to remote server" } }
+    // 🚫 `ssh-<папка>` через `directory` ставит на деплой не файл, а КАТАЛОГ, а copyWithOverride
+    // сперва делает rm -rf удалённого каталога и только потом льёт локальный целиком - вместе с
+    // node_modules и всем, что валяется в рабочем дереве, унося при этом compose.yml и .dockerignore
+    // сервера. После починки фильтра выше (он читал `name` корневого проекта вместо `it.name`, то
+    // есть был константным) здесь и оставались ровно те два подпроекта, которые фильтр обязан был
+    // убрать: frontend и postgres. У обоих свой безопасный путь - sshFront кладёт .output.tar.xz
+    // плюс compose/Dockerfile, а у postgres отдельная ветка в Ssh.kt, берегущая backups.
+//    wholeFolder.map{it.name}
+//        .filter{ !it.contains("static") && !it.contains("monitor") && it != BROKER && it != NGINX && it != ELASTIC }
+//        .forEach { register<Ssh>("ssh-$it") { directory = it; description = "🦖 Copy WHOLE FOLDER [$it] to remote server" } }
 
     register<Ssh>("ssh-docker"){ docker = true; allProjects = true; description = "🐳 Copy [docker] needed files to remote server including subprojects" }
     register<Ssh>("ssh-gradle"){ gradle = true; allProjects = true; description = "🐘 Copy [gradle] needed files to remote server including subprojects" }

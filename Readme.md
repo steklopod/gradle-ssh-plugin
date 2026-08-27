@@ -21,7 +21,7 @@ In the root `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "2.1.5"
+    id("online.colaba.ssh") version "2.1.7"
 }
 group = "online.colaba"   // host is computed from group if not set explicitly
 ```
