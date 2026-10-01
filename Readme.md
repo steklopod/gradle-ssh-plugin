@@ -8,12 +8,25 @@ Files land in the remote `~/${project.name}/...` folder.
 
 ### ⚙️ How it works
 
-The plugin shells out to the **system OpenSSH** (`ssh` / `scp`) via `ProcessBuilder`. A single `ControlMaster`
-connection is reused for every copy/command in a task run. There is **no bundled SSH library** (no JSch / groovy-ssh),
-so any key the OS `ssh` understands works — **ed25519**, RSA, the OpenSSH key format, etc.
+The plugin shells out to the **system OpenSSH** (`ssh` / `scp`) and **rsync** via `ProcessBuilder`. A single
+`ControlMaster` connection is reused for every copy/command in a task run. There is **no bundled SSH library**
+(no JSch / groovy-ssh), so any key the OS `ssh` understands works — **ed25519**, RSA, the OpenSSH key format, etc.
+
+When both ends have `rsync`, copies go through it over the same connection:
+
+- a jar folder (or any folder replaced as a whole) is **mirrored**, and only changed blocks travel. A rebuilt
+  140 MB Spring Boot fat jar shares almost all of its bytes with the previous one, so a redeploy sends kilobytes
+  to a few MB instead of the whole jar. Files are replaced through a temp file, so an interrupted copy leaves the
+  previous version in place instead of an empty folder;
+- small files of one task (compose files, Dockerfiles, gradle files) go out in **one** call instead of one
+  round trip per file.
+
+Without `rsync` on either end, every copy falls back to `scp`, file by file. Force that per task with
+`rsync = false`.
 
 > **Requirements:** `ssh` and `scp` (OpenSSH) on `PATH` of the machine running the tasks
-> (any CI runner and macOS/Linux dev box has them by default).
+> (any CI runner and macOS/Linux dev box has them by default). `rsync` on both ends is optional and only
+> makes copies faster; macOS `openrsync` works too.
 
 ### 🎯 Quick start
 
@@ -21,7 +34,7 @@ In the root `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "2.1.7"
+    id("online.colaba.ssh") version "2.2.0"
 }
 group = "online.colaba"   // host is computed from group if not set explicitly
 ```

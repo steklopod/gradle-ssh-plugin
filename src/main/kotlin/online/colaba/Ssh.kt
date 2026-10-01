@@ -63,6 +63,8 @@ open class Ssh : DefaultTask() {
     @get:Input var config          : Boolean = false
     @get:Input var withBuildSrc    : Boolean = false
     @get:Input var checkKnownHosts : Boolean = false
+    /** Copy with rsync where both ends have it (only changed blocks travel); `false` forces scp. */
+    @get:Input var rsync           : Boolean = true
     @get:Input @Optional var server : SshServer? = null
 
 @TaskAction fun run() {
@@ -86,14 +88,13 @@ open class Ssh : DefaultTask() {
         System.err.println("⛔️ Error running `chmod 400 id_rsa` in folder ${project.rootDir}: ${e.message}")
     }
 
-    SshConn(host!!, user, SshServer.idRsaPath(project.rootDir.toString()), checkKnownHosts).use { conn -> with(conn) { runBlocking {
+    SshConn(host!!, user, SshServer.idRsaPath(project.rootDir.toString()), checkKnownHosts, rsync).use { conn -> with(conn) { runBlocking {
 
     val isInitRun = !remoteExists("")
     if (isInitRun) println("\n🎉 🎉 🎉 INIT RUN 🎉 🎉 🎉\n") else println("\n🍄🍄🍄 REDEPLOY STARTED 🍄🍄🍄\n")
 
-    fun copyInEach(vararg files: String) = measureTimeMillis { files.forEach { file ->
+    fun copyInEach(vararg files: String) = batched("IN EACH project") { files.forEach { file ->
         copy(file)
-        // sequential copy (conservative; ControlMaster could parallelize scp later)
         if (jars.isEmpty() || allProjects) findJARs(); jars.forEach { copy(file, it) }
         if (frontend || allProjects) frontendName()?.run { copy(file, this) }
         if (nginx || allProjects) copy(file, NGINX)
@@ -102,19 +103,19 @@ open class Ssh : DefaultTask() {
        /* TODO:
             - monitoring,
        */
-    }}.apply {
-        statistic["IN EACH project"] = this
-        println("\n\t  ⏱️ ${MILLISECONDS.toSeconds(this)} sec. (or $this ms) - copy IN EACH project \n") }
+    }}
 
     suspend fun copyGradle() = coroutineScope { measureTimeMillis {
         fun ifNotGroovyThenKotlin(buildFile: String): String = (if (File(buildFile).exists()) buildFile else "$buildFile.kts")
                 .apply{ copyInEach(this) }
-            copy("gradle")
-            copy("gradlew")
-            copy("gradlew.bat")
-            copy("gradle.properties")
-            ifNotGroovyThenKotlin("build.gradle")
-            ifNotGroovyThenKotlin("settings.gradle")
+            batched("GRADLE files") {
+                copy("gradle")
+                copy("gradlew")
+                copy("gradlew.bat")
+                copy("gradle.properties")
+                ifNotGroovyThenKotlin("build.gradle")
+                ifNotGroovyThenKotlin("settings.gradle")
+            }
             execute("chmod +x ${project.name}/gradlew")
             if (withBuildSrc) "buildSrc".run { "$this/build".removeLocal(); copyWithOverrideAsync(this) }
         }.apply {
@@ -185,12 +186,11 @@ open class Ssh : DefaultTask() {
         println("🌈 FRONTEND DISTRIBUTION : [ $distributionDirectory ]")
 
         println("🐳 Start copying Docker files for frontend:")
-        listOf("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "Dockerfile", ".dockerignore")
-            .filter { project.localExists("$this/$it") }
-            .forEach {
-                println("🐳 Docker file in frontend will be copied: $it")
-                copy(it, this)
-            }
+        batched("FRONTEND docker files") {
+            listOf("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "Dockerfile", ".dockerignore")
+                .filter { project.localExists("$this/$it") }
+                .forEach { copy(it, this) }
+        }
     } }
 
     postgres?.run {
@@ -225,24 +225,26 @@ open class Ssh : DefaultTask() {
 
      if (gradle) launch { copyGradle() }
 
-     if (docker) launch {
+     if (docker) launch { batched("DOCKER files") {
          listOf("docker-compose.infra.yml", "compose.infra.yml").any { copy(it) }
          listOf("docker-compose.prod.yml", "compose.prod.yml").any { copy(it) }
          listOf("elastic/docker-compose.yml", "elastic/compose.yml").any { copy(it) }
          listOf("nginx/docker-compose.yml", "nginx/compose.yml").any { copy(it) }
          copyInEach("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "Dockerfile", ".dockerignore")
-     }
+     } }
 
     if (elastic && project.localExists(ELASTIC)) { measureTimeMillis {
         println("\n💿 Start [$ELASTIC]... ")
-        if (!docker) {
-            listOf("docker-compose.infra.yml", "compose.infra.yml").any { copy(it) }
-            listOf("elastic/docker-compose.yml", "elastic/compose.yml").any { copy(it) }
+        batched(ELASTIC) {
+            if (!docker) {
+                listOf("docker-compose.infra.yml", "compose.infra.yml").any { copy(it) }
+                listOf("elastic/docker-compose.yml", "elastic/compose.yml").any { copy(it) }
+            }
+            copy("elasticsearch.yml", ELASTIC)
+            copy("filebeat", ELASTIC)
+            copy("kibana", ELASTIC)
+            copy("logstash", ELASTIC)
         }
-        copy("elasticsearch.yml", ELASTIC)
-        copy("filebeat", ELASTIC)
-        copy("kibana", ELASTIC)
-        copy("logstash", ELASTIC)
         /*
             if (logstash) { copy("logstash", ELASTIC); copy("filebeat", ELASTIC) }
             if (kibana) copy("kibana", ELASTIC)
@@ -288,10 +290,12 @@ open class Ssh : DefaultTask() {
         if (remoteExists(fromFolder)) {
             println("🔘🔃 Copying [${fromFolder.uppercase(getDefault())}] nested files...")
             val folder = File("${project.rootDir.absolutePath}/$fromFolder")
-            folder.walk()
-                .filter { !it.isDirectory && it.name != ".gitignore" && it.extension != "md" }
-                .map { it.path.substringAfter("$folder/") }
-                .forEach { copy(it, fromFolder) }
+            batched(fromFolder.uppercase(getDefault())) {
+                folder.walk()
+                    .filter { !it.isDirectory && it.name != ".gitignore" && it.extension != "md" }
+                    .map { it.path.substringAfter("$folder/") }
+                    .forEach { copy(it, fromFolder) }
+            }
         } else {
             println("⚡⚡⚡ Copying WHOLE [$fromFolder] folder...")
             copyWithOverride(fromFolder)
@@ -333,11 +337,17 @@ open class Ssh : DefaultTask() {
         val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
         val localFileExists = File("${project.rootDir.absolutePath}/$directory").exists()
         if (localFileExists) {
-            removeRemote(toRemote)
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
-            val into = remoteMkDir(toRemoteParent)
             println("\n🚚 Deploy of [$directory] 🚠 just has STARTED. Wait a little ⏱️⏱️⏱️...\n")
-            put(File(fromLocalPath), into)
+            if (rsyncAvailable) {
+                // No `rm -rf` first: the mirror deletes what is gone locally and replaces the rest file by file
+                val into = remoteMkDir(toRemoteParent)
+                measureTimeMillis { mirror(File(fromLocalPath), into).forEach { println("   $it") } }
+                    .also { statistic[directory] = it }
+            } else {
+                removeRemote(toRemote)
+                put(File(fromLocalPath), remoteMkDir(toRemoteParent))
+            }
             println("🚚✔️ Deploy of [$directory] ⬅️ into remote  {$toRemoteParent} is done\n")
         } else println("\n📦📌 LOCAL folder ☝️[$directory] ⬅️ NOT EXISTS, so it not will be copied to remote server.\n")
         return localFileExists
@@ -374,11 +384,41 @@ open class Ssh : DefaultTask() {
      private fun SshConn.copy(file: File, remote: String = ""): Boolean {
          val from = File("${project.rootDir}/$remote/$file".normalizeForWindows())
          if (!from.exists()) return false                  // quiet: callers probe many candidate names
+         batch?.let { it += "$remote/$file".normalizeForWindows().trim('/'); return true }
          val into = "${project.name}/$remote".normalizeForWindows()
          put(from, remoteMkDir(into))
          println("   ✓ ${file.name}  →  ${into.trimEnd('/')}/")
          return true
      }
+
+    /** Paths queued by [copy] inside [batched]; `null` means every copy goes out on its own. */
+    private var batch: MutableList<String>? = null
+
+    /**
+     * Copies made inside [block] go out as ONE rsync call when both ends have rsync, otherwise each one on its
+     * own through scp. A nested call joins the outer batch. The block must not suspend: coroutines of this task
+     * share the queue, and a suspended batch would collect a neighbour's files.
+     */
+    private fun SshConn.batched(label: String, block: () -> Unit) {
+        if (batch != null) return block()
+        if (!rsyncAvailable) {
+            measureTimeMillis(block).also { statistic[label] = it }
+            return
+        }
+        batch = mutableListOf()
+        val paths = try {
+            block()
+            batch.orEmpty().distinct()
+        } finally {
+            batch = null
+        }
+        if (paths.isEmpty()) return
+        measureTimeMillis { uploadRelative(project.rootDir, paths, project.name) }.also { took ->
+            paths.forEach { println("   ✓ $it  →  ${project.name}/${it.substringBeforeLast('/', "")}") }
+            statistic[label] = took
+            println("\n\t  ⏱️ ${MILLISECONDS.toSeconds(took)} sec. (or $took ms) - $label: ${paths.size} paths in one rsync \n")
+        }
+    }
 
     private fun SshConn.copy(file: String, remote: String = ""): Boolean {
         var from = file

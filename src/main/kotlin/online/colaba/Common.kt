@@ -25,10 +25,12 @@ fun jarLibFolder(folder: String = "backend") = "$folder/build/libs"
 
 fun String.normalizeForWindows(): String = replace("\\", "/").replace("//", "/").replace("//", "/")
 
-fun Project.localExists(directory: String): Boolean {
-    val absolutePath = "${rootProject.projectDir.absolutePath}/$name/$directory".normalizeForWindows().replace("$name/$name", name)
-    return File(absolutePath).exists()
-}
+/**
+ * Path relative to THIS project's own folder. Not derived from the project name: a checkout folder named
+ * otherwise (a worktree, a CI workspace) made every lookup miss, and the frontend deploy, not finding its
+ * archive, shipped the whole `frontend/` folder instead.
+ */
+fun Project.localExists(directory: String): Boolean = File(projectDir, directory).exists()
 
 fun Project.computeHostFromGroup(): String {
     println("Ok: Optional property `host` was not passed to gradle ssh plugin. Computing from gradle `project.group`...")
