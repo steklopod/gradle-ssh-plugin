@@ -48,12 +48,13 @@ fun Project.computeHostFromGroup(): String {
 
 
 
+private val ipV4Regex = Regex("^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\\.(?!$)|$)){4}$")
+private val domainNameRegex = Regex("^(((?!\\-))(xn\\-\\-)?[a-z0-9\\-_]{0,61}[a-z0-9]{1,1}\\.)*(xn\\-\\-)?([a-z0-9\\-]{1,61}|[a-z0-9\\-]{1,30})\\.[a-z]{2,}\$")
+
+/** An IPv4 address or a domain name; a dotted number that is not an IPv4 address is rejected as such. */
 fun validateHost(host: String): String {
-    val ipV4Regex = Regex("^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\\.(?!$)|$)){4}$")
-    if (host.count { it == '.' } > 2 && !ipV4Regex.matches(host)) throw RuntimeException("HOST (property in ssh gradle plugin) [$host] is NOT VALID IPv4")
-    else {
-        val domainNameRegex = Regex("^(((?!\\-))(xn\\-\\-)?[a-z0-9\\-_]{0,61}[a-z0-9]{1,1}\\.)*(xn\\-\\-)?([a-z0-9\\-]{1,61}|[a-z0-9\\-]{1,30})\\.[a-z]{2,}\$")
-        if (!domainNameRegex.matches(host)) throw RuntimeException("Domain name (host property in ssh gradle plugin) [$host] is NOT VALID DOMAIN")
-    }
+    if (ipV4Regex.matches(host)) return host
+    if (host.all { it.isDigit() || it == '.' }) throw RuntimeException("HOST (property in ssh gradle plugin) [$host] is NOT VALID IPv4")
+    if (!domainNameRegex.matches(host)) throw RuntimeException("Domain name (host property in ssh gradle plugin) [$host] is NOT VALID DOMAIN")
     return host
 }

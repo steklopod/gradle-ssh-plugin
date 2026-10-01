@@ -26,6 +26,10 @@ class SshConn(
         add("-o"); add("ControlMaster=auto")
         add("-o"); add("ControlPath=$ctlPath")
         add("-o"); add("ControlPersist=120")
+        // A link that dies without a reset (network drop, NAT timeout) would otherwise hang ssh, scp and rsync
+        // until the CI job's own timeout: the peer is declared dead after a minute of silence instead
+        add("-o"); add("ServerAliveInterval=15")
+        add("-o"); add("ServerAliveCountMax=4")
         if (!checkKnownHosts) {
             add("-o"); add("StrictHostKeyChecking=no")
             add("-o"); add("UserKnownHostsFile=/dev/null")
@@ -78,13 +82,14 @@ class SshConn(
      * (the nested dependency jars are stored as is), so a 140 MB jar costs a few MB on the wire. Every file
      * lands through a temp file and a rename, so an interrupted run leaves the previous copy intact instead
      * of the empty folder that `rm -rf` + scp left behind. Owner and group are not carried over: the files
-     * belong to the remote user, as they do after scp. Returns rsync's `--stats` lines about the transfer.
+     * belong to the remote user, as they do after scp; a symlink travels as the file it points to, as with
+     * scp. Returns rsync's `--stats` lines about the transfer.
      */
     fun mirror(from: File, into: String): List<String> {
         val target = into.trimEnd('/')
         val args = if (from.isDirectory) listOf("--delete", "${from.path.trimEnd('/')}/", "$user@$host:$target/${from.name}/")
         else listOf(from.path, "$user@$host:$target/")
-        return rsync(listOf("-rlpt", "--stats") + args)
+        return rsync(listOf("-rLpt", "--stats") + args)
             .filter { it.startsWith("Total file size") || it.startsWith("Literal data") || it.startsWith("Matched data") }
     }
 
@@ -99,14 +104,15 @@ class SshConn(
         val list = File.createTempFile("colaba-rsync-", ".list")
         try {
             list.writeText(paths.joinToString(separator = "\n", postfix = "\n"))
-            rsync(listOf("-rlptR", "--files-from=${list.path}", "${root.path.trimEnd('/')}/", "$user@$host:${into.trimEnd('/')}/"))
+            rsync(listOf("-rLptR", "--files-from=${list.path}", "${root.path.trimEnd('/')}/", "$user@$host:${into.trimEnd('/')}/"))
         } finally {
             list.delete()
         }
     }
 
     private fun rsync(args: List<String>): List<String> {
-        val proc = ProcessBuilder(cmdPrefix + listOf("rsync", "-e", rsyncShell) + args).redirectErrorStream(true).start()
+        // --timeout reaches the remote side too: its receiver exits on a dead link instead of waiting for TCP keepalive
+        val proc = ProcessBuilder(cmdPrefix + listOf("rsync", "-e", rsyncShell, "--timeout=120") + args).redirectErrorStream(true).start()
         val out = proc.inputStream.bufferedReader().readLines()
         val code = proc.waitFor()
         if (code != 0) throw RuntimeException("rsync exit=$code ${args.takeLast(2)}:\n${out.takeLast(20).joinToString("\n")}")

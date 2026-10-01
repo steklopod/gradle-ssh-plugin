@@ -24,6 +24,13 @@ When both ends have `rsync`, copies go through it over the same connection:
 Without `rsync` on either end, every copy falls back to `scp`, file by file. Force that per task with
 `rsync = false`.
 
+Whatever the transport:
+
+- an **empty** local folder is never shipped: replacing the remote copy with nothing (after a `clean`, or a
+  build that produced no jar) fails the task instead, and the server keeps what it had;
+- a symlink travels as the file it points to, as with `scp`;
+- a link that dies without a reset fails the task after about a minute instead of hanging the build.
+
 > **Requirements:** `ssh` and `scp` (OpenSSH) on `PATH` of the machine running the tasks
 > (any CI runner and macOS/Linux dev box has them by default). `rsync` on both ends is optional and only
 > makes copies faster; macOS `openrsync` works too.
@@ -34,7 +41,7 @@ In the root `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    id("online.colaba.ssh") version "2.2.0"
+    id("online.colaba.ssh") version "2.2.1"
 }
 group = "online.colaba"   // host is computed from group if not set explicitly
 ```

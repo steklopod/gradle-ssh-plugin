@@ -1,7 +1,9 @@
 package online.colaba
 
 import org.gradle.testfixtures.ProjectBuilder
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -40,5 +42,13 @@ internal class CommonTest {
         assertTrue(root.localExists("frontend/.output.tar.xz"), "the archive is seen from the root project")
         assertTrue(frontend.localExists(".output.tar.xz"), "and from its own subproject")
         assertFalse(root.localExists("frontend/node_modules"), "a missing path stays missing")
+    }
+
+    @Test
+    fun `a host is accepted as an IPv4 address or as a domain of any depth`() {
+        listOf("colaba.online", "172.18.0.2", "10.0.0.1", "deploy.eu.example.com", "xn--80ak6aa92e.com")
+            .forEach { assertEquals(it, validateHost(it), "$it is a valid host") }
+        listOf("999.1.1.1", "1.2.3", "my_host", "localhost")
+            .forEach { assertThrows(RuntimeException::class.java, { validateHost(it) }, "$it is not a host") }
     }
 }

@@ -337,6 +337,11 @@ open class Ssh : DefaultTask() {
         val fromLocalPath = "${project.rootDir}/$directory".normalizeForWindows()
         val localFileExists = File("${project.rootDir.absolutePath}/$directory").exists()
         if (localFileExists) {
+            // An empty local folder (cleaned, or a build that produced nothing) would wipe the remote copy, and the
+            // next image would be built from nothing; failing here is louder and leaves the server as it was
+            File(fromLocalPath).takeIf { it.isDirectory && it.list().isNullOrEmpty() }?.let {
+                throw RuntimeException("🚫 Local folder [$directory] is empty: refusing to replace the remote copy with nothing")
+            }
             val toRemoteParent = File(toRemote).parent.normalizeForWindows()
             println("\n🚚 Deploy of [$directory] 🚠 just has STARTED. Wait a little ⏱️⏱️⏱️...\n")
             if (rsyncAvailable) {
